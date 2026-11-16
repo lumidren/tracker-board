@@ -54,5 +54,60 @@
     damiettaBranch: [[31.12, 30.2], [31.2, 30.5], [31.3, 30.85], [31.55, 31.2], [31.82, 31.48]],
     labels: ['cairo', 'alexandria', 'portsaid', 'suez', 'asyut', 'luxor', 'aswan', 'hurghada', 'matruh']
   };
+
+  const p = (id) => places[id].at;
+
+  const routes = {
+    'cairo-alexandria': {
+      corridor: 'Transit Corridor 4',
+      hubAt: 0.85,
+      points: [p('cairo'), [30.95, 30.2], [30.52, 30.38], [30.25, 30.62], [30.05, 30.95], p('alexandria')]
+    },
+    'cairo-mansoura': {
+      corridor: 'Transit Corridor 7',
+      hubAt: 0.7,
+      points: [p('cairo'), [31.18, 30.46], [31.26, 30.72], p('mansoura')]
+    },
+    'portsaid-suez': {
+      corridor: 'Transit Corridor 12',
+      hubAt: 0.5,
+      points: [p('portsaid'), [32.31, 30.85], p('ismailia'), [32.42, 30.3], p('suez')]
+    },
+    'cairo-asyut': {
+      corridor: 'Transit Corridor 2',
+      hubAt: 0.6,
+      points: [p('cairo'), p('benisuef'), p('minya'), p('asyut')]
+    },
+    'cairo-portsaid': {
+      corridor: 'Transit Corridor 5',
+      hubAt: 0.6,
+      points: [p('cairo'), [31.75, 30.3], p('ismailia'), [32.31, 30.85], p('portsaid')]
+    },
+    'alexandria-matruh': {
+      corridor: 'Transit Corridor 9',
+      hubAt: 0.5,
+      points: [p('alexandria'), [28.95, 30.83], [28.1, 31.05], p('matruh')]
+    },
+    'suez-hurghada': {
+      corridor: 'Transit Corridor 14',
+      hubAt: 0.55,
+      points: [p('suez'), [32.35, 29.6], [32.65, 29.0], [33.08, 28.36], p('hurghada')]
+    },
+    'tanta-cairo': {
+      corridor: 'Transit Corridor 3',
+      hubAt: 0.6,
+      points: [p('tanta'), [31.18, 30.46], p('cairo')]
+    },
+    'mansoura-damietta': {
+      corridor: 'Transit Corridor 8',
+      hubAt: 0.5,
+      points: [p('mansoura'), [31.6, 31.25], p('damietta')]
+    },
+    'asyut-luxor': {
+      corridor: 'Transit Corridor 11',
+      hubAt: 0.55,
+      points: [p('asyut'), p('sohag'), p('qena'), p('luxor')]
+    }
+  };
   return {};
 });
