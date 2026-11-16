@@ -1861,10 +1861,13 @@ const ACTIONS = {
    -------------------------------------------------------------------------- */
 function cacheElements() {
   [
-    'app', 'viewport', 'role-switch', 'live-chip', 'live-chip-text', 'dock', 'dock-items', 'toast',
+    'app', 'viewport', 'role-switch', 'live-chip', 'live-chip-text', 'lang-toggle', 'dock', 'dock-items', 'toast',
     'account-bar', 'account-name', 'auth-panel', 'auth-title', 'auth-sub', 'auth-form',
     'auth-identifier', 'auth-identifier-label', 'auth-password', 'auth-toggle', 'auth-error',
     'auth-submit', 'auth-demo-note', 'health-chip',
+    'verify-panel', 'verify-banner', 'verify-banner-title', 'verify-banner-note', 'verify-card',
+    'verify-serial', 'verify-chip', 'verify-vehicle', 'verify-consignment', 'verify-cargo', 'verify-range',
+    'verify-signed', 'verify-duration', 'verify-minmax', 'verify-excursions', 'verify-door', 'verify-digest',
     'admin-alert', 'admin-alert-title', 'admin-alert-note',
     'client-banner', 'client-banner-title', 'client-banner-note',
     'cargo-card', 'cargo-consignment', 'cargo-state', 'cargo-type', 'cargo-temp', 'cargo-target',
@@ -1877,13 +1880,14 @@ function cacheElements() {
     'spark-band', 'spark-setpoint', 'spark-line', 'spark-dot',
     'diag-battery', 'bar-battery', 'diag-uplink', 'row-uplink', 'diag-compressor', 'row-compressor',
     'diag-fuel', 'bar-fuel', 'diag-seal', 'diag-calibration', 'diag-firmware',
+    'alerts-summary', 'alert-list', 'alerts-empty',
     'controls-title', 'seal-card', 'seal-serial', 'seal-status', 'seal-note', 'seal-signed',
     'seal-hash', 'seal-excursions', 'btn-incident', 'btn-normalize', 'btn-sign', 'tools-hint',
     'audit-log', 'log-count',
     'certificate', 'cert-serial', 'cert-consignor', 'cert-consignee', 'cert-vehicle', 'cert-operator',
     'cert-cargo', 'cert-setpoint', 'cert-duration', 'cert-minmax', 'cert-excursions', 'cert-door',
     'cert-seal', 'cert-stamp-title', 'cert-stamp-meta', 'cert-stamp-tick', 'cert-hash', 'cert-qr',
-    'cert-signer'
+    'cert-qr-svg', 'cert-qr-pending', 'cert-verify-link', 'cert-signer'
   ].forEach((id) => {
     el[id] = byId(id);
   });
@@ -1895,14 +1899,14 @@ function buildStepper() {
   el['route-stepper'].innerHTML = ROUTE_STEPS.map((label, index) => `
     <li class="stepper__step" data-state="upcoming">
       <span class="stepper__node"><span class="stepper__num">${index + 1}</span>${iconMarkup('i-check')}</span>
-      <span class="stepper__label">${label.replace('-', '‑')}</span>
+      <span class="stepper__label"></span>
     </li>`).join('');
 }
 
 function buildTimeline() {
-  el['journey-timeline'].innerHTML = ROUTE_STEPS.map((label) => `
+  el['journey-timeline'].innerHTML = ROUTE_STEPS.map(() => `
     <li class="timeline__step" data-state="upcoming">
-      <p class="timeline__label">${label}</p>
+      <p class="timeline__label"></p>
       <p class="timeline__place"></p>
       <p class="timeline__time"></p>
     </li>`).join('');
@@ -1912,7 +1916,7 @@ function buildFleet() {
   el['fleet-grid'].innerHTML = state.trucks.map((truck) => `
     <button type="button" class="unit-card" data-truck="${truck.id}" aria-pressed="false">
       <span class="unit-card__head">
-        <span class="unit-card__id">Unit #${truck.id}</span>
+        <span class="unit-card__id" data-field="unit"></span>
         <span class="chip" data-field="status"></span>
       </span>
       <span class="unit-card__cargo" data-field="cargo"></span>
@@ -1939,7 +1943,7 @@ function buildFleet() {
 
 function buildUnitPickers() {
   const markup = state.trucks.map((truck) => `
-    <button type="button" class="unit-picker__option" data-truck="${truck.id}" aria-pressed="false">#${truck.id}</button>`).join('');
+    <button type="button" class="unit-picker__option" data-truck="${truck.id}" aria-pressed="false" dir="ltr">#${truck.id}</button>`).join('');
   all('[data-unit-picker]').forEach((picker) => {
     picker.innerHTML = markup;
   });
