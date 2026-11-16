@@ -349,3 +349,15 @@ function setChip(node, label, modifiers) {
 function iconMarkup(name) {
   return `<svg class="icon" aria-hidden="true" focusable="false"><use href="#${name}"></use></svg>`;
 }
+
+async function sha256Hex(text) {
+  if (!window.crypto || !window.crypto.subtle || typeof TextEncoder === 'undefined') {
+    return null;
+  }
+  try {
+    const buffer = await window.crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+    return Array.from(new Uint8Array(buffer), (byte) => byte.toString(16).padStart(2, '0')).join('');
+  } catch (error) {
+    return null;
+  }
+}
