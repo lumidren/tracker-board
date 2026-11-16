@@ -1017,6 +1017,44 @@ function qrDataCodewords(version) {
   return Math.floor(qrRawModules(version) / 8) - QR_ECC_PER_BLOCK[version] * QR_BLOCK_COUNT[version];
 }
 
+/* Multiplication in GF(2^8) modulo x^8 + x^4 + x^3 + x^2 + 1. */
+function gfMultiply(x, y) {
+  let z = 0;
+  for (let i = 7; i >= 0; i -= 1) {
+    z = (z << 1) ^ ((z >>> 7) * 0x11D);
+    z ^= ((y >>> i) & 1) * x;
+  }
+  return z;
+}
+
+function reedSolomonDivisor(degree) {
+  const result = new Array(degree).fill(0);
+  result[degree - 1] = 1;
+  let root = 1;
+  for (let i = 0; i < degree; i += 1) {
+    for (let j = 0; j < degree; j += 1) {
+      result[j] = gfMultiply(result[j], root);
+      if (j + 1 < degree) {
+        result[j] ^= result[j + 1];
+      }
+    }
+    root = gfMultiply(root, 2);
+  }
+  return result;
+}
+
+function reedSolomonRemainder(data, divisor) {
+  const result = divisor.map(() => 0);
+  data.forEach((byte) => {
+    const factor = byte ^ result.shift();
+    result.push(0);
+    divisor.forEach((coefficient, index) => {
+      result[index] ^= gfMultiply(coefficient, factor);
+    });
+  });
+  return result;
+}
+
 /* --------------------------------------------------------------------------
    Actions
    -------------------------------------------------------------------------- */
