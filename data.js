@@ -591,5 +591,12 @@
       certificate: { serial: 'REF-CERT-2026-8821-CC', status: 'valid' }
     }
   ];
-  return {};
+
+  /* Events that happened before the session started, already acknowledged. */
+  const pastAlerts = [
+    { truckId: 'TRK-208', kind: 'uplink', startedMinutesAgo: 95, lastedSeconds: 38, acknowledgedBy: 'Lead Quality Assurance Auditor' },
+    { truckId: 'TRK-733', kind: 'uplink', startedMinutesAgo: 41, lastedSeconds: 112, acknowledgedBy: 'Fleet Dispatch Controller' }
+  ];
+
+  return { places, geography, routes, orgs, users, trucks, pastAlerts };
 });
