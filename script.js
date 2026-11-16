@@ -819,7 +819,6 @@ function applyLanguage() {
   root.classList.add('is-switching-language');
   root.lang = state.lang;
   root.dir = arabic ? 'rtl' : 'ltr';
-  window.setTimeout(() => root.classList.remove('is-switching-language'), 80);
   applyStaticText();
 
   const toggle = el['lang-toggle'];
@@ -830,6 +829,11 @@ function applyLanguage() {
   buildDock();
   render();
   renderAuditLog();
+
+  /* Reading layout applies the mirrored styles while transitions are still
+     off; only then are transitions allowed again. */
+  void root.offsetWidth;
+  root.classList.remove('is-switching-language');
 }
 
 function toggleLanguage() {
