@@ -18,3 +18,28 @@ const MAX_SIGN_IN_ATTEMPTS = 5;
 const LOCKOUT_MS = 30000;
 const IDLE_LIMIT_MS = { client: 30 * 60000, admin: 10 * 60000 };
 const SESSION_KEY = 'maatora.session';
+
+const ROUTE_STEPS = [
+  'Origin Departure',
+  'Highway In-Transit',
+  'Regional Inspection Hub',
+  'Final Receiving Depot'
+];
+
+const PERSONNEL = {
+  qaOfficer: 'Lead Quality Assurance Auditor',
+  inspector: 'Cold-Chain Regulatory Officer'
+};
+
+const DOCK_ITEMS = {
+  client: [
+    { id: 'overview', label: 'Overview', icon: 'i-shield-check' },
+    { id: 'journey', label: 'Journey', icon: 'i-route' },
+    { id: 'documents', label: 'Documents', icon: 'i-document' }
+  ],
+  admin: [
+    { id: 'fleet', label: 'Fleet', icon: 'i-fleet' },
+    { id: 'diagnostics', label: 'Diagnostics', icon: 'i-activity' },
+    { id: 'controls', label: 'Controls', icon: 'i-sliders' }
+  ]
+};
