@@ -22,6 +22,11 @@ const SESSION_KEY = 'maatora.session';
 const LANG_KEY = 'maatora.lang';
 const VERIFY_PREFIX = '#verify=';
 const VERIFY_DIGEST_LENGTH = 32;
+/* Address of the hosted site, for example 'https://example.org/maatora/'. When set, every
+   QR code points there, so anyone can verify a certificate from any phone. */
+const PUBLIC_VERIFY_URL = '';
+/* Used inside the phone app, whose own page address means nothing to another device. */
+const APP_VERIFY_LINK = 'maatora://verify/';
 
 const ROUTE_STEPS = [
   'Origin Departure',
@@ -1355,7 +1360,13 @@ function verificationUrl(truck) {
     truck.log.doorOpenings,
     cert.hash.slice(0, VERIFY_DIGEST_LENGTH)
   ].join('~');
-  return `${window.location.href.split('#')[0]}${VERIFY_PREFIX}${record}`;
+  if (PUBLIC_VERIFY_URL) {
+    return `${PUBLIC_VERIFY_URL}${VERIFY_PREFIX}${record}`;
+  }
+  if (/^https?:$/.test(window.location.protocol)) {
+    return `${window.location.href.split('#')[0]}${VERIFY_PREFIX}${record}`;
+  }
+  return `${APP_VERIFY_LINK}${record}`;
 }
 
 function parseVerificationRecord(hash) {
