@@ -763,6 +763,47 @@
         accounts: seesAccounts ? ((extras && extras.accounts) || []) : null
       };
     }
+
+    /* Checks a scanned record. On the server the registry also has to agree. */
+    function verify(text) {
+      const record = parseVerificationRecord(text);
+      const truck = record ? findTruck(record.truckId) : null;
+      if (!record || !truck) {
+        return { status: 'invalid' };
+      }
+      const result = {
+        status: 'failed',
+        source: authoritative ? 'registry' : 'digest',
+        record,
+        truck: {
+          id: truck.id,
+          vehicleClass: truck.vehicleClass,
+          consignmentId: truck.consignmentId,
+          cargo: truck.cargo,
+          tempMin: truck.tempMin,
+          tempMax: truck.tempMax,
+          serial: truck.certificate.serial
+        }
+      };
+      const digest = sha256(certificatePayload(truck, record)).slice(0, DIGEST_LENGTH);
+      if (digest !== record.digest) {
+        return result;
+      }
+      if (!authoritative) {
+        result.status = 'verified';
+        return result;
+      }
+      const entry = state.registry.find(
+        (item) => item.truckId === truck.id && item.signedAt === record.signedAt
+          && item.digest.slice(0, DIGEST_LENGTH) === record.digest
+      );
+      if (!entry) {
+        result.status = 'unknown';
+      } else {
+        result.status = entry.status === 'current' ? 'verified' : 'revoked';
+      }
+      return result;
+    }
     return {};
   }
 
