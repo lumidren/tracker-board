@@ -181,6 +181,27 @@
             </article>
           </section>
 
+          <!-- ================= CLIENT: MY SHIPMENTS ================= -->
+          <section class="panel" data-role="client" data-panel="shipments" aria-label="My shipments" hidden>
+            <header class="panel__head">
+              <p class="eyebrow">My Shipments</p>
+              <h1 class="panel__title" id="shipments-title"></h1>
+              <p class="panel__sub" id="shipments-sub"></p>
+            </header>
+
+            <div class="shipments" id="shipment-list"></div>
+
+            <article class="card legend" aria-labelledby="legend-heading">
+              <h2 class="card__title" id="legend-heading">What the Colours Mean</h2>
+              <ul class="legend__list">
+                <li><span class="status-dot" data-tone="safe" aria-hidden="true"></span><span>Green: the shipment is safe.</span></li>
+                <li><span class="status-dot" data-tone="alert" aria-hidden="true"></span><span>Red: there is a problem and our team is fixing it.</span></li>
+                <li><span class="status-dot" data-tone="pending" aria-hidden="true"></span><span>Blue: getting ready to leave.</span></li>
+                <li><span class="status-dot" data-tone="done" aria-hidden="true"></span><span>Grey: already delivered.</span></li>
+              </ul>
+            </article>
+          </section>
+
           <!-- ================= CLIENT: OVERVIEW ================= -->
           <section class="panel" data-role="client" data-panel="overview" aria-label="Shipment overview">
 
