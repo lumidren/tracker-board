@@ -51,6 +51,26 @@ python -m http.server 4180
 
 Then open `http://localhost:4180`. Each sign-in page has a **Use Demo Credentials** button.
 
+## Android app
+
+`android/` holds a native Android app (Kotlin, no libraries) that wraps the same interface.
+
+- The three web files are copied into the APK on every build, so the app and the site are always the same code
+- Works with no network and requests **no permissions**
+- Certificates print through Android's own print service, including Save as PDF
+- The back button closes the certificate or verification view, then sends the app to the background without ending the session
+- Verification links of the form `maatora://verify/<record>` open straight into the app; only record characters are accepted, so a crafted link cannot inject script
+
+Build it with JDK 17 or 21 and the Android SDK (platform 35):
+
+```bash
+cd android && ./gradlew assembleDebug
+```
+
+The APK lands in `android/app/build/outputs/apk/debug/`. Android 10 or newer is required. A debug build is signed with a machine-local key: fine for sideloading, not for a store listing or for updating a copy signed elsewhere.
+
+QR codes generated inside the app use the `maatora://` link, which only opens on a phone that has the app. Set `PUBLIC_VERIFY_URL` in `script.js` to the hosted site address to make every code open in any browser instead.
+
 ## Structure
 
 | File | Role |
@@ -58,6 +78,7 @@ Then open `http://localhost:4180`. Each sign-in page has a **Use Demo Credential
 | `index.html` | Semantic markup, inline SVG icon sprite, certificate document |
 | `style.css` | Design tokens, phone frame, glass dock, components, A4 print rules |
 | `script.js` | Single state object, role and session logic, simulation, rendering |
+| `android/` | Native shell: one activity, a print bridge, link and back-button handling |
 
 There are no inline styles, inline scripts or emojis anywhere in the code.
 
