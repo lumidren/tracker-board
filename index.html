@@ -213,6 +213,22 @@
             </article>
           </section>
 
+          <!-- ================= ADMIN: FLEET ================= -->
+          <section class="panel" data-role="admin" data-panel="fleet" aria-label="Fleet telemetry" hidden>
+            <header class="panel__head">
+              <p class="eyebrow">Dispatch &amp; Compliance Control</p>
+              <h1 class="panel__title">Fleet Telemetry Grid</h1>
+              <p class="panel__sub" id="fleet-summary"></p>
+            </header>
+
+            <div class="fleet" id="fleet-grid"></div>
+
+            <button type="button" class="btn btn--outline btn--block" data-action="goto-diagnostics">
+              <span id="fleet-goto-label">Open Diagnostics</span>
+              <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-arrow"></use></svg>
+            </button>
+          </section>
+
         </main>
 
         <nav class="glass-dock" id="dock" aria-label="Section navigation">
