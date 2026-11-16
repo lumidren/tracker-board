@@ -2506,38 +2506,43 @@ function renderControls() {
   const certMeta = CERT_STATUS[cert.status];
   const drillTruck = state.isExcursionActive ? getTruck(state.excursionTruckId) : null;
   const blockReason = signBlockReason(truck);
+  const blockText = blockReason ? t(blockReason) : '';
 
-  setText(el['controls-title'], `Unit #${truck.id}`);
+  setText(el['controls-title'], t('Unit {id}', { id: `#${truck.id}` }));
   el['seal-card'].dataset.tone = certMeta.tone;
-  setText(el['seal-serial'], cert.serial);
-  setChip(el['seal-status'], certMeta.label, certMeta.chip);
-  setText(el['seal-note'], certMeta.note);
-  setText(el['seal-signed'], cert.status === 'valid' && cert.signedAt ? formatDateTime(cert.signedAt) : 'Not signed');
+  setText(el['seal-serial'], ltr(cert.serial));
+  setChip(el['seal-status'], t(certMeta.label), certMeta.chip);
+  setText(el['seal-note'], t(certMeta.note));
+  setText(
+    el['seal-signed'],
+    cert.status === 'valid' && cert.signedAt ? formatDateTime(cert.signedAt) : t('Not signed')
+  );
   setText(el['seal-hash'], hashLabel(cert));
-  setText(el['seal-excursions'], excursionText(truck));
+  setText(el['seal-excursions'], excursionText(truck.log.excursions));
 
   el['btn-incident'].disabled = state.isExcursionActive;
   el['btn-normalize'].disabled = !state.isExcursionActive;
   el['btn-sign'].disabled = Boolean(blockReason);
 
-  let hint = `Trigger Incident simulates a compressor failure and a +${EXCURSION_DELTA_C.toFixed(1)}°C spike on Unit #${truck.id}.`;
+  let hint = t('Trigger Incident simulates a compressor failure and a {delta} spike on Unit {id}.', {
+    delta: `+${EXCURSION_DELTA_C.toFixed(1)}°C`,
+    id: `#${truck.id}`
+  });
   if (drillTruck && drillTruck.id !== truck.id) {
-    hint = `A drill is active on Unit #${drillTruck.id}. Normalize Sensor will close it. ${blockReason}`.trim();
+    hint = t('A drill is active on Unit {id}. Normalize Sensor will close it.', { id: `#${drillTruck.id}` });
   } else if (drillTruck) {
-    hint = `Drill active on this unit. ${blockReason}`;
-  } else if (blockReason) {
-    hint = `${hint} ${blockReason}`;
-  } else if (cert.status === 'revalidate') {
-    hint = 'Telemetry is nominal. Issue / Sign Certificate to validate the log and restore the seal.';
+    hint = t('Drill active on this unit.');
+  } else if (!blockReason && cert.status === 'revalidate') {
+    hint = t('Telemetry is nominal. Issue / Sign Certificate to validate the log and restore the seal.');
   }
-  setText(el['tools-hint'], hint);
+  setText(el['tools-hint'], blockText && !hint.includes(blockText) ? `${hint} ${blockText}` : hint);
 }
 
 function hashLabel(cert) {
   if (cert.status !== 'valid') {
-    return cert.status === 'hold' ? 'Withheld (Compliance Hold)' : 'Not issued';
+    return t(cert.status === 'hold' ? 'Withheld (Compliance Hold)' : 'Not issued');
   }
-  return cert.hash ? `SHA256: ${shortHash(cert.hash)}` : 'Digest unavailable in this browser';
+  return cert.hash ? ltr(`SHA256: ${shortHash(cert.hash)}`) : t('Computing digest');
 }
 
 function renderAuditLog() {
@@ -2559,17 +2564,19 @@ function renderAuditLog() {
 
     const message = document.createElement('p');
     message.className = 'audit__message';
-    message.textContent = entry.message;
+    message.textContent = t(entry.source, entry.params);
 
     const meta = document.createElement('p');
     meta.className = 'audit__meta';
-    const digest = entry.digest ? `chain ${entry.digest.slice(0, 12)}` : 'chain pending';
-    meta.textContent = `#${pad2(entry.seq)} • ${formatClock(entry.time, true)} • ${digest}`;
+    const stamp = { seq: `#${pad2(entry.seq)}`, time: formatClock(entry.time, true) };
+    meta.textContent = entry.digest
+      ? t('{seq} • {time} • chain {digest}', { ...stamp, digest: entry.digest.slice(0, 12) })
+      : t('{seq} • {time} • chain pending', stamp);
 
     item.append(marker, message, meta);
     list.append(item);
   });
-  setText(el['log-count'], `${state.auditLog.length} Entries`);
+  setText(el['log-count'], t('{count} Entries', { count: state.auditLog.length }));
 }
 
 /* Deterministic verification block: QR-styled placeholder seeded from the
