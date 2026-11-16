@@ -672,6 +672,22 @@
       );
       return done();
     }
+
+    function command(actor, name, payload) {
+      const input = payload || {};
+      switch (name) {
+        case 'trigger-incident':
+          return triggerIncident(actor, input.truckId);
+        case 'normalize-sensor':
+          return normalizeSensor(actor);
+        case 'acknowledge-alert':
+          return acknowledgeAlert(actor, input.alertId);
+        case 'sign-certificate':
+          return signCertificate(actor, input.truckId);
+        default:
+          return fail('Unknown action.');
+      }
+    }
     return {};
   }
 
