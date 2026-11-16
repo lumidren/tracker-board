@@ -109,5 +109,30 @@
       points: [p('asyut'), p('sohag'), p('qena'), p('luxor')]
     }
   };
+
+  const orgs = {
+    biopharma: {
+      name: 'National Logistics & Biopharma Consignor S.A.E.',
+      dept: 'Certified Pharmaceutical Logistics Dept.'
+    },
+    provisions: {
+      name: 'National Cold-Chain Provisions Consignor S.A.E.',
+      dept: 'Certified Food-Grade Logistics Dept.'
+    },
+    dairy: {
+      name: 'Delta Dairy Cooperative S.A.E.',
+      dept: 'Certified Dairy Logistics Dept.'
+    },
+    'depot-north': { name: 'Northern Regional Medical Depot #04', terminal: 'Regional Receiving Terminal #04' },
+    'depot-delta': { name: 'Delta Regional Clinical Depot #02', terminal: 'Regional Receiving Terminal #02' },
+    'pharmacy-upper': { name: 'Upper Egypt Pharmacy Network Depot #11', terminal: 'Regional Receiving Terminal #11' },
+    'bloodbank-canal': { name: 'Canal Zone Blood Bank #03', terminal: 'Regional Receiving Terminal #03' },
+    'coldstore-coastal': { name: 'Coastal Cold Storage Terminal #07', terminal: 'Regional Receiving Terminal #07' },
+    'coldstore-west': { name: 'Western Coast Cold Store #05', terminal: 'Regional Receiving Terminal #05' },
+    'hospitality-redsea': { name: 'Red Sea Hospitality Depot #08', terminal: 'Regional Receiving Terminal #08' },
+    'retail-capital': { name: 'Capital Retail Distribution Hub #01', terminal: 'Regional Receiving Terminal #01' },
+    'market-damietta': { name: 'Damietta Wholesale Market Depot #06', terminal: 'Regional Receiving Terminal #06' },
+    'market-luxor': { name: 'Luxor Fresh Produce Terminal #09', terminal: 'Regional Receiving Terminal #09' }
+  };
   return {};
 });
