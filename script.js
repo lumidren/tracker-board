@@ -1810,7 +1810,7 @@ function signCertificate() {
 }
 
 function openCertificate() {
-  if (state.certificateModalOpen || !isAuthed()) {
+  if (state.certificateModalOpen || !isAuthed() || state.verification) {
     return;
   }
   lastFocused = document.activeElement;
@@ -1850,7 +1850,10 @@ const ACTIONS = {
   'goto-diagnostics': () => setPanel('diagnostics'),
   'sign-out': () => signOut(),
   'fill-demo': fillDemoCredentials,
-  'toggle-password': togglePasswordVisibility
+  'toggle-password': togglePasswordVisibility,
+  'toggle-language': toggleLanguage,
+  'acknowledge-alert': acknowledgeAlert,
+  'exit-verification': exitVerification
 };
 
 /* --------------------------------------------------------------------------
