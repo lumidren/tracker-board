@@ -2404,18 +2404,55 @@ function renderAuth() {
   setText(el['auth-sub'], t(copy.sub));
   setText(el['auth-identifier-label'], t(copy.identifierLabel));
   el['auth-identifier'].setAttribute('inputmode', copy.inputMode);
-  setText(el['auth-demo-note'], t(copy.demoNote));
   setText(el['auth-toggle'], t(el['auth-password'].type === 'password' ? 'Show' : 'Hide'));
 
   let message = '';
   if (locked > 0) {
     message = t('Too many failed attempts. Try again in {seconds} seconds.', { seconds: locked });
+  } else if (state.auth.busy) {
+    message = '';
+  } else if (isAuthed(role) && !state.views[role]) {
+    message = t('Loading your data');
   } else if (error) {
     message = t(error.source, error.params);
   }
   el['auth-error'].hidden = !message;
   setText(el['auth-error'], message);
-  el['auth-submit'].disabled = locked > 0;
+  el['auth-submit'].disabled = locked > 0 || state.auth.busy;
+  setText(el['auth-submit'].querySelector('span'), t(state.auth.busy ? 'Signing in' : 'Sign In'));
+
+  /* Test accounts, when the backend offers them. */
+  const accounts = state.auth.demoAccounts[role];
+  if (!accounts) {
+    loadDemoAccounts(role);
+  }
+  const list = el['auth-demo-list'];
+  const signature = `${role}|${state.lang}|${accounts ? accounts.length : 0}`;
+  el['auth-demo'].hidden = !accounts || accounts.length === 0;
+  setText(
+    el['auth-demo-note'],
+    t(backend.mode === 'remote'
+      ? 'This server is running in demo mode. Choose a test account to fill in the form.'
+      : 'These accounts exist only in this browser. Choose one to fill in the form.')
+  );
+  if (accounts && list.dataset.signature !== signature) {
+    list.dataset.signature = signature;
+    list.innerHTML = '';
+    accounts.forEach((account, index) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'account-option';
+      button.dataset.demoAccount = String(index);
+      const name = document.createElement('span');
+      name.className = 'account-option__name';
+      name.textContent = t(account.name);
+      const title = document.createElement('span');
+      title.className = 'account-option__title';
+      title.textContent = `${t(account.title)} • ${ltr(account.identifier)}`;
+      button.append(name, title);
+      list.append(button);
+    });
+  }
 }
 
 function renderVerification() {
