@@ -1562,3 +1562,20 @@ function seedAuditLog() {
       appendLog('sign', `Certificate ${truck.certificate.serial} validated by ${PERSONNEL.qaOfficer}.`);
     });
 }
+
+function secondTick() {
+  renderLiveChip();
+  const now = Date.now();
+  ['client', 'admin'].forEach((role) => {
+    if (state.session[role] && now - state.lastActivityAt > IDLE_LIMIT_MS[role]) {
+      signOut(role, 'idle timeout');
+    }
+  });
+  if (!isAuthed()) {
+    renderAuth();
+  }
+}
+
+function markActivity() {
+  state.lastActivityAt = Date.now();
+}
