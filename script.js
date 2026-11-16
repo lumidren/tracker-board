@@ -1822,8 +1822,24 @@ async function signOut(role = state.currentRole, idle = false) {
   endSession(role, idle);
 }
 
-function fillDemoCredentials() {
-  const account = DEMO_ACCOUNTS.find((item) => item.role === state.currentRole);
+async function loadDemoAccounts(role) {
+  if (state.auth.demoAccounts[role]) {
+    return;
+  }
+  state.auth.demoAccounts[role] = [];
+  try {
+    state.auth.demoAccounts[role] = await backend.demoAccounts(role);
+  } catch (error) {
+    state.auth.demoAccounts[role] = [];
+  }
+  renderAuth();
+}
+
+function fillDemoAccount(button) {
+  const account = (state.auth.demoAccounts[state.currentRole] || [])[Number(button.dataset.demoAccount)];
+  if (!account) {
+    return;
+  }
   el['auth-identifier'].value = account.identifier;
   el['auth-password'].value = account.password;
   state.auth.error = null;
@@ -1837,35 +1853,6 @@ function togglePasswordVisibility() {
   input.type = reveal ? 'text' : 'password';
   el['auth-toggle'].setAttribute('aria-pressed', String(reveal));
   renderAuth();
-}
-
-function selectConsignment(truckId) {
-  const account = state.session.client;
-  if (!account || !account.trucks.includes(truckId) || state.clientTruckId === truckId) {
-    return;
-  }
-  state.clientTruckId = truckId;
-  persistSession();
-  render();
-}
-
-/* --- Hardware health --- */
-function hardwareChecks(truck) {
-  const level = (fault, warn) => {
-    if (fault) {
-      return 'fault';
-    }
-    return warn ? 'warn' : 'ok';
-  };
-  return {
-    battery: level(truck.sensorBattery < 15, truck.sensorBattery < 35),
-    uplink: level(truck.uplinkSignal < -105, truck.uplinkSignal < -95 || truck.uplinkPing > 150),
-    compressor: level(truck.status === 'excursion' || truck.compressorRpm === 0, false),
-    fuel: level(truck.fuelPercent < 15, truck.fuelPercent < 30),
-    seal: level(truck.log.doorOpenings > 0, false),
-    calibration: 'ok',
-    firmware: 'ok'
-  };
 }
 
 function setRole(role) {
