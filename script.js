@@ -416,3 +416,42 @@ async function refreshCertificateHash(truck) {
     renderControls();
   }
 }
+
+/* --------------------------------------------------------------------------
+   Actions
+   -------------------------------------------------------------------------- */
+/* --- Authentication (simulated, browser only) --- */
+function persistSession() {
+  try {
+    window.sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+      role: state.currentRole,
+      client: state.session.client ? state.session.client.id : null,
+      admin: state.session.admin ? state.session.admin.id : null,
+      clientTruckId: state.clientTruckId
+    }));
+  } catch (error) {
+    /* Storage unavailable: the session lasts until the page is closed. */
+  }
+}
+
+function restoreSession() {
+  let saved = null;
+  try {
+    saved = JSON.parse(window.sessionStorage.getItem(SESSION_KEY) || 'null');
+  } catch (error) {
+    saved = null;
+  }
+  if (!saved || typeof saved !== 'object') {
+    return;
+  }
+  ['client', 'admin'].forEach((role) => {
+    state.session[role] = DEMO_ACCOUNTS.find((item) => item.id === saved[role] && item.role === role) || null;
+  });
+  if (saved.role === 'client' || saved.role === 'admin') {
+    state.currentRole = saved.role;
+  }
+  const account = state.session.client;
+  if (account) {
+    state.clientTruckId = account.trucks.includes(saved.clientTruckId) ? saved.clientTruckId : account.trucks[0];
+  }
+}
