@@ -1625,23 +1625,11 @@ function createRemoteBackend() {
 /* --------------------------------------------------------------------------
    Certificate verification page
    -------------------------------------------------------------------------- */
-/* The link carries the signed record itself, so any browser can recompute the
-   digest. It proves the fields were not altered; it is not proof of origin. */
 function verificationUrl(truck) {
-  const cert = truck.certificate;
-  if (cert.status !== 'valid' || !cert.hash || !cert.signedAt) {
+  const record = truck.certificate.verification;
+  if (!record) {
     return '';
   }
-  const record = [
-    truck.id,
-    cert.signedAt.getTime(),
-    truck.log.transitMinutes,
-    truck.log.min,
-    truck.log.max,
-    truck.log.excursions,
-    truck.log.doorOpenings,
-    cert.hash.slice(0, VERIFY_DIGEST_LENGTH)
-  ].join('~');
   if (PUBLIC_VERIFY_URL) {
     return `${PUBLIC_VERIFY_URL}${VERIFY_PREFIX}${record}`;
   }
@@ -1649,35 +1637,6 @@ function verificationUrl(truck) {
     return `${window.location.href.split('#')[0]}${VERIFY_PREFIX}${record}`;
   }
   return `${APP_VERIFY_LINK}${record}`;
-}
-
-function parseVerificationRecord(hash) {
-  let parts = [];
-  try {
-    parts = decodeURIComponent(hash.slice(VERIFY_PREFIX.length)).split('~');
-  } catch (error) {
-    return null;
-  }
-  if (parts.length !== 8) {
-    return null;
-  }
-  const truck = getTruck(parts[0]);
-  const numbers = parts.slice(1, 7).map(Number);
-  const digest = parts[7].toLowerCase();
-  if (!truck || numbers.some((value) => !Number.isFinite(value)) || !/^[0-9a-f]+$/.test(digest)
-    || digest.length !== VERIFY_DIGEST_LENGTH || numbers[0] <= 0 || numbers[0] > 8640000000000000) {
-    return null;
-  }
-  return {
-    truck,
-    digest,
-    signedAt: numbers[0],
-    transitMinutes: numbers[1],
-    min: numbers[2],
-    max: numbers[3],
-    excursions: numbers[4],
-    doorOpenings: numbers[5]
-  };
 }
 
 async function loadVerification() {
@@ -1693,18 +1652,25 @@ async function loadVerification() {
     return;
   }
 
-  const record = parseVerificationRecord(hash);
+  let record = '';
+  try {
+    record = decodeURIComponent(hash.slice(VERIFY_PREFIX.length));
+  } catch (error) {
+    record = '';
+  }
   state.certificateModalOpen = false;
-  state.verification = record ? { ...record, status: 'checking' } : { status: 'invalid' };
+  state.verification = { status: 'checking' };
   render();
   el.viewport.scrollTop = 0;
-  if (!record) {
-    return;
-  }
 
-  const computed = await sha256Hex(certificatePayload(record.truck, record));
+  let result = { status: 'invalid' };
+  try {
+    result = await backend.verify(record);
+  } catch (error) {
+    result = { status: 'invalid' };
+  }
   if (token === verificationToken && state.verification) {
-    state.verification.status = computed.slice(0, VERIFY_DIGEST_LENGTH) === record.digest ? 'verified' : 'failed';
+    state.verification = result;
     render();
   }
 }
