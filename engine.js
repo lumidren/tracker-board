@@ -282,6 +282,24 @@
       }
       return entry;
     }
+
+    /* Position, distance left, arrival estimate and route stage from progress. */
+    function derive(truck) {
+      const remaining = truck.routeKm * (1 - truck.progress);
+      truck.position = pointAt(truck.routePoints, truck.progress).map((value) => Math.round(value * 1000) / 1000);
+      truck.remainingKm = Math.round(remaining);
+      if (truck.baseStatus === 'en-route') {
+        truck.eta = Math.max(1, Math.ceil((remaining / truck.cruiseKmh) * 60 - 1e-6));
+        truck.routeStep = truck.progress >= truck.hubAt ? 2 : 1;
+      } else {
+        truck.eta = null;
+        truck.routeStep = truck.baseStatus === 'delivered' ? 4 : 0;
+      }
+    }
+
+    function sampleTemperature(truck) {
+      return round1(truck.tempBaseline + (truck.status === 'excursion' ? EXCURSION_DELTA_C : 0) + jitter(0.5));
+    }
     return {};
   }
 
