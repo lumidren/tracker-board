@@ -1509,6 +1509,119 @@ function createLocalBackend() {
   };
 }
 
+/* The Maatora server: accounts, sessions and data live there. */
+function createRemoteBackend() {
+  const streams = {};
+
+  async function request(method, path, body) {
+    const options = { method, credentials: 'same-origin', headers: {} };
+    if (body !== undefined) {
+      options.headers['Content-Type'] = 'application/json';
+      options.headers['X-Requested-With'] = 'maatora';
+      options.body = JSON.stringify(body);
+    }
+    try {
+      const response = await window.fetch(path, options);
+      let data = {};
+      try {
+        data = await response.json();
+      } catch (error) {
+        data = {};
+      }
+      return { status: response.status, data };
+    } catch (error) {
+      return { status: 0, data: {} };
+    }
+  }
+
+  function unsubscribe(portal) {
+    if (streams[portal]) {
+      streams[portal].close();
+      delete streams[portal];
+    }
+  }
+
+  return {
+    mode: 'remote',
+
+    async restore() {
+      const reply = await request('GET', '/api/session');
+      return reply.status === 200 ? reply.data : { client: null, admin: null };
+    },
+
+    async login(portal, identifier, password) {
+      const reply = await request('POST', '/api/login', { portal, identifier, password });
+      if (reply.status === 200) {
+        return { ok: true, user: reply.data.user };
+      }
+      if (reply.status === 429) {
+        return { ok: false, reason: 'locked', retryAfter: reply.data.retryAfter || 30 };
+      }
+      if (reply.status === 401) {
+        return { ok: false, reason: 'invalid', attemptsLeft: reply.data.attemptsLeft };
+      }
+      return { ok: false, reason: 'unreachable' };
+    },
+
+    async logout(portal) {
+      unsubscribe(portal);
+      await request('POST', '/api/logout', { portal });
+    },
+
+    subscribe(portal, onSnapshot, onExpired) {
+      unsubscribe(portal);
+      const source = new window.EventSource(`/api/stream?portal=${portal}`);
+      streams[portal] = source;
+      source.addEventListener('snapshot', (event) => onSnapshot(JSON.parse(event.data)));
+      source.addEventListener('expired', () => {
+        unsubscribe(portal);
+        onExpired();
+      });
+      /* The browser reconnects by itself. If the session is gone, stop and say so. */
+      source.onerror = async () => {
+        const reply = await request('GET', '/api/session');
+        if (reply.status === 200 && !reply.data[portal] && streams[portal] === source) {
+          unsubscribe(portal);
+          onExpired();
+        }
+      };
+    },
+
+    unsubscribe,
+
+    async command(name, payload) {
+      const reply = await request('POST', `/api/commands/${name}`, payload || {});
+      if (reply.status === 200) {
+        return { ok: true };
+      }
+      if (reply.status === 401) {
+        return { ok: false, expired: true };
+      }
+      if (reply.status === 0) {
+        return { ok: false, error: 'The server could not be reached. Check the connection and try again.' };
+      }
+      return { ok: false, error: reply.data.message || 'The server refused this action.' };
+    },
+
+    async verify(record) {
+      const reply = await request('GET', `/api/public/verify?record=${encodeURIComponent(record)}`);
+      return reply.status === 200 ? reply.data : { status: 'invalid' };
+    },
+
+    async demoAccounts(portal) {
+      if (!REMOTE.demo) {
+        return [];
+      }
+      const reply = await request('GET', `/api/demo-accounts?portal=${portal}`);
+      return reply.status === 200 ? reply.data : [];
+    },
+
+    touch(portal) {
+      request('POST', '/api/touch', { portal });
+    }
+  };
+}
+
 /* --------------------------------------------------------------------------
    Certificate verification page
    -------------------------------------------------------------------------- */
