@@ -532,3 +532,190 @@ button {
   font-size: 12px;
   font-weight: 500;
 }
+
+/* 6. Client view ----------------------------------------------------------- */
+.banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 13px 14px;
+  border-radius: 18px;
+  border: 1px solid var(--safe-line);
+  background: var(--safe-soft);
+}
+
+.banner .pulse-dot {
+  width: 10px;
+  height: 10px;
+  margin-top: 4px;
+}
+
+.banner__title {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  color: var(--safe-strong);
+}
+
+.banner__note {
+  margin-top: 3px;
+  font-size: 12.5px;
+  color: var(--text-soft);
+}
+
+.banner--alert {
+  border-color: var(--alert-line);
+  background: var(--alert-soft);
+}
+
+.banner--alert .banner__title {
+  color: var(--alert-strong);
+  animation: flash 1s ease-in-out infinite;
+}
+
+.banner--pending {
+  border-color: var(--ice-line);
+  background: var(--ice-soft);
+}
+
+.banner--pending .banner__title {
+  color: var(--ice-strong);
+}
+
+.cargo {
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.cargo[data-tone="alert"] {
+  border-color: var(--alert-line);
+  box-shadow: 0 0 0 3px var(--alert-soft), var(--shadow-card);
+}
+
+.cargo__type {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-soft);
+}
+
+.cargo__reading {
+  margin-top: 16px;
+}
+
+.temp-display {
+  margin-top: 4px;
+  font-size: 58px;
+  font-weight: 650;
+  line-height: 1;
+  letter-spacing: -0.035em;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  transition: color 0.3s ease;
+}
+
+.cargo[data-tone="alert"] .temp-display {
+  color: var(--alert-strong);
+}
+
+.cargo__target {
+  margin-top: 8px;
+  font-size: 12.5px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.range-meter {
+  --band-start: 20%;
+  --band-end: 60%;
+  --setpoint: 40%;
+  --marker: 40%;
+  margin-top: 16px;
+}
+
+.range-meter__track {
+  position: relative;
+  height: 10px;
+  border-radius: var(--radius-pill);
+  background: #E9EEF4;
+}
+
+.range-meter__band {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--band-start);
+  width: calc(var(--band-end) - var(--band-start));
+  border-radius: var(--radius-pill);
+  background: rgba(16, 185, 129, 0.34);
+}
+
+.range-meter__setpoint {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  left: var(--setpoint);
+  width: 2px;
+  margin-left: -1px;
+  border-radius: 1px;
+  background: var(--safe-strong);
+}
+
+.range-meter__marker {
+  position: absolute;
+  top: 50%;
+  left: var(--marker);
+  width: 18px;
+  height: 18px;
+  margin: -9px 0 0 -9px;
+  border-radius: 50%;
+  border: 4px solid var(--safe);
+  background: var(--surface);
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.2);
+  transition: left 0.7s var(--ease-out), border-color 0.3s ease;
+}
+
+.cargo[data-tone="alert"] .range-meter__marker {
+  border-color: var(--alert);
+}
+
+.range-meter__scale {
+  position: relative;
+  height: 18px;
+  margin-top: 7px;
+}
+
+.range-meter__tick {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.range-meter__tick--min {
+  left: var(--band-start);
+}
+
+.range-meter__tick--max {
+  left: var(--band-end);
+}
+
+.cargo__route {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 12px;
+  padding-top: 13px;
+  border-top: 1px solid var(--border);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-soft);
+}
+
+.cargo__route .icon {
+  width: 18px;
+  height: 18px;
+  color: var(--ice);
+}
