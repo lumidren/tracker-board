@@ -2699,6 +2699,10 @@ function liveTick() {
     truck.uplinkPing = clamp(Math.round(truck.uplinkPing + jitter(6)), 28, 72);
     if (truck.status === 'excursion') {
       truck.log.max = Math.max(truck.log.max, truck.tempCurrent);
+      const alert = activeAlert(truck.id);
+      if (alert) {
+        alert.peak = Math.max(alert.peak, truck.tempCurrent);
+      }
     } else {
       truck.compressorRpm = truck.compressorNominalRpm + Math.round(jitter(40));
     }
@@ -2707,6 +2711,7 @@ function liveTick() {
   renderClient();
   renderFleet();
   renderDiagnostics();
+  renderAlerts();
   if (state.isExcursionActive) {
     renderCertificate();
   }
