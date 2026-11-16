@@ -813,6 +813,42 @@ function applyStaticText() {
   });
 }
 
+function applyLanguage() {
+  const arabic = state.lang === 'ar';
+  document.documentElement.lang = state.lang;
+  document.documentElement.dir = arabic ? 'rtl' : 'ltr';
+  applyStaticText();
+
+  const toggle = el['lang-toggle'];
+  toggle.textContent = arabic ? 'EN' : 'عربي';
+  toggle.lang = arabic ? 'en' : 'ar';
+  toggle.setAttribute('aria-label', arabic ? AR['Switch language to English'] : 'Switch language to Arabic');
+
+  buildDock();
+  render();
+  renderAuditLog();
+}
+
+function toggleLanguage() {
+  state.lang = state.lang === 'ar' ? 'en' : 'ar';
+  try {
+    window.localStorage.setItem(LANG_KEY, state.lang);
+  } catch (error) {
+    /* Storage unavailable: the choice lasts until the page is closed. */
+  }
+  applyLanguage();
+}
+
+function restoreLanguage() {
+  try {
+    if (window.localStorage.getItem(LANG_KEY) === 'ar') {
+      state.lang = 'ar';
+    }
+  } catch (error) {
+    state.lang = 'en';
+  }
+}
+
 async function sha256Hex(text) {
   if (!window.crypto || !window.crypto.subtle || typeof TextEncoder === 'undefined') {
     return null;
