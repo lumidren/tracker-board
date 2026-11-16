@@ -1380,6 +1380,43 @@ function parseVerificationRecord(hash) {
   };
 }
 
+async function loadVerification() {
+  verificationToken += 1;
+  const token = verificationToken;
+  const hash = window.location.hash;
+
+  if (!hash.startsWith(VERIFY_PREFIX)) {
+    if (state.verification) {
+      state.verification = null;
+      render();
+    }
+    return;
+  }
+
+  const record = parseVerificationRecord(hash);
+  state.certificateModalOpen = false;
+  state.verification = record ? { ...record, status: 'checking' } : { status: 'invalid' };
+  render();
+  el.viewport.scrollTop = 0;
+  if (!record) {
+    return;
+  }
+
+  const computed = await sha256Hex(certificatePayload(record.truck, record));
+  if (token === verificationToken && state.verification) {
+    state.verification.status = computed.slice(0, VERIFY_DIGEST_LENGTH) === record.digest ? 'verified' : 'failed';
+    render();
+  }
+}
+
+function exitVerification() {
+  window.history.replaceState(null, '', window.location.href.split('#')[0]);
+  verificationToken += 1;
+  state.verification = null;
+  render();
+  el.viewport.scrollTop = 0;
+}
+
 /* --------------------------------------------------------------------------
    Actions
    -------------------------------------------------------------------------- */
