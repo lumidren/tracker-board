@@ -2133,6 +2133,30 @@ button {
   margin-top: 14px;
 }
 
+.topbar__tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+}
+
+.lang-btn {
+  height: 28px;
+  min-width: 40px;
+  padding: 0 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--ice-strong);
+  cursor: pointer;
+}
+
+.lang-btn:hover {
+  border-color: var(--ice);
+}
+
 /* 12. Motion preferences --------------------------------------------------- */
 @media (prefers-reduced-motion: reduce) {
   *,
