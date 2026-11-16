@@ -2093,6 +2093,38 @@ function renderAuth() {
   el['auth-submit'].disabled = locked > 0;
 }
 
+function renderVerification() {
+  const record = state.verification;
+  if (!record) {
+    return;
+  }
+  const view = VERIFY_STATUS[record.status];
+  const bannerClass = `banner ${view.banner}`;
+  if (el['verify-banner'].className !== bannerClass) {
+    el['verify-banner'].className = bannerClass;
+  }
+  setText(el['verify-banner-title'], t(view.title));
+  setText(el['verify-banner-note'], t(view.note));
+
+  el['verify-card'].hidden = !record.truck;
+  if (!record.truck) {
+    return;
+  }
+  const truck = record.truck;
+  setText(el['verify-serial'], truck.certificate.serial);
+  setChip(el['verify-chip'], t(view.label), view.chip);
+  setText(el['verify-vehicle'], t('Unit {id} ({vehicle})', { id: `#${truck.id}`, vehicle: truck.vehicleClass }));
+  setText(el['verify-consignment'], ltr(truck.consignmentId));
+  setText(el['verify-cargo'], t(truck.cargo));
+  setText(el['verify-range'], t('{min} to {max}', { min: plainTemp(truck.tempMin), max: plainTemp(truck.tempMax) }));
+  setText(el['verify-signed'], formatDateTime(new Date(record.signedAt)));
+  setText(el['verify-duration'], formatDuration(record.transitMinutes));
+  setText(el['verify-minmax'], `${formatTemp(record.min)} / ${formatTemp(record.max)}`);
+  setText(el['verify-excursions'], excursionText(record.excursions));
+  setText(el['verify-door'], t('{count} Unauthorized Openings', { count: record.doorOpenings }));
+  setText(el['verify-digest'], ltr(`SHA256: ${record.digest}`));
+}
+
 function renderConsignmentPickers() {
   const account = state.session.client;
   const trucks = account ? account.trucks : [];
