@@ -92,3 +92,46 @@ const AUTH_COPY = {
     demoNote: 'Sign-in is simulated in this browser. Load the demo controller account to open the control room.'
   }
 };
+
+const HEALTH_LEVELS = {
+  ok: { label: 'Nominal', tone: 'safe' },
+  warn: { label: 'Attention', tone: 'ice' },
+  fault: { label: 'Fault', tone: 'alert' }
+};
+
+const UNIT_STATUS = {
+  'en-route': { label: 'En Route', chip: 'chip--safe' },
+  standby: { label: 'Standby / Pre-Cooling', chip: 'chip--ice' },
+  excursion: { label: 'Excursion', chip: 'chip--alert chip--flash' }
+};
+
+const CERT_STATUS = {
+  valid: {
+    label: 'Valid',
+    chip: 'chip--safe',
+    tone: 'safe',
+    stamp: 'VERIFIED & VALIDATED • ZERO EXCURSIONS',
+    note: 'Continuous temperature log validated. Compliance seal is in force.'
+  },
+  hold: {
+    label: 'Compliance Hold',
+    chip: 'chip--alert chip--flash',
+    tone: 'alert',
+    stamp: 'COMPLIANCE HOLD • EXCURSION UNDER REVIEW',
+    note: 'Compliance violation flagged. Seal suspended while the excursion is active.'
+  },
+  revalidate: {
+    label: 'Re-Validation Pending',
+    chip: 'chip--ice',
+    tone: 'pending',
+    stamp: 'RE-VALIDATION PENDING • AWAITING QA SIGN-OFF',
+    note: 'Telemetry is back at baseline. Sign the certificate to restore the seal.'
+  },
+  'not-issued': {
+    label: 'Not Yet Issued',
+    chip: 'chip--neutral',
+    tone: 'pending',
+    stamp: 'NOT YET ISSUED • TRANSIT NOT COMMENCED',
+    note: 'Unit is on standby. A certificate is issued once the transit log opens.'
+  }
+};
