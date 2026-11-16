@@ -2563,6 +2563,49 @@ function renderShipments() {
   });
 }
 
+/* "Arrives in about 42 minutes", in the words used on the client dashboard. */
+function arrivalHeadline(truck) {
+  if (truck.baseStatus === 'standby') {
+    return t('Waiting to leave');
+  }
+  if (truck.baseStatus === 'delivered') {
+    return t('Arrived at {time}', { time: formatClock(new Date(truck.arrivedAt)) });
+  }
+  return t('Arrives in {eta}', { eta: formatEta(truck.eta) });
+}
+
+/* The control room wording of the same fact, with a clock time. */
+function arrivalText(truck) {
+  if (truck.baseStatus === 'standby') {
+    return t('Awaiting departure');
+  }
+  if (truck.baseStatus === 'delivered') {
+    return t('Delivered at {time}', { time: formatClock(new Date(truck.arrivedAt)) });
+  }
+  return t('Expected {time} • {eta}', {
+    time: formatClock(new Date(Date.now() + truck.eta * 60000)),
+    eta: formatEta(truck.eta)
+  });
+}
+
+function distanceText(truck, pattern) {
+  const total = Math.round(truck.routeKm);
+  if (truck.baseStatus === 'standby') {
+    return t('The trip of {total} km has not started yet.', { total });
+  }
+  if (truck.baseStatus === 'delivered') {
+    return t('The whole trip of {total} km is complete.', { total });
+  }
+  return t(pattern, { done: total - truck.remainingKm, total, left: truck.remainingKm });
+}
+
+function stepState(truck, index) {
+  if (index < truck.routeStep) {
+    return 'done';
+  }
+  return index === truck.routeStep ? 'current' : 'upcoming';
+}
+
 function renderClient() {
   const truck = clientTruck();
   renderConsignmentPickers();
