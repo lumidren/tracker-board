@@ -202,10 +202,17 @@
             </article>
           </section>
 
-          <!-- ================= CLIENT: OVERVIEW ================= -->
-          <section class="panel" data-role="client" data-panel="overview" aria-label="Shipment overview">
+          <!-- ================= CLIENT: STATUS ================= -->
+          <section class="panel" data-role="client" data-panel="status" aria-label="Shipment status" hidden>
 
-            <div class="unit-picker unit-picker--consignments" data-consignment-picker role="group" aria-label="Select consignment" hidden></div>
+            <article class="hero" id="status-hero" data-tone="safe" aria-live="polite">
+              <span class="hero__icon" aria-hidden="true">
+                <svg class="icon" focusable="false"><use id="status-hero-icon" href="#i-check"></use></svg>
+              </span>
+              <p class="hero__name" id="status-name"></p>
+              <h1 class="hero__title" id="status-headline"></h1>
+              <p class="hero__text" id="status-text"></p>
+            </article>
 
             <div class="banner banner--safe" id="client-banner">
               <span class="pulse-dot" aria-hidden="true"></span>
@@ -215,22 +222,13 @@
               </div>
             </div>
 
-            <article class="card cargo" id="cargo-card" aria-labelledby="cargo-consignment">
+            <article class="card cargo" id="cargo-card" aria-labelledby="cargo-temp-label">
               <header class="card__head">
-                <div>
-                  <p class="eyebrow">Consignment ID</p>
-                  <h1 class="mono-id" id="cargo-consignment">BATCH-REF-8841-X</h1>
-                </div>
+                <p class="eyebrow" id="cargo-temp-label">Temperature Now</p>
                 <span class="chip chip--safe" id="cargo-state">Within Spec</span>
               </header>
-
-              <p class="cargo__type" id="cargo-type"></p>
-
-              <div class="cargo__reading">
-                <p class="eyebrow">Current Temperature</p>
-                <p class="temp-display" id="cargo-temp" aria-live="polite"></p>
-                <p class="cargo__target" id="cargo-target"></p>
-              </div>
+              <p class="temp-display" id="cargo-temp" aria-live="polite"></p>
+              <p class="cargo__plain" id="cargo-plain"></p>
 
               <div class="range-meter" id="cargo-meter" role="img" aria-label="Temperature against permitted range">
                 <div class="range-meter__track">
@@ -243,25 +241,45 @@
                   <span class="range-meter__tick range-meter__tick--max" id="meter-max"></span>
                 </div>
               </div>
+              <p class="cargo__target" id="cargo-target"></p>
+            </article>
 
+            <article class="card arrival" aria-labelledby="arrival-label">
+              <header class="card__head">
+                <p class="eyebrow" id="arrival-label">Arrival</p>
+                <span class="chip chip--ice" id="route-chip">In Transit</span>
+              </header>
+              <p class="arrival__headline" id="arrival-headline"></p>
+              <p class="arrival__place" id="arrival-place"></p>
+              <div class="progress" id="arrival-progress" role="img" aria-label="Route progress">
+                <span class="progress__fill"></span>
+              </div>
+              <p class="arrival__distance" id="arrival-distance"></p>
+              <ol class="stepper" id="route-stepper"></ol>
               <p class="cargo__route">
                 <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-route"></use></svg>
                 <span id="cargo-corridor"></span>
               </p>
             </article>
 
-            <article class="card" aria-labelledby="route-heading">
-              <header class="card__head">
-                <h2 class="card__title" id="route-heading">Route &amp; Corridor Status</h2>
-                <span class="chip chip--ice" id="route-chip">In Transit</span>
-              </header>
-              <ol class="stepper" id="route-stepper"></ol>
-            </article>
-
             <button type="button" class="btn btn--primary btn--block" data-action="open-certificate">
               <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-shield-check"></use></svg>
               <span>View Official Compliance Certificate</span>
             </button>
+
+            <details class="card details">
+              <summary class="details__summary">Shipment Details</summary>
+              <dl class="facts">
+                <div class="facts__row"><dt>Shipment Number</dt><dd id="cargo-consignment"></dd></div>
+                <div class="facts__row"><dt>What Is Inside</dt><dd id="cargo-type"></dd></div>
+                <div class="facts__row"><dt>Quantity</dt><dd id="detail-quantity"></dd></div>
+                <div class="facts__row"><dt>From</dt><dd id="detail-from"></dd></div>
+                <div class="facts__row"><dt>To</dt><dd id="detail-to"></dd></div>
+                <div class="facts__row"><dt>Driver</dt><dd id="detail-driver"></dd></div>
+                <div class="facts__row"><dt>Vehicle</dt><dd id="detail-vehicle"></dd></div>
+                <div class="facts__row"><dt>Left At</dt><dd id="detail-departed"></dd></div>
+              </dl>
+            </details>
           </section>
 
           <!-- ================= CLIENT: JOURNEY ================= -->
