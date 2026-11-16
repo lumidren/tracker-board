@@ -46,6 +46,13 @@
 
   --ease-out: cubic-bezier(0.3, 0.8, 0.25, 1);
   --dock-height: 66px;
+
+  /* 1 in left-to-right layouts, -1 in right-to-left: mirrors sliding indicators. */
+  --dir: 1;
+}
+
+[dir="rtl"] {
+  --dir: -1;
 }
 
 /* 2. Base & utilities ------------------------------------------------------ */
@@ -331,7 +338,7 @@ button {
   position: absolute;
   top: 4px;
   bottom: 4px;
-  left: 4px;
+  inset-inline-start: 4px;
   width: calc(50% - 4px);
   border-radius: 10px;
   background: var(--surface);
@@ -340,7 +347,7 @@ button {
 }
 
 .role-switch[data-role="admin"] .role-switch__thumb {
-  transform: translateX(100%);
+  transform: translateX(calc(100% * var(--dir)));
 }
 
 .role-switch__option {
@@ -1336,12 +1343,12 @@ button {
   position: absolute;
   top: 6px;
   bottom: 6px;
-  left: 6px;
+  inset-inline-start: 6px;
   width: calc((100% - 12px) / var(--dock-count));
   border-radius: 20px;
   background: rgba(2, 132, 199, 0.11);
   box-shadow: inset 0 0 0 1px rgba(2, 132, 199, 0.2), 0 1px 2px rgba(2, 132, 199, 0.12);
-  transform: translateX(calc(var(--dock-index) * 100%));
+  transform: translateX(calc(var(--dock-index) * 100% * var(--dir)));
   transition: transform 0.4s var(--ease-out);
 }
 
