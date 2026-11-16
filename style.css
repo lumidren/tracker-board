@@ -2393,6 +2393,20 @@ button {
   white-space: nowrap;
 }
 
+.legend__list {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.legend__list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--text-soft);
+}
+
 /* 12. Motion preferences --------------------------------------------------- */
 @media (prefers-reduced-motion: reduce) {
   *,
