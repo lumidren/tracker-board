@@ -1183,3 +1183,53 @@ function renderSparkline(truck) {
   el['spark-dot'].setAttribute('cx', last[0]);
   el['spark-dot'].setAttribute('cy', last[1]);
 }
+
+function renderDiagnostics() {
+  const truck = activeTruck();
+  const meta = UNIT_STATUS[truck.status];
+  const inExcursion = truck.status === 'excursion';
+
+  setText(el['diag-title'], `Unit #${truck.id}`);
+  setText(el['diag-sub'], `${truck.vehicleClass} • ${truck.cargoShort}`);
+  el['trace-card'].dataset.tone = isInSpec(truck) ? 'safe' : 'alert';
+  setText(el['diag-temp'], formatTemp(truck.tempCurrent));
+  setChip(el['diag-status'], meta.label, meta.chip);
+  setText(
+    el['diag-range'],
+    `Setpoint ${formatTemp(truck.tempTarget)} • Permitted ${formatTemp(truck.tempMin)} to ${formatTemp(truck.tempMax)} • 60 s sampling`
+  );
+  renderSparkline(truck);
+
+  setText(el['diag-battery'], `${truck.sensorBattery}% (Li-SOCl2 Cell, 3.6V)`);
+  el['bar-battery'].parentElement.style.setProperty('--fill', `${truck.sensorBattery}%`);
+
+  setText(
+    el['diag-uplink'],
+    `4G LTE / Satellite Failover (Ping: ${truck.uplinkPing}ms • ${truck.uplinkSignal} dBm)`
+  );
+
+  const health = healthSummary(truck);
+  setChip(el['health-chip'], health.label, health.chip);
+  Object.entries(hardwareChecks(truck)).forEach(([key, level]) => {
+    const meta = HEALTH_LEVELS[level];
+    const stateNode = byId(`state-${key}`);
+    setText(stateNode, meta.label);
+    stateNode.dataset.tone = meta.tone;
+    byId(`row-${key}`).dataset.tone = level === 'fault' ? 'alert' : 'default';
+  });
+
+  setText(
+    el['diag-compressor'],
+    inExcursion
+      ? '0 RPM (Compressor Fault, Inverter Trip)'
+      : `${truck.compressorRpm.toLocaleString('en-US')} RPM (Inverter Variable Frequency)`
+  );
+
+  setText(el['diag-fuel'], `${truck.fuelPercent}% Diesel Dedicated Auxiliary`);
+  el['bar-fuel'].parentElement.style.setProperty('--fill', `${truck.fuelPercent}%`);
+
+  const sealState = truck.log.doorOpenings === 0 ? 'ENGAGED / ZERO BREACHES' : `ENGAGED / ${truck.log.doorOpenings} BREACHES`;
+  setText(el['diag-seal'], `Electronic Seal #${truck.sealId} [${sealState}]`);
+  setText(el['diag-calibration'], truck.calibration);
+  setText(el['diag-firmware'], truck.firmware);
+}
