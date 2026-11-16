@@ -1690,39 +1690,11 @@ function exitVerification() {
 /* --------------------------------------------------------------------------
    Actions
    -------------------------------------------------------------------------- */
-/* --- Authentication (simulated, browser only) --- */
-function persistSession() {
+function rememberRole() {
   try {
-    window.sessionStorage.setItem(SESSION_KEY, JSON.stringify({
-      role: state.currentRole,
-      client: state.session.client ? state.session.client.id : null,
-      admin: state.session.admin ? state.session.admin.id : null,
-      clientTruckId: state.clientTruckId
-    }));
+    window.sessionStorage.setItem(`${SESSION_KEY}.role`, state.currentRole);
   } catch (error) {
-    /* Storage unavailable: the session lasts until the page is closed. */
-  }
-}
-
-function restoreSession() {
-  let saved = null;
-  try {
-    saved = JSON.parse(window.sessionStorage.getItem(SESSION_KEY) || 'null');
-  } catch (error) {
-    saved = null;
-  }
-  if (!saved || typeof saved !== 'object') {
-    return;
-  }
-  ['client', 'admin'].forEach((role) => {
-    state.session[role] = DEMO_ACCOUNTS.find((item) => item.id === saved[role] && item.role === role) || null;
-  });
-  if (saved.role === 'client' || saved.role === 'admin') {
-    state.currentRole = saved.role;
-  }
-  const account = state.session.client;
-  if (account) {
-    state.clientTruckId = account.trucks.includes(saved.clientTruckId) ? saved.clientTruckId : account.trucks[0];
+    /* Storage unavailable: the page simply opens on the client portal next time. */
   }
 }
 
@@ -1736,15 +1708,66 @@ function resetAuthForm() {
   el['auth-toggle'].setAttribute('aria-pressed', 'false');
 }
 
-function submitSignIn() {
+/* The backend delivered a fresh view for one portal. */
+function applySnapshot(role, snapshot) {
+  state.views[role] = snapshot;
+  if (role === 'admin') {
+    state.isExcursionActive = Boolean(snapshot.drillTruckId);
+    if (!snapshot.trucks.some((truck) => truck.id === state.activeTruckId)) {
+      state.activeTruckId = snapshot.trucks[0] ? snapshot.trucks[0].id : null;
+    }
+  } else if (!snapshot.trucks.some((truck) => truck.id === state.clientTruckId)) {
+    state.clientTruckId = snapshot.trucks[0] ? snapshot.trucks[0].id : null;
+  }
+  if (state.landing[role]) {
+    state.landing[role] = false;
+    if (role === 'client') {
+      state.activePanel.client = snapshot.trucks.length > 1 ? 'shipments' : 'status';
+    }
+  }
+  state.trucks = trucksOf(state.currentRole);
+  render();
+}
+
+function startSession(role, user, landing) {
+  state.session[role] = user;
+  state.views[role] = null;
+  state.landing[role] = landing;
+  state.lastActivityAt = Date.now();
+  backend.subscribe(role, (snapshot) => applySnapshot(role, snapshot), () => endSession(role, true));
+  render();
+}
+
+function endSession(role, expired) {
+  if (!state.session[role]) {
+    return;
+  }
+  backend.unsubscribe(role);
+  state.session[role] = null;
+  state.views[role] = null;
+  if (role === 'admin') {
+    state.isExcursionActive = false;
+  }
+  if (role === state.currentRole) {
+    state.certificateModalOpen = false;
+    lastFocused = null;
+    state.auth.error = expired ? { source: 'You were signed out after a period of inactivity.' } : null;
+    state.trucks = [];
+    hideToast();
+    resetAuthForm();
+    el.viewport.scrollTop = 0;
+  }
+  render();
+}
+
+async function submitSignIn() {
   const role = state.currentRole;
   const copy = AUTH_COPY[role];
-  if (lockSecondsLeft(role) > 0) {
+  if (state.auth.busy || lockSecondsLeft(role) > 0) {
     renderAuth();
     return;
   }
-
-  const identifier = el['auth-identifier'].value.trim().toLowerCase();
+  const identifier = el['auth-identifier'].value.trim();
   const password = el['auth-password'].value;
   if (!identifier || !password) {
     state.auth.error = { source: copy.missing };
@@ -1752,32 +1775,27 @@ function submitSignIn() {
     return;
   }
 
-  const account = DEMO_ACCOUNTS.find(
-    (item) => item.role === role && item.identifier.toLowerCase() === identifier && item.password === password
-  );
+  state.auth.busy = true;
+  state.auth.error = null;
+  renderAuth();
+  let result = { ok: false, reason: 'unreachable' };
+  try {
+    result = await backend.login(role, identifier, password);
+  } catch (error) {
+    result = { ok: false, reason: 'unreachable' };
+  }
+  state.auth.busy = false;
 
-  if (!account) {
-    state.auth.attempts[role] += 1;
-    const attempt = state.auth.attempts[role];
-    if (attempt >= MAX_SIGN_IN_ATTEMPTS) {
-      state.auth.attempts[role] = 0;
-      state.auth.lockedUntil[role] = Date.now() + LOCKOUT_MS;
+  if (!result.ok) {
+    if (result.reason === 'locked') {
+      state.auth.lockedUntil[role] = Date.now() + result.retryAfter * 1000;
       state.auth.error = null;
-      appendLog('alert', 'Sign-in locked on the {scope} for {seconds} seconds after {attempts} failed attempts.', {
-        scope: copy.scope,
-        seconds: LOCKOUT_MS / 1000,
-        attempts: MAX_SIGN_IN_ATTEMPTS
-      });
-    } else {
-      const left = MAX_SIGN_IN_ATTEMPTS - attempt;
-      state.auth.error = left === 1
+    } else if (result.reason === 'invalid') {
+      state.auth.error = result.attemptsLeft === 1
         ? { source: 'Those details do not match an account. 1 attempt left before a temporary lock.' }
-        : { source: 'Those details do not match an account. {left} attempts left before a temporary lock.', params: { left } };
-      appendLog('alert', 'Failed sign-in attempt on the {scope} ({attempt} of {max}).', {
-        scope: copy.scope,
-        attempt,
-        max: MAX_SIGN_IN_ATTEMPTS
-      });
+        : { source: 'Those details do not match an account. {left} attempts left before a temporary lock.', params: { left: result.attemptsLeft } };
+    } else {
+      state.auth.error = { source: 'The server could not be reached. Check the connection and try again.' };
     }
     el['auth-password'].value = '';
     renderAuth();
@@ -1785,44 +1803,23 @@ function submitSignIn() {
     return;
   }
 
-  state.auth.attempts[role] = 0;
-  state.auth.error = null;
-  state.session[role] = account;
-  if (role === 'client' && !account.trucks.includes(state.clientTruckId)) {
-    state.clientTruckId = account.trucks[0];
-  }
-  state.lastActivityAt = Date.now();
   resetAuthForm();
-  persistSession();
-  appendLog('ok', 'Sign-in on the {scope}: {name}.', { scope: copy.scope, name: account.name });
-  showToast(t('Signed in as {name}', { name: account.name }), 'safe');
-  render();
+  startSession(role, result.user, true);
+  showToast(t('Signed in as {name}', { name: result.user.name }), 'safe');
   el.viewport.scrollTop = 0;
   el.viewport.focus();
 }
 
-function signOut(role = state.currentRole, idle = false) {
-  const account = state.session[role];
-  if (!account) {
+async function signOut(role = state.currentRole, idle = false) {
+  if (!state.session[role]) {
     return;
   }
-  state.session[role] = null;
-  persistSession();
-  appendLog(
-    'info',
-    idle ? 'Sign-out on the {scope}: {name} (idle timeout).' : 'Sign-out on the {scope}: {name}.',
-    { scope: AUTH_COPY[role].scope, name: account.name }
-  );
-
-  if (role === state.currentRole) {
-    state.certificateModalOpen = false;
-    lastFocused = null;
-    state.auth.error = idle ? { source: 'You were signed out after a period of inactivity.' } : null;
-    hideToast();
-    resetAuthForm();
-    render();
-    el.viewport.scrollTop = 0;
+  try {
+    await backend.logout(role, idle);
+  } catch (error) {
+    /* The local session ends either way. */
   }
+  endSession(role, idle);
 }
 
 function fillDemoCredentials() {
