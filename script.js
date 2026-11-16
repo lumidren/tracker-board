@@ -1352,3 +1352,51 @@ function renderVerificationBlock(seed) {
   }
   el['cert-qr'].setAttribute('d', path);
 }
+
+function renderCertificate() {
+  const truck = viewTruck();
+  const cert = truck.certificate;
+  const certMeta = CERT_STATUS[cert.status];
+  const log = truck.log;
+
+  el.certificate.dataset.tone = certMeta.tone;
+  setText(el['cert-serial'], cert.serial);
+  setText(el['cert-consignor'], `${truck.consignor} (${truck.consignorDept})`);
+  setText(el['cert-consignee'], `${truck.consignee} (${truck.consigneeTerminal})`);
+  setText(el['cert-vehicle'], `Unit #${truck.id} (${truck.vehicleClass})`);
+  setText(el['cert-operator'], truck.operator);
+  setText(el['cert-cargo'], `${truck.consignmentId} • ${truck.cargo}`);
+  setText(
+    el['cert-setpoint'],
+    `${formatTemp(truck.tempTarget)} (Permissible Range: ${formatTemp(truck.tempMin)} to ${formatTemp(truck.tempMax)})`
+  );
+
+  setText(
+    el['cert-duration'],
+    truck.baseStatus === 'standby' ? 'Not Commenced (Pre-Departure Conditioning)' : formatDuration(log.transitMinutes)
+  );
+  setText(el['cert-minmax'], `${formatTemp(log.min)} / ${formatTemp(log.max)}`);
+  setText(el['cert-excursions'], excursionText(truck));
+  el['cert-excursions'].dataset.tone = log.excursions === 0 ? 'default' : 'alert';
+  setText(el['cert-door'], `${log.doorOpenings} Unauthorized Openings`);
+  setText(el['cert-seal'], `#${truck.sealId} (Engaged)`);
+
+  setText(el['cert-stamp-title'], certMeta.stamp);
+  let stampMeta = 'Certificate not in force';
+  if (cert.status === 'valid' && cert.signedAt) {
+    stampMeta = `Signed ${formatDateTime(cert.signedAt)} by ${PERSONNEL.qaOfficer}`;
+  } else if (cert.status === 'hold') {
+    stampMeta = 'Seal suspended pending corrective action and QA review';
+  } else if (cert.status === 'revalidate') {
+    stampMeta = 'Telemetry nominal, awaiting signature';
+  }
+  setText(el['cert-stamp-meta'], stampMeta);
+  el['cert-stamp-tick'].setAttribute(
+    'd',
+    cert.status === 'valid' ? 'M16.5 24.5l5 5 10-10.5' : cert.status === 'hold' ? 'M24 15v11M24 31.500v.500' : 'M17 24h14'
+  );
+
+  setText(el['cert-hash'], hashLabel(cert));
+  setText(el['cert-signer'], cert.status === 'valid' ? PERSONNEL.qaOfficer : 'Signature pending');
+  renderVerificationBlock(`${cert.serial}|${cert.status}|${cert.hash}`);
+}
