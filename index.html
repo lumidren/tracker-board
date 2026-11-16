@@ -229,6 +229,94 @@
             </button>
           </section>
 
+          <!-- ================= ADMIN: DIAGNOSTICS ================= -->
+          <section class="panel" data-role="admin" data-panel="diagnostics" aria-label="Sensor and chiller diagnostics" hidden>
+            <header class="panel__head">
+              <p class="eyebrow">IoT Sensor &amp; Chiller Diagnostics</p>
+              <h1 class="panel__title" id="diag-title"></h1>
+              <p class="panel__sub" id="diag-sub"></p>
+            </header>
+
+            <div class="unit-picker" data-unit-picker role="group" aria-label="Select unit"></div>
+
+            <article class="card trace" id="trace-card" aria-labelledby="trace-heading">
+              <header class="card__head">
+                <div>
+                  <p class="eyebrow" id="trace-heading">Internal Temperature</p>
+                  <p class="trace__value" id="diag-temp"></p>
+                </div>
+                <span class="chip" id="diag-status"></span>
+              </header>
+              <svg class="sparkline" id="diag-spark" viewBox="0 0 320 84" role="img" aria-label="Recent internal temperature trace against the permitted range">
+                <rect class="sparkline__band" id="spark-band" x="0" y="0" width="320" height="0"/>
+                <line class="sparkline__setpoint" id="spark-setpoint" x1="0" x2="320" y1="0" y2="0"/>
+                <polyline class="sparkline__line" id="spark-line" points=""/>
+                <circle class="sparkline__dot" id="spark-dot" cx="0" cy="0" r="3.500"/>
+              </svg>
+              <p class="trace__legend" id="diag-range"></p>
+            </article>
+
+            <article class="card" aria-labelledby="diag-heading">
+              <header class="card__head">
+                <h2 class="card__title" id="diag-heading">Hardware Health</h2>
+                <span class="chip" id="health-chip"></span>
+              </header>
+              <ul class="diag">
+                <li class="diag__row" id="row-battery">
+                  <span class="diag__icon"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-battery"></use></svg></span>
+                  <div class="diag__body">
+                    <p class="diag__label"><span>Sensor Probe Battery Health</span><span class="diag__state" id="state-battery"></span></p>
+                    <p class="diag__value" id="diag-battery"></p>
+                    <span class="bar" aria-hidden="true"><span class="bar__fill" id="bar-battery"></span></span>
+                  </div>
+                </li>
+                <li class="diag__row" id="row-uplink">
+                  <span class="diag__icon"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-signal"></use></svg></span>
+                  <div class="diag__body">
+                    <p class="diag__label"><span>Telemetry Uplink</span><span class="diag__state" id="state-uplink"></span></p>
+                    <p class="diag__value" id="diag-uplink"></p>
+                  </div>
+                </li>
+                <li class="diag__row" id="row-compressor">
+                  <span class="diag__icon"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-gauge"></use></svg></span>
+                  <div class="diag__body">
+                    <p class="diag__label"><span>Compressor Speed</span><span class="diag__state" id="state-compressor"></span></p>
+                    <p class="diag__value" id="diag-compressor"></p>
+                  </div>
+                </li>
+                <li class="diag__row" id="row-fuel">
+                  <span class="diag__icon"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-tank"></use></svg></span>
+                  <div class="diag__body">
+                    <p class="diag__label"><span>Chiller Reserve Tank</span><span class="diag__state" id="state-fuel"></span></p>
+                    <p class="diag__value" id="diag-fuel"></p>
+                    <span class="bar" aria-hidden="true"><span class="bar__fill" id="bar-fuel"></span></span>
+                  </div>
+                </li>
+                <li class="diag__row" id="row-seal">
+                  <span class="diag__icon"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-lock"></use></svg></span>
+                  <div class="diag__body">
+                    <p class="diag__label"><span>Cargo Bay Tamper Seal</span><span class="diag__state" id="state-seal"></span></p>
+                    <p class="diag__value" id="diag-seal"></p>
+                  </div>
+                </li>
+                <li class="diag__row" id="row-calibration">
+                  <span class="diag__icon"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-target"></use></svg></span>
+                  <div class="diag__body">
+                    <p class="diag__label"><span>Probe Calibration</span><span class="diag__state" id="state-calibration"></span></p>
+                    <p class="diag__value" id="diag-calibration"></p>
+                  </div>
+                </li>
+                <li class="diag__row" id="row-firmware">
+                  <span class="diag__icon"><svg class="icon" aria-hidden="true" focusable="false"><use href="#i-chip"></use></svg></span>
+                  <div class="diag__body">
+                    <p class="diag__label"><span>Telematics Firmware</span><span class="diag__state" id="state-firmware"></span></p>
+                    <p class="diag__value" id="diag-firmware"></p>
+                  </div>
+                </li>
+              </ul>
+            </article>
+          </section>
+
         </main>
 
         <nav class="glass-dock" id="dock" aria-label="Section navigation">
