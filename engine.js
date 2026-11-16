@@ -121,5 +121,22 @@
     }
     return points[points.length - 1].slice();
   }
+
+  /* ------------------------------------------------------------------------
+     Shared formatting and rules
+     ------------------------------------------------------------------------ */
+  function fill(source, params) {
+    if (!params) {
+      return source;
+    }
+    return source.replace(/\{(\w+)\}/g, (match, key) => (key in params ? String(params[key]) : match));
+  }
+
+  function plainTemp(value) {
+    const rounded = round1(value);
+    return `${rounded > 0 ? '+' : ''}${rounded.toFixed(1)}°C`;
+  }
+
+  const isInSpec = (truck) => truck.tempCurrent >= truck.tempMin && truck.tempCurrent <= truck.tempMax;
   return {};
 });
