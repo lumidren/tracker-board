@@ -1108,3 +1108,50 @@ function excursionText(truck) {
   const count = truck.log.excursions;
   return count === 0 ? '0 (Zero Breaches Recorded)' : `${count} (Breach Recorded, Under Review)`;
 }
+
+function chillerState(truck) {
+  if (truck.status === 'excursion') {
+    return { label: 'FAULT', tone: 'alert' };
+  }
+  if (truck.baseStatus === 'standby') {
+    return { label: 'Pre-Cooling', tone: 'ice' };
+  }
+  return { label: 'ON', tone: 'safe' };
+}
+
+function renderFleet() {
+  const enRoute = state.trucks.filter((truck) => truck.baseStatus === 'en-route').length;
+  const standby = state.trucks.length - enRoute;
+  setText(el['fleet-summary'], `${state.trucks.length} units monitored • ${enRoute} en route • ${standby} on standby`);
+
+  state.trucks.forEach((truck) => {
+    const card = el['fleet-grid'].querySelector(`[data-truck="${truck.id}"]`);
+    const meta = UNIT_STATUS[truck.status];
+    const chiller = chillerState(truck);
+    const tempNode = card.querySelector('[data-field="temp"]');
+    const chillerNode = card.querySelector('[data-field="chiller"]');
+
+    card.setAttribute('aria-pressed', String(truck.id === state.activeTruckId));
+    card.dataset.status = truck.status;
+    setChip(card.querySelector('[data-field="status"]'), meta.label, meta.chip);
+    setText(card.querySelector('[data-field="cargo"]'), `${truck.cargoShort} • ${truck.consignmentId}`);
+    setText(tempNode, formatTemp(truck.tempCurrent));
+    tempNode.dataset.tone = isInSpec(truck) ? 'default' : 'alert';
+    setText(chillerNode, chiller.label);
+    chillerNode.dataset.tone = chiller.tone;
+    setText(card.querySelector('[data-field="uplink"]'), `Online • ${truck.uplinkPing}ms`);
+
+    const health = healthSummary(truck);
+    const healthNode = card.querySelector('[data-field="health"]');
+    setText(healthNode, health.label);
+    healthNode.dataset.tone = health.tone;
+  });
+
+  all('.unit-picker__option[data-truck]').forEach((button) => {
+    const truck = getTruck(button.dataset.truck);
+    button.setAttribute('aria-pressed', String(truck.id === state.activeTruckId));
+    button.dataset.status = truck.status;
+  });
+
+  setText(el['fleet-goto-label'], `Open Diagnostics for Unit #${state.activeTruckId}`);
+}
