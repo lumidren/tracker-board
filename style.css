@@ -2461,6 +2461,41 @@ button {
   margin-top: 18px;
 }
 
+.details {
+  padding: 0;
+}
+
+.details__summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  font-size: 14px;
+  font-weight: 650;
+  list-style: none;
+  cursor: pointer;
+}
+
+.details__summary::-webkit-details-marker {
+  display: none;
+}
+
+.details__summary::after {
+  content: "+";
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 1;
+  color: var(--ice-strong);
+}
+
+.details[open] .details__summary::after {
+  content: "\2212";
+}
+
+.details .facts {
+  padding: 0 16px 16px;
+}
+
 /* 12. Motion preferences --------------------------------------------------- */
 @media (prefers-reduced-motion: reduce) {
   *,
