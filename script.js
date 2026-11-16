@@ -1765,6 +1765,7 @@ function normalizeSensor() {
   render();
 }
 
+/* Returns the English source of the reason signing is blocked, or ''. */
 function signBlockReason(truck) {
   if (truck.status === 'excursion') {
     return 'Signing is blocked while an excursion is active. Normalize the sensor first.';
@@ -1775,6 +1776,9 @@ function signBlockReason(truck) {
   if (!isInSpec(truck)) {
     return 'Signing is blocked while the reading is outside the permitted range.';
   }
+  if (unacknowledgedAlerts(truck.id).length > 0) {
+    return 'Acknowledge the open alert for this unit before signing.';
+  }
   return '';
 }
 
@@ -1782,7 +1786,7 @@ function signCertificate() {
   const truck = activeTruck();
   const reason = signBlockReason(truck);
   if (reason) {
-    showToast(reason, 'alert');
+    showToast(t(reason), 'alert');
     return;
   }
   const cert = truck.certificate;
@@ -1792,9 +1796,15 @@ function signCertificate() {
 
   appendLog(
     'sign',
-    `Certificate ${cert.serial} signed by ${PERSONNEL.qaOfficer}. Continuous log validated: ${truck.log.excursions} excursions, ${truck.log.doorOpenings} unauthorized openings.`
+    'Certificate {serial} signed by {name}. Continuous log validated: {excursions} excursions, {openings} unauthorized openings.',
+    {
+      serial: cert.serial,
+      name: PERSONNEL.qaOfficer,
+      excursions: truck.log.excursions,
+      openings: truck.log.doorOpenings
+    }
   );
-  showToast(`Certificate signed for Unit #${truck.id}`, 'safe');
+  showToast(t('Certificate signed for Unit {id}', { id: `#${truck.id}` }), 'safe');
   render();
   refreshCertificateHash(truck);
 }
