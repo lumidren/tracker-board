@@ -556,10 +556,13 @@
             <header class="panel__head">
               <p class="eyebrow">Simulation &amp; Testing Tools</p>
               <h1 class="panel__title" id="controls-title"></h1>
-              <p class="panel__sub">Drill the excursion response, restore telemetry and sign the compliance seal.</p>
+              <p class="panel__sub" id="controls-role"></p>
             </header>
 
-            <div class="unit-picker" data-unit-picker role="group" aria-label="Select unit"></div>
+            <label class="select">
+              <span class="select__label">Unit</span>
+              <select class="select__input" data-unit-select aria-label="Select unit"></select>
+            </label>
 
             <article class="card seal" id="seal-card" data-tone="safe" aria-labelledby="seal-heading">
               <header class="card__head">
@@ -572,6 +575,7 @@
               <p class="seal__note" id="seal-note"></p>
               <dl class="facts">
                 <div class="facts__row"><dt>Signed</dt><dd id="seal-signed"></dd></div>
+                <div class="facts__row"><dt>Signed By</dt><dd id="seal-signer"></dd></div>
                 <div class="facts__row"><dt>Log Digest</dt><dd class="mono" id="seal-hash"></dd></div>
                 <div class="facts__row"><dt>Excursions Logged</dt><dd id="seal-excursions"></dd></div>
               </dl>
@@ -604,6 +608,14 @@
                 <span class="chip chip--neutral" id="log-count"></span>
               </header>
               <ol class="audit" id="audit-log" reversed></ol>
+            </article>
+
+            <article class="card" id="accounts-card" aria-labelledby="accounts-heading" hidden>
+              <header class="card__head">
+                <h2 class="card__title" id="accounts-heading">Accounts</h2>
+                <span class="chip chip--neutral" id="accounts-count"></span>
+              </header>
+              <ul class="accounts" id="accounts-list"></ul>
             </article>
           </section>
 
