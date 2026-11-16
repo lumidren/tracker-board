@@ -1856,16 +1856,14 @@ function togglePasswordVisibility() {
 }
 
 function setRole(role) {
-  if (role !== 'client' && role !== 'admin') {
-    return;
-  }
-  if (state.currentRole === role) {
+  if (!PORTALS.includes(role) || state.currentRole === role) {
     return;
   }
   state.currentRole = role;
   state.auth.error = null;
+  state.trucks = trucksOf(role);
   resetAuthForm();
-  persistSession();
+  rememberRole();
   hideToast();
   buildDock();
   render();
@@ -1883,11 +1881,26 @@ function setPanel(panelId) {
 }
 
 function selectTruck(id) {
-  if (!getTruck(id) || state.activeTruckId === id) {
+  if (!getTruck(id, 'admin') || state.activeTruckId === id) {
     return;
   }
   state.activeTruckId = id;
   render();
+}
+
+function selectShipment(id) {
+  if (!getTruck(id, 'client')) {
+    return;
+  }
+  state.clientTruckId = id;
+  state.activePanel.client = 'status';
+  render();
+  el.viewport.scrollTop = 0;
+}
+
+function setFleetFilter(filter) {
+  state.fleetFilter = filter;
+  renderFleet();
 }
 
 function triggerIncident() {
