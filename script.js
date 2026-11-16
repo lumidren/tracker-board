@@ -3204,15 +3204,22 @@ function hashLabel(cert) {
   if (cert.status !== 'valid') {
     return t(cert.status === 'hold' ? 'Withheld (Compliance Hold)' : 'Not issued');
   }
-  return cert.hash ? ltr(`SHA256: ${shortHash(cert.hash)}`) : t('Computing digest');
+  return ltr(`SHA256: ${shortHash(cert.hash)}`);
 }
 
 function renderAuditLog() {
+  const snapshot = state.views.admin;
   const list = el['audit-log'];
-  if (!list) {
+  if (!snapshot) {
     return;
   }
-  const entries = state.auditLog.slice(-AUDIT_LOG_VISIBLE).reverse();
+  const entries = snapshot.audit.slice(-AUDIT_LOG_VISIBLE).reverse();
+  const signature = `${state.lang}|${snapshot.auditCount}`;
+  setText(el['log-count'], t('{count} Entries', { count: snapshot.auditCount }));
+  if (list.dataset.signature === signature) {
+    return;
+  }
+  list.dataset.signature = signature;
   list.innerHTML = '';
   entries.forEach((entry) => {
     const item = document.createElement('li');
@@ -3230,15 +3237,15 @@ function renderAuditLog() {
 
     const meta = document.createElement('p');
     meta.className = 'audit__meta';
-    const stamp = { seq: `#${pad2(entry.seq)}`, time: formatClock(entry.time, true) };
-    meta.textContent = entry.digest
-      ? t('{seq} • {time} • chain {digest}', { ...stamp, digest: entry.digest.slice(0, 12) })
-      : t('{seq} • {time} • chain pending', stamp);
+    meta.textContent = t('{seq} • {time} • chain {digest}', {
+      seq: `#${pad2(entry.seq)}`,
+      time: formatClock(new Date(entry.time), true),
+      digest: entry.digest.slice(0, 12)
+    });
 
     item.append(marker, message, meta);
     list.append(item);
   });
-  setText(el['log-count'], t('{count} Entries', { count: state.auditLog.length }));
 }
 
 /* Draws the scannable code for a signed certificate, or the pending notice. */
@@ -3265,9 +3272,12 @@ function renderVerificationBlock(truck) {
 
 function renderCertificate() {
   const truck = viewTruck();
+  if (!truck) {
+    return;
+  }
   const cert = truck.certificate;
   const certMeta = CERT_STATUS[cert.status];
-  const log = truck.log;
+  const figures = certificateFigures(truck);
 
   el.certificate.dataset.tone = certMeta.tone;
   setText(el['cert-serial'], ltr(cert.serial));
@@ -3287,18 +3297,18 @@ function renderCertificate() {
 
   setText(
     el['cert-duration'],
-    truck.baseStatus === 'standby' ? t('Not Commenced (Pre-Departure Conditioning)') : formatDuration(log.transitMinutes)
+    truck.baseStatus === 'standby' ? t('Not Commenced (Pre-Departure Conditioning)') : formatDuration(figures.transitMinutes)
   );
-  setText(el['cert-minmax'], `${formatTemp(log.min)} / ${formatTemp(log.max)}`);
-  setText(el['cert-excursions'], excursionText(log.excursions));
-  el['cert-excursions'].dataset.tone = log.excursions === 0 ? 'default' : 'alert';
-  setText(el['cert-door'], t('{count} Unauthorized Openings', { count: log.doorOpenings }));
+  setText(el['cert-minmax'], `${formatTemp(figures.min)} / ${formatTemp(figures.max)}`);
+  setText(el['cert-excursions'], excursionText(figures.excursions));
+  el['cert-excursions'].dataset.tone = figures.excursions === 0 ? 'default' : 'alert';
+  setText(el['cert-door'], t('{count} Unauthorized Openings', { count: figures.doorOpenings }));
   setText(el['cert-seal'], t('{seal} (Engaged)', { seal: `#${truck.sealId}` }));
 
   setText(el['cert-stamp-title'], t(certMeta.stamp));
   let stampMeta = t('Certificate not in force');
   if (cert.status === 'valid' && cert.signedAt) {
-    stampMeta = t('Signed {time} by {name}', { time: formatDateTime(cert.signedAt), name: PERSONNEL.qaOfficer });
+    stampMeta = t('Signed {time} by {name}', { time: formatDateTime(new Date(cert.signedAt)), name: cert.signedBy });
   } else if (cert.status === 'hold') {
     stampMeta = t('Seal suspended pending corrective action and QA review');
   } else if (cert.status === 'revalidate') {
@@ -3315,7 +3325,7 @@ function renderCertificate() {
   el['cert-stamp-tick'].setAttribute('d', tick);
 
   setText(el['cert-hash'], hashLabel(cert));
-  setText(el['cert-signer'], t(cert.status === 'valid' ? PERSONNEL.qaOfficer : 'Signature pending'));
+  setText(el['cert-signer'], t(cert.status === 'valid' ? cert.signedBy : 'Signature pending'));
   renderVerificationBlock(truck);
 }
 
