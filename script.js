@@ -1360,6 +1360,156 @@ function qrPath(matrix) {
 }
 
 /* --------------------------------------------------------------------------
+   Backends
+   -------------------------------------------------------------------------- */
+/* Both backends answer the same questions, so the rest of the interface does
+   not know which one it is talking to. */
+
+/* The offline demo: the engine runs in this page with the test dataset. */
+function createLocalBackend() {
+  const engine = Engine.createEngine(SEED);
+  const sessions = { client: null, admin: null };
+  const listeners = { client: null, admin: null };
+  const guesses = {};
+  const lastSignIn = {};
+
+  const accounts = () => engine.accounts().map((account) => ({
+    ...account,
+    lastSignIn: lastSignIn[account.id] || null,
+    sessions: sessions[account.portal] && sessions[account.portal].id === account.id ? 1 : 0
+  }));
+
+  function push() {
+    PORTALS.forEach((portal) => {
+      if (sessions[portal] && listeners[portal]) {
+        listeners[portal](engine.snapshot(sessions[portal], { accounts: accounts() }));
+      }
+    });
+  }
+
+  function remember() {
+    try {
+      window.sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+        client: sessions.client ? sessions.client.id : null,
+        admin: sessions.admin ? sessions.admin.id : null
+      }));
+    } catch (error) {
+      /* Storage unavailable: the session lasts until the page is closed. */
+    }
+  }
+
+  window.setInterval(() => {
+    engine.tick();
+    push();
+  }, LIVE_TICK_MS);
+
+  return {
+    mode: 'local',
+
+    async restore() {
+      let saved = {};
+      try {
+        saved = JSON.parse(window.sessionStorage.getItem(SESSION_KEY) || '{}') || {};
+      } catch (error) {
+        saved = {};
+      }
+      const restored = {};
+      PORTALS.forEach((portal) => {
+        sessions[portal] = SEED.users.find((user) => user.id === saved[portal] && user.portal === portal) || null;
+        restored[portal] = sessions[portal] ? engine.snapshot(sessions[portal]).user : null;
+      });
+      return restored;
+    },
+
+    async login(portal, identifier, password) {
+      const key = `${portal}:${identifier.toLowerCase()}`;
+      const record = guesses[key] || { count: 0, lockedUntil: 0 };
+      guesses[key] = record;
+      if (record.lockedUntil > Date.now()) {
+        return { ok: false, reason: 'locked', retryAfter: Math.ceil((record.lockedUntil - Date.now()) / 1000) };
+      }
+      const scope = AUTH_COPY[portal].scope;
+      const user = SEED.users.find(
+        (item) => item.portal === portal && item.identifier.toLowerCase() === identifier.toLowerCase()
+          && item.password === password
+      );
+      if (!user) {
+        record.count += 1;
+        if (record.count >= MAX_SIGN_IN_ATTEMPTS) {
+          record.count = 0;
+          record.lockedUntil = Date.now() + LOCKOUT_MS;
+          engine.log('alert', 'Sign-in locked on the {scope} for {seconds} seconds after {attempts} failed attempts.', {
+            scope,
+            seconds: LOCKOUT_MS / 1000,
+            attempts: MAX_SIGN_IN_ATTEMPTS
+          });
+          push();
+          return { ok: false, reason: 'locked', retryAfter: LOCKOUT_MS / 1000 };
+        }
+        engine.log('alert', 'Failed sign-in attempt on the {scope} ({attempt} of {max}).', {
+          scope,
+          attempt: record.count,
+          max: MAX_SIGN_IN_ATTEMPTS
+        });
+        push();
+        return { ok: false, reason: 'invalid', attemptsLeft: MAX_SIGN_IN_ATTEMPTS - record.count };
+      }
+      record.count = 0;
+      sessions[portal] = user;
+      lastSignIn[user.id] = Date.now();
+      remember();
+      engine.log('ok', 'Sign-in on the {scope}: {name}.', { scope, name: user.name });
+      return { ok: true, user: engine.snapshot(user).user };
+    },
+
+    async logout(portal, idle) {
+      const user = sessions[portal];
+      sessions[portal] = null;
+      listeners[portal] = null;
+      remember();
+      if (user) {
+        engine.log(
+          'info',
+          idle ? 'Sign-out on the {scope}: {name} (idle timeout).' : 'Sign-out on the {scope}: {name}.',
+          { scope: AUTH_COPY[portal].scope, name: user.name }
+        );
+        push();
+      }
+    },
+
+    subscribe(portal, onSnapshot) {
+      listeners[portal] = onSnapshot;
+      push();
+    },
+
+    unsubscribe(portal) {
+      listeners[portal] = null;
+    },
+
+    async command(name, payload) {
+      const result = engine.command(sessions.admin, name, payload);
+      push();
+      return result;
+    },
+
+    async verify(record) {
+      return engine.verify(record);
+    },
+
+    async demoAccounts(portal) {
+      return SEED.users.filter((user) => user.portal === portal).map((user) => ({
+        identifier: user.identifier,
+        password: user.password,
+        name: user.name,
+        title: user.title || ''
+      }));
+    },
+
+    touch() {}
+  };
+}
+
+/* --------------------------------------------------------------------------
    Certificate verification page
    -------------------------------------------------------------------------- */
 /* The link carries the signed record itself, so any browser can recompute the
