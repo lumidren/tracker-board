@@ -462,6 +462,53 @@
         });
       });
     }
+
+    /* One telemetry step. Called every few seconds by whoever hosts the engine. */
+    function tick() {
+      const time = now();
+      const elapsed = clamp(time - state.lastTickAt, 0, 60000) * timeScale;
+      state.lastTickAt = time;
+      state.minuteCarry += elapsed;
+      const minutes = Math.floor(state.minuteCarry / 60000);
+      state.minuteCarry -= minutes * 60000;
+
+      state.trucks.forEach((truck) => {
+        truck.tempCurrent = sampleTemperature(truck);
+        truck.history.push(truck.tempCurrent);
+        truck.history = truck.history.slice(-HISTORY_POINTS);
+        truck.uplinkPing = clamp(Math.round(truck.uplinkPing + jitter(6)), truck.uplinkPingBase - 12, truck.uplinkPingBase + 14);
+        truck.humidity = clamp(Math.round(truck.humidity + jitter(1.6)), 20, 95);
+
+        if (truck.status === 'excursion') {
+          truck.log.max = Math.max(truck.log.max, truck.tempCurrent);
+          const alert = state.alerts.find((item) => item.truckId === truck.id && item.kind === 'excursion' && !item.endedAt);
+          if (alert) {
+            alert.peak = Math.max(alert.peak, truck.tempCurrent);
+          }
+        } else {
+          truck.compressorRpm = truck.compressorNominalRpm + Math.round(jitter(40));
+        }
+
+        if (truck.baseStatus === 'en-route') {
+          const wasBeforeHub = truck.progress < truck.hubAt;
+          truck.progress = Math.min(1, truck.progress + ((truck.cruiseKmh * elapsed) / 3600000) / truck.routeKm);
+          truck.speedKmh = Math.max(0, Math.round(truck.cruiseKmh + jitter(8)));
+          truck.log.transitMinutes += minutes;
+          if (wasBeforeHub && truck.progress >= truck.hubAt) {
+            truck.hubPassedAt = time;
+            log('info', 'Unit {id} cleared the regional inspection hub.', { id: `#${truck.id}` });
+          }
+          if (truck.progress >= 1) {
+            truck.baseStatus = 'delivered';
+            truck.status = truck.status === 'excursion' ? 'excursion' : 'delivered';
+            truck.arrivedAt = time;
+            truck.speedKmh = 0;
+            log('ok', 'Unit {id} arrived at {place}.', { id: `#${truck.id}`, place: truck.destination });
+          }
+        }
+        derive(truck);
+      });
+    }
     return {};
   }
 
