@@ -2532,6 +2532,55 @@ button {
   vector-effect: non-scaling-stroke;
 }
 
+.map__route {
+  fill: none;
+  stroke: #94A3B8;
+  stroke-width: 2.5;
+  stroke-dasharray: 5 5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.map__route--done {
+  stroke: var(--ice);
+  stroke-width: 3.5;
+  stroke-dasharray: none;
+}
+
+.map__city {
+  fill: #64748B;
+}
+
+.map__label {
+  fill: var(--muted);
+  font-size: calc(var(--k) * 8.5px);
+  font-weight: 600;
+}
+
+.map__label--sea {
+  fill: #5B9CC4;
+  font-style: italic;
+  font-weight: 500;
+}
+
+.map__label--end {
+  fill: var(--text);
+  font-size: calc(var(--k) * 10.5px);
+  font-weight: 700;
+  paint-order: stroke;
+  stroke: #FFFFFF;
+  stroke-width: calc(var(--k) * 3px);
+  stroke-linejoin: round;
+}
+
+.map__end {
+  fill: #FFFFFF;
+  stroke: var(--ice-strong);
+  stroke-width: 2.5;
+  vector-effect: non-scaling-stroke;
+}
+
 /* 12. Motion preferences --------------------------------------------------- */
 @media (prefers-reduced-motion: reduce) {
   *,
