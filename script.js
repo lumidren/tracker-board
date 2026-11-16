@@ -1055,6 +1055,60 @@ function reedSolomonRemainder(data, divisor) {
   return result;
 }
 
+/* Packs the text into data codewords, then adds and interleaves error correction. */
+function qrCodewords(bytes, version) {
+  const capacityBits = qrDataCodewords(version) * 8;
+  const bits = [];
+  const push = (value, length) => {
+    for (let i = length - 1; i >= 0; i -= 1) {
+      bits.push((value >>> i) & 1);
+    }
+  };
+  push(4, 4);
+  push(bytes.length, version < 10 ? 8 : 16);
+  bytes.forEach((byte) => push(byte, 8));
+  push(0, Math.min(4, capacityBits - bits.length));
+  push(0, (8 - (bits.length % 8)) % 8);
+  for (let padByte = 0xEC; bits.length < capacityBits; padByte ^= 0xEC ^ 0x11) {
+    push(padByte, 8);
+  }
+
+  const data = [];
+  for (let i = 0; i < bits.length; i += 8) {
+    data.push(bits.slice(i, i + 8).reduce((value, bit) => (value << 1) | bit, 0));
+  }
+
+  const blockCount = QR_BLOCK_COUNT[version];
+  const eccLength = QR_ECC_PER_BLOCK[version];
+  const rawCodewords = Math.floor(qrRawModules(version) / 8);
+  const shortBlocks = blockCount - (rawCodewords % blockCount);
+  const shortLength = Math.floor(rawCodewords / blockCount);
+  const divisor = reedSolomonDivisor(eccLength);
+
+  const blocks = [];
+  let offset = 0;
+  for (let i = 0; i < blockCount; i += 1) {
+    const dataLength = shortLength - eccLength + (i < shortBlocks ? 0 : 1);
+    const chunk = data.slice(offset, offset + dataLength);
+    offset += dataLength;
+    const ecc = reedSolomonRemainder(chunk, divisor);
+    if (i < shortBlocks) {
+      chunk.push(0);
+    }
+    blocks.push(chunk.concat(ecc));
+  }
+
+  const codewords = [];
+  for (let i = 0; i < blocks[0].length; i += 1) {
+    blocks.forEach((block, index) => {
+      if (i !== shortLength - eccLength || index >= shortBlocks) {
+        codewords.push(block[i]);
+      }
+    });
+  }
+  return codewords;
+}
+
 /* --------------------------------------------------------------------------
    Actions
    -------------------------------------------------------------------------- */
