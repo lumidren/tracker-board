@@ -947,3 +947,44 @@ function renderShell() {
 
   renderLiveChip();
 }
+
+function renderAuth() {
+  const role = state.currentRole;
+  const copy = AUTH_COPY[role];
+  const locked = lockSecondsLeft(role);
+
+  setText(el['auth-title'], copy.title);
+  setText(el['auth-sub'], copy.sub);
+  setText(el['auth-identifier-label'], copy.identifierLabel);
+  el['auth-identifier'].setAttribute('inputmode', copy.inputMode);
+  setText(el['auth-demo-note'], copy.demoNote);
+
+  const message = locked > 0 ? `Too many failed attempts. Try again in ${locked} seconds.` : state.auth.error;
+  el['auth-error'].hidden = !message;
+  setText(el['auth-error'], message);
+  el['auth-submit'].disabled = locked > 0;
+}
+
+function renderConsignmentPickers() {
+  const account = state.session.client;
+  const trucks = account ? account.trucks : [];
+  const signature = trucks.join(',');
+  all('[data-consignment-picker]').forEach((picker) => {
+    picker.hidden = trucks.length < 2;
+    if (picker.dataset.signature !== signature) {
+      picker.dataset.signature = signature;
+      picker.innerHTML = trucks.map((id) => `
+        <button type="button" class="unit-picker__option" data-consignment="${id}" aria-pressed="false">${getTruck(id).consignmentId}</button>`).join('');
+    }
+    all('[data-consignment]', picker).forEach((button) => {
+      const truck = getTruck(button.dataset.consignment);
+      button.setAttribute('aria-pressed', String(truck.id === state.clientTruckId));
+      button.dataset.status = truck.status;
+    });
+  });
+}
+
+function renderLiveChip() {
+  const alertInView = el.app.dataset.alert === 'true';
+  setText(el['live-chip-text'], `${alertInView ? 'Alert' : 'Live'} • ${formatClock(new Date(), true)}`);
+}
