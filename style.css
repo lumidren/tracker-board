@@ -2199,6 +2199,14 @@ button {
   transform: scaleX(-1);
 }
 
+/* Set for one frame while the language changes, so the sliding indicators
+   jump to their mirrored position instead of sweeping across the screen. */
+.is-switching-language *,
+.is-switching-language *::before,
+.is-switching-language *::after {
+  transition: none !important;
+}
+
 /* 12. Motion preferences --------------------------------------------------- */
 @media (prefers-reduced-motion: reduce) {
   *,
