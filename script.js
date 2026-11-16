@@ -663,8 +663,11 @@ const state = {
    -------------------------------------------------------------------------- */
 const el = {};
 const loadedAt = Date.now();
+const staticText = [];
+const dateTimeFormats = {};
 let toastTimer = null;
 let lastFocused = null;
+let verificationToken = 0;
 let logChain = Promise.resolve('MAATORA-AUDIT-GENESIS');
 
 const byId = (id) => document.getElementById(id);
@@ -681,6 +684,36 @@ const isAuthed = (role = state.currentRole) => Boolean(state.session[role]);
 const clientTruck = () => getTruck(state.clientTruckId);
 /* The client sees only their own consignment; the admin sees the selected unit. */
 const viewTruck = () => (state.currentRole === 'client' ? clientTruck() : activeTruck());
+
+/* Fills {placeholders} in an English source string. */
+function fmt(source, params) {
+  if (!params) {
+    return source;
+  }
+  return source.replace(/\{(\w+)\}/g, (match, key) => (key in params ? String(params[key]) : match));
+}
+
+/* Translates a source string. In Arabic every inserted value is wrapped in a
+   first-strong isolate so identifiers and readings keep their own direction. */
+function t(source, params) {
+  if (state.lang !== 'ar') {
+    return fmt(source, params);
+  }
+  const template = AR[source] || source;
+  if (!params) {
+    return template;
+  }
+  return template.replace(/\{(\w+)\}/g, (match, key) => {
+    if (!(key in params)) {
+      return match;
+    }
+    const raw = String(params[key]);
+    return `⁨${AR[raw] || raw}⁩`;
+  });
+}
+
+/* Keeps a standalone identifier or reading left-to-right inside Arabic text. */
+const ltr = (text) => (state.lang === 'ar' ? `⁦${text}⁩` : String(text));
 
 function formatTemp(value) {
   const rounded = round1(value);
