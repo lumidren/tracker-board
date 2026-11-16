@@ -149,12 +149,12 @@
             <form class="card auth__form" id="auth-form" novalidate>
               <div class="field">
                 <label class="field__label" for="auth-identifier" id="auth-identifier-label">Account Email</label>
-                <input class="field__input" id="auth-identifier" name="identifier" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" required>
+                <input class="field__input" id="auth-identifier" name="identifier" type="text" dir="ltr" autocomplete="username" autocapitalize="none" spellcheck="false" required>
               </div>
               <div class="field">
                 <label class="field__label" for="auth-password">Password</label>
                 <div class="field__group">
-                  <input class="field__input" id="auth-password" name="password" type="password" autocomplete="current-password" required>
+                  <input class="field__input" id="auth-password" name="password" type="password" dir="ltr" autocomplete="current-password" required>
                   <button type="button" class="field__toggle" id="auth-toggle" data-action="toggle-password" aria-pressed="false" aria-controls="auth-password">Show</button>
                 </div>
               </div>
@@ -315,7 +315,7 @@
 
             <button type="button" class="btn btn--outline btn--block" data-action="goto-diagnostics">
               <span id="fleet-goto-label">Open Diagnostics</span>
-              <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-arrow"></use></svg>
+              <svg class="icon icon--directional" aria-hidden="true" focusable="false"><use href="#i-arrow"></use></svg>
             </button>
           </section>
 
