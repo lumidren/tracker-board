@@ -3,10 +3,14 @@ package com.lumidren.maatora
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.ActivityNotFoundException
+import android.content.Context
 import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.net.Uri
 import android.os.Bundle
+import android.print.PrintAttributes
+import android.print.PrintManager
+import android.webkit.JavascriptInterface
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -41,6 +45,7 @@ class MainActivity : Activity() {
             setSupportMultipleWindows(false)
         }
         web.webViewClient = Client()
+        web.addJavascriptInterface(Bridge(), "MaatoraNative")
         setContentView(web)
 
         val record = verificationRecord(intent?.data)
@@ -87,6 +92,22 @@ class MainActivity : Activity() {
             // Anything else is ignored: the app only ever shows its own bundled page.
             return true
         }
+    }
+
+    /** What the page can ask the phone to do. A WebView has no print dialog of its own. */
+    private inner class Bridge {
+        @JavascriptInterface
+        fun print() {
+            runOnUiThread(::printCertificate)
+        }
+    }
+
+    /** Hands the page to Android's print service, which also offers "Save as PDF". */
+    private fun printCertificate() {
+        val name = getString(R.string.print_job_name)
+        val paper = PrintAttributes.Builder().setMediaSize(PrintAttributes.MediaSize.ISO_A4).build()
+        val printer = getSystemService(Context.PRINT_SERVICE) as PrintManager
+        printer.print(name, web.createPrintDocumentAdapter(name), paper)
     }
 
     private fun openInBrowser(uri: Uri) {
