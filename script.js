@@ -947,31 +947,36 @@ function appendLog(kind, source, params) {
 /* --------------------------------------------------------------------------
    Certificate digest
    -------------------------------------------------------------------------- */
+/* The canonical record that is hashed when a certificate is signed and hashed
+   again by the verification page. */
+function certificatePayload(truck, record) {
+  return [
+    truck.certificate.serial,
+    truck.id,
+    truck.consignmentId,
+    truck.tempTarget,
+    truck.tempMin,
+    truck.tempMax,
+    record.transitMinutes,
+    record.min,
+    record.max,
+    record.excursions,
+    record.doorOpenings,
+    truck.sealId,
+    new Date(record.signedAt).toISOString()
+  ].join('|');
+}
+
 async function refreshCertificateHash(truck) {
   const cert = truck.certificate;
   if (cert.status !== 'valid' || !cert.signedAt) {
     cert.hash = '';
     return;
   }
-  const payload = [
-    cert.serial,
-    truck.id,
-    truck.consignmentId,
-    truck.tempTarget,
-    truck.tempMin,
-    truck.tempMax,
-    truck.log.transitMinutes,
-    truck.log.min,
-    truck.log.max,
-    truck.log.excursions,
-    truck.log.doorOpenings,
-    truck.sealId,
-    cert.signedAt.toISOString()
-  ].join('|');
   const signedAt = cert.signedAt;
-  const hash = await sha256Hex(payload);
+  const hash = await sha256Hex(certificatePayload(truck, { ...truck.log, signedAt: signedAt.getTime() }));
   if (cert.status === 'valid' && cert.signedAt === signedAt) {
-    cert.hash = hash || '';
+    cert.hash = hash;
     renderCertificate();
     renderControls();
   }
