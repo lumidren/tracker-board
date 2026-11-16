@@ -1856,18 +1856,33 @@ button {
 
 .qr {
   flex: none;
-  width: 104px;
+  width: 140px;
   text-align: center;
+}
+
+.qr__link {
+  display: block;
 }
 
 .qr__code {
   display: block;
-  width: 104px;
-  height: 104px;
-  padding: 6px;
+  width: 140px;
+  height: 140px;
   border: 1px solid var(--border-strong);
   background: #FFFFFF;
-  fill: var(--text);
+  fill: #000000;
+}
+
+.qr__pending {
+  display: grid;
+  place-items: center;
+  width: 140px;
+  height: 140px;
+  padding: 14px;
+  border: 1px dashed var(--border-strong);
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--muted);
 }
 
 .qr figcaption {
