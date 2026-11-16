@@ -1711,3 +1711,41 @@ button {
   text-transform: uppercase;
   color: var(--ice-strong);
 }
+
+.cert-table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid var(--border-strong);
+  font-size: 12.5px;
+}
+
+.cert-table th,
+.cert-table td {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.cert-table tr:last-child th,
+.cert-table tr:last-child td {
+  border-bottom: 0;
+}
+
+.cert-table th {
+  width: 38%;
+  background: var(--canvas);
+  border-right: 1px solid var(--border);
+  font-weight: 600;
+  color: var(--text-soft);
+}
+
+.cert-table td {
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.cert-table td[data-tone="alert"] {
+  color: var(--alert-strong);
+  font-weight: 650;
+}
