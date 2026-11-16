@@ -1109,6 +1109,49 @@ function qrCodewords(bytes, version) {
   return codewords;
 }
 
+function qrPenalty(modules) {
+  const size = modules.length;
+  let score = 0;
+  const lines = [];
+  for (let i = 0; i < size; i += 1) {
+    lines.push(modules[i]);
+    lines.push(modules.map((row) => row[i]));
+  }
+  lines.forEach((line) => {
+    let run = 1;
+    for (let i = 1; i <= size; i += 1) {
+      if (i < size && line[i] === line[i - 1]) {
+        run += 1;
+      } else {
+        if (run >= 5) {
+          score += run - 2;
+        }
+        run = 1;
+      }
+    }
+    const text = line.map((dark) => (dark ? '1' : '0')).join('');
+    ['10111010000', '00001011101'].forEach((pattern) => {
+      for (let at = text.indexOf(pattern); at !== -1; at = text.indexOf(pattern, at + 1)) {
+        score += 40;
+      }
+    });
+  });
+  let dark = 0;
+  for (let y = 0; y < size; y += 1) {
+    for (let x = 0; x < size; x += 1) {
+      const colour = modules[y][x];
+      if (colour) {
+        dark += 1;
+      }
+      if (x + 1 < size && y + 1 < size
+        && colour === modules[y][x + 1] && colour === modules[y + 1][x] && colour === modules[y + 1][x + 1]) {
+        score += 3;
+      }
+    }
+  }
+  return score + Math.floor(Math.abs(dark * 20 - size * size * 10) / (size * size)) * 10;
+}
+
 /* --------------------------------------------------------------------------
    Actions
    -------------------------------------------------------------------------- */
