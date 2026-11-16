@@ -819,9 +819,7 @@ function applyLanguage() {
   root.classList.add('is-switching-language');
   root.lang = state.lang;
   root.dir = arabic ? 'rtl' : 'ltr';
-  window.requestAnimationFrame(() => {
-    window.requestAnimationFrame(() => root.classList.remove('is-switching-language'));
-  });
+  window.setTimeout(() => root.classList.remove('is-switching-language'), 80);
   applyStaticText();
 
   const toggle = el['lang-toggle'];
