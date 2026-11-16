@@ -735,3 +735,47 @@ function signCertificate() {
   render();
   refreshCertificateHash(truck);
 }
+
+function openCertificate() {
+  if (state.certificateModalOpen || !isAuthed()) {
+    return;
+  }
+  lastFocused = document.activeElement;
+  state.certificateModalOpen = true;
+  renderCertificate();
+  renderModal();
+  const closeButton = el.modal.querySelector('.modal__toolbar [data-action="close-certificate"]');
+  if (closeButton) {
+    closeButton.focus();
+  }
+}
+
+function closeCertificate() {
+  if (!state.certificateModalOpen) {
+    return;
+  }
+  state.certificateModalOpen = false;
+  renderModal();
+  if (lastFocused && typeof lastFocused.focus === 'function') {
+    lastFocused.focus();
+  }
+  lastFocused = null;
+}
+
+function printCertificate() {
+  renderCertificate();
+  window.print();
+}
+
+const ACTIONS = {
+  'open-certificate': openCertificate,
+  'close-certificate': closeCertificate,
+  'print-certificate': printCertificate,
+  'trigger-incident': triggerIncident,
+  'normalize-sensor': normalizeSensor,
+  'sign-certificate': signCertificate,
+  'goto-diagnostics': () => setPanel('diagnostics'),
+  'sign-out': () => signOut(),
+  'fill-demo': fillDemoCredentials,
+  'toggle-password': togglePasswordVisibility
+};
