@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="Maatora: active-transit cold-chain temperature monitoring with client assurance, fleet telematics and printable compliance certificates.">
+  <meta name="theme-color" content="#FFFFFF">
+  <title>Maatora | Cold-Chain Monitoring</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%230284C7'/%3E%3Cpath d='M16 7v18M8.2 11.5l15.6 9M23.8 11.5l-15.6 9' stroke='%23fff' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="style.css">
+  <script src="script.js" defer></script>
+</head>
+<body>
+
+  <div class="stage">
+    <div class="device">
+      <div class="app" id="app" data-role="client" data-alert="false">
+
+        <header class="topbar">
+          <div class="topbar__row">
+            <div class="brand">
+              <svg class="brand__mark" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+                <rect class="brand__mark-bg" width="32" height="32" rx="9"/>
+                <path class="brand__mark-fg" d="M16 7v18M8.200 11.500l15.600 9M23.800 11.500l-15.600 9"/>
+              </svg>
+              <div class="brand__text">
+                <span class="brand__name">Maatora</span>
+                <span class="brand__tag">Cold-Chain Monitoring</span>
+              </div>
+            </div>
+            <div class="live-chip" id="live-chip">
+              <span class="pulse-dot" aria-hidden="true"></span>
+              <span id="live-chip-text">Live</span>
+            </div>
+          </div>
+
+          <div class="role-switch" id="role-switch" role="group" aria-label="Operational role" data-role="client">
+            <span class="role-switch__thumb" aria-hidden="true"></span>
+            <button type="button" class="role-switch__option" data-role-target="client" aria-pressed="true">Client View</button>
+            <button type="button" class="role-switch__option" data-role-target="admin" aria-pressed="false">Admin &amp; Telematics</button>
+          </div>
+
+          <div class="account-bar" id="account-bar" hidden>
+            <p class="account-bar__who">
+              <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-user"></use></svg>
+              <span id="account-name"></span>
+            </p>
+            <button type="button" class="link-btn" data-action="sign-out">Sign Out</button>
+          </div>
+        </header>
+
+        <main class="viewport" id="viewport" tabindex="-1">
+
+          <div class="alert-bar" id="admin-alert" role="alert" hidden>
+            <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-alert"></use></svg>
+            <div>
+              <p class="alert-bar__title" id="admin-alert-title">Active Excursion</p>
+              <p class="alert-bar__note" id="admin-alert-note"></p>
+            </div>
+          </div>
+
+        </main>
+
+        <nav class="glass-dock" id="dock" aria-label="Section navigation">
+          <span class="glass-dock__pill" aria-hidden="true"></span>
+          <div class="glass-dock__items" id="dock-items"></div>
+        </nav>
+
+        <div class="toast" id="toast" role="status" aria-live="polite"></div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
