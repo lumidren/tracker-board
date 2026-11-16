@@ -1351,6 +1351,35 @@ function verificationUrl(truck) {
   return `${window.location.href.split('#')[0]}${VERIFY_PREFIX}${record}`;
 }
 
+function parseVerificationRecord(hash) {
+  let parts = [];
+  try {
+    parts = decodeURIComponent(hash.slice(VERIFY_PREFIX.length)).split('~');
+  } catch (error) {
+    return null;
+  }
+  if (parts.length !== 8) {
+    return null;
+  }
+  const truck = getTruck(parts[0]);
+  const numbers = parts.slice(1, 7).map(Number);
+  const digest = parts[7].toLowerCase();
+  if (!truck || numbers.some((value) => !Number.isFinite(value)) || !/^[0-9a-f]+$/.test(digest)
+    || digest.length !== VERIFY_DIGEST_LENGTH || numbers[0] <= 0 || numbers[0] > 8640000000000000) {
+    return null;
+  }
+  return {
+    truck,
+    digest,
+    signedAt: numbers[0],
+    transitMinutes: numbers[1],
+    min: numbers[2],
+    max: numbers[3],
+    excursions: numbers[4],
+    doorOpenings: numbers[5]
+  };
+}
+
 /* --------------------------------------------------------------------------
    Actions
    -------------------------------------------------------------------------- */
