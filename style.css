@@ -2496,6 +2496,42 @@ button {
   padding: 0 16px 16px;
 }
 
+/* 11f. Maps ------------------------------------------------------------------ */
+.map-card {
+  padding: 10px;
+}
+
+.map {
+  --k: 1;
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 14px;
+  background: #EEF2F6;
+  direction: ltr;
+}
+
+.map__sea {
+  fill: #DCEBF6;
+}
+
+.map__land {
+  fill: #FDFEFE;
+  stroke: #B6C5D6;
+  stroke-width: 1;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.map__river {
+  fill: none;
+  stroke: #8CCBEE;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
 /* 12. Motion preferences --------------------------------------------------- */
 @media (prefers-reduced-motion: reduce) {
   *,
