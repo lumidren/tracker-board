@@ -408,15 +408,18 @@
             </article>
           </section>
 
-          <!-- ================= ADMIN: DIAGNOSTICS ================= -->
-          <section class="panel" data-role="admin" data-panel="diagnostics" aria-label="Sensor and chiller diagnostics" hidden>
+          <!-- ================= ADMIN: UNIT ================= -->
+          <section class="panel" data-role="admin" data-panel="unit" aria-label="Sensor and chiller diagnostics" hidden>
             <header class="panel__head">
               <p class="eyebrow">IoT Sensor &amp; Chiller Diagnostics</p>
               <h1 class="panel__title" id="diag-title"></h1>
               <p class="panel__sub" id="diag-sub"></p>
             </header>
 
-            <div class="unit-picker" data-unit-picker role="group" aria-label="Select unit"></div>
+            <label class="select">
+              <span class="select__label">Unit</span>
+              <select class="select__input" data-unit-select aria-label="Select unit"></select>
+            </label>
 
             <article class="card trace" id="trace-card" aria-labelledby="trace-heading">
               <header class="card__head">
@@ -430,14 +433,14 @@
                 <rect class="sparkline__band" id="spark-band" x="0" y="0" width="320" height="0"/>
                 <line class="sparkline__setpoint" id="spark-setpoint" x1="0" x2="320" y1="0" y2="0"/>
                 <polyline class="sparkline__line" id="spark-line" points=""/>
-                <circle class="sparkline__dot" id="spark-dot" cx="0" cy="0" r="3.500"/>
+                <circle class="sparkline__dot" id="spark-dot" cx="0" cy="0" r="3.5"/>
               </svg>
               <p class="trace__legend" id="diag-range"></p>
             </article>
 
-            <article class="card" aria-labelledby="diag-heading">
+            <article class="card" aria-labelledby="health-heading">
               <header class="card__head">
-                <h2 class="card__title" id="diag-heading">Hardware Health</h2>
+                <h2 class="card__title" id="health-heading">Hardware Health</h2>
                 <span class="chip" id="health-chip"></span>
               </header>
               <ul class="diag">
@@ -493,6 +496,42 @@
                   </div>
                 </li>
               </ul>
+            </article>
+
+            <article class="card" aria-labelledby="trip-heading">
+              <header class="card__head">
+                <h2 class="card__title" id="trip-heading">Trip</h2>
+                <span class="chip chip--ice" id="trip-chip"></span>
+              </header>
+              <div class="progress" id="trip-progress" role="img" aria-label="Route progress">
+                <span class="progress__fill"></span>
+              </div>
+              <dl class="facts">
+                <div class="facts__row"><dt>Route</dt><dd id="trip-route"></dd></div>
+                <div class="facts__row"><dt>Corridor</dt><dd id="trip-corridor"></dd></div>
+                <div class="facts__row"><dt>Distance</dt><dd id="trip-distance"></dd></div>
+                <div class="facts__row"><dt>Speed</dt><dd id="trip-speed"></dd></div>
+                <div class="facts__row"><dt>Arrival</dt><dd id="trip-eta"></dd></div>
+                <div class="facts__row"><dt>Departed</dt><dd id="trip-departed"></dd></div>
+                <div class="facts__row"><dt>Transport Operator</dt><dd id="trip-operator"></dd></div>
+                <div class="facts__row"><dt>Vehicle</dt><dd id="trip-vehicle"></dd></div>
+              </dl>
+            </article>
+
+            <article class="card" aria-labelledby="load-heading">
+              <header class="card__head">
+                <h2 class="card__title" id="load-heading">Cargo &amp; Environment</h2>
+              </header>
+              <dl class="facts">
+                <div class="facts__row"><dt>Consignment</dt><dd id="load-consignment"></dd></div>
+                <div class="facts__row"><dt>Cargo</dt><dd id="load-cargo"></dd></div>
+                <div class="facts__row"><dt>Quantity</dt><dd id="load-quantity"></dd></div>
+                <div class="facts__row"><dt>Consignor</dt><dd id="load-consignor"></dd></div>
+                <div class="facts__row"><dt>Consignee</dt><dd id="load-consignee"></dd></div>
+                <div class="facts__row"><dt>Cargo Bay Humidity</dt><dd id="load-humidity"></dd></div>
+                <div class="facts__row"><dt>Outside Temperature</dt><dd id="load-ambient"></dd></div>
+                <div class="facts__row"><dt>Recorded Min / Max</dt><dd id="load-minmax"></dd></div>
+              </dl>
             </article>
           </section>
 
