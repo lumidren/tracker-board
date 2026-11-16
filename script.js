@@ -2010,6 +2010,66 @@ const ACTIONS = {
 };
 
 /* --------------------------------------------------------------------------
+   Maps
+   -------------------------------------------------------------------------- */
+const project = (point) => [
+  round1((point[0] - MAP.lon0) * MAP.kx * MAP.scale),
+  round1((MAP.lat0 - point[1]) * MAP.scale)
+];
+
+const linePath = (points) => points.map((point, index) => `${index === 0 ? 'M' : 'L'}${project(point).join(' ')}`).join('');
+
+/* Draws the coastline, seas and river once; routes and units are layered on top. */
+function buildMap(svg) {
+  const geo = SEED.geography;
+  if (!geo || svg.dataset.built) {
+    return;
+  }
+  const northCoast = geo.land.slice(3, 13);
+  const eastCoast = geo.land.slice(13);
+  const mediterranean = [[22, 34], [22, northCoast[0][1]], ...northCoast, [northCoast[northCoast.length - 1][0], 34]];
+  const redSea = [...eastCoast, [39, eastCoast[eastCoast.length - 1][1]], [39, eastCoast[0][1]]];
+  svg.dataset.built = 'true';
+  svg.innerHTML = `
+    <path class="map__sea" d="${linePath(mediterranean)}Z"/>
+    <path class="map__sea" d="${linePath(redSea)}Z"/>
+    <path class="map__land" d="${linePath(geo.land)}Z"/>
+    <path class="map__river" d="${linePath(geo.nile)}"/>
+    <path class="map__river" d="${linePath(geo.rosetta)}"/>
+    <path class="map__river" d="${linePath(geo.damiettaBranch)}"/>
+    <g data-layer="labels"></g>
+    <g data-layer="routes"></g>
+    <g data-layer="trucks"></g>`;
+}
+
+/* Frames the map on a box in map units; k is how far it is zoomed in. */
+function frameMap(svg, x, y, width, height) {
+  const k = width / MAP.width;
+  setAttribute(svg, 'viewBox', `${round1(x)} ${round1(y)} ${round1(width)} ${round1(height)}`);
+  svg.style.setProperty('--k', String(Math.round(k * 1000) / 1000));
+  return k;
+}
+
+function mapLabels(svg, k, placeIds) {
+  const layer = svg.querySelector('[data-layer="labels"]');
+  const signature = `${state.lang}|${k}|${placeIds.join(',')}`;
+  if (layer.dataset.signature === signature) {
+    return;
+  }
+  layer.dataset.signature = signature;
+  const seas = [['Mediterranean Sea', [28.2, 32.25]], ['Red Sea', [35.55, 26.3]]];
+  layer.innerHTML = seas.map(([name, at]) => {
+    const [x, y] = project(at);
+    return `<text class="map__label map__label--sea" x="${x}" y="${y}" text-anchor="middle">${t(name)}</text>`;
+  }).join('') + placeIds.map((id) => {
+    const place = SEED.places[id];
+    const [x, y] = project(place.at);
+    return `<circle class="map__city" cx="${x}" cy="${y}" r="${round1(1.9 * k)}"/>`
+      + `<text class="map__label" x="${round1(x + 4 * k)}" y="${round1(y + 3 * k)}">${t(place.name)}</text>`;
+  }).join('');
+}
+
+/* --------------------------------------------------------------------------
    One-time DOM construction
    -------------------------------------------------------------------------- */
 function cacheElements() {
