@@ -524,3 +524,40 @@ function submitSignIn() {
   el.viewport.scrollTop = 0;
   el.viewport.focus();
 }
+
+function signOut(role = state.currentRole, reason = '') {
+  const account = state.session[role];
+  if (!account) {
+    return;
+  }
+  state.session[role] = null;
+  persistSession();
+  appendLog('info', `Sign-out on the ${AUTH_COPY[role].scope}: ${account.name}${reason ? ` (${reason})` : ''}.`);
+
+  if (role === state.currentRole) {
+    state.certificateModalOpen = false;
+    lastFocused = null;
+    state.auth.error = reason ? 'You were signed out after a period of inactivity.' : '';
+    hideToast();
+    resetAuthForm();
+    render();
+    el.viewport.scrollTop = 0;
+  }
+}
+
+function fillDemoCredentials() {
+  const account = DEMO_ACCOUNTS.find((item) => item.role === state.currentRole);
+  el['auth-identifier'].value = account.identifier;
+  el['auth-password'].value = account.password;
+  state.auth.error = '';
+  renderAuth();
+  el['auth-submit'].focus();
+}
+
+function togglePasswordVisibility() {
+  const input = el['auth-password'];
+  const reveal = input.type === 'password';
+  input.type = reveal ? 'text' : 'password';
+  el['auth-toggle'].setAttribute('aria-pressed', String(reveal));
+  setText(el['auth-toggle'], reveal ? 'Hide' : 'Show');
+}
