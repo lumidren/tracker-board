@@ -272,3 +272,27 @@ const state = {
     }
   ]
 };
+
+/* --------------------------------------------------------------------------
+   Helpers
+   -------------------------------------------------------------------------- */
+const el = {};
+const loadedAt = Date.now();
+let toastTimer = null;
+let lastFocused = null;
+let logChain = Promise.resolve('MAATORA-AUDIT-GENESIS');
+
+const byId = (id) => document.getElementById(id);
+const all = (selector, root = document) => Array.from(root.querySelectorAll(selector));
+const round1 = (value) => Math.round(value * 10) / 10;
+const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
+const pad2 = (value) => String(value).padStart(2, '0');
+
+const getTruck = (id) => state.trucks.find((truck) => truck.id === id);
+const activeTruck = () => getTruck(state.activeTruckId);
+const isInSpec = (truck) => truck.tempCurrent >= truck.tempMin && truck.tempCurrent <= truck.tempMax;
+
+const isAuthed = (role = state.currentRole) => Boolean(state.session[role]);
+const clientTruck = () => getTruck(state.clientTruckId);
+/* The client sees only their own consignment; the admin sees the selected unit. */
+const viewTruck = () => (state.currentRole === 'client' ? clientTruck() : activeTruck());
