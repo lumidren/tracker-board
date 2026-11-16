@@ -561,3 +561,13 @@ function togglePasswordVisibility() {
   el['auth-toggle'].setAttribute('aria-pressed', String(reveal));
   setText(el['auth-toggle'], reveal ? 'Hide' : 'Show');
 }
+
+function selectConsignment(truckId) {
+  const account = state.session.client;
+  if (!account || !account.trucks.includes(truckId) || state.clientTruckId === truckId) {
+    return;
+  }
+  state.clientTruckId = truckId;
+  persistSession();
+  render();
+}
