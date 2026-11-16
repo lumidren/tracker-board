@@ -2114,6 +2114,25 @@ button {
   animation: flash 1s ease-in-out infinite;
 }
 
+/* 11c. Alert history and language toggle ----------------------------------- */
+.alerts {
+  display: grid;
+  gap: 10px;
+}
+
+.alert-card[data-state="active"] {
+  border-color: var(--alert);
+  box-shadow: 0 0 0 3px var(--alert-soft), var(--shadow-card);
+}
+
+.alert-card[data-state="open"] {
+  border-color: var(--alert-line);
+}
+
+.alert-card .btn {
+  margin-top: 14px;
+}
+
 /* 12. Motion preferences --------------------------------------------------- */
 @media (prefers-reduced-motion: reduce) {
   *,
