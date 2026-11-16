@@ -2298,6 +2298,101 @@ button {
   color: var(--text-soft);
 }
 
+.shipments {
+  display: grid;
+  gap: 10px;
+}
+
+.shipment {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 14px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+  text-align: start;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.shipment:hover {
+  border-color: var(--border-strong);
+}
+
+.shipment[aria-pressed="true"] {
+  border-color: var(--ice);
+  box-shadow: 0 0 0 3px var(--ice-soft), var(--shadow-card);
+}
+
+.shipment[data-tone="alert"] {
+  border-color: var(--alert);
+  box-shadow: 0 0 0 3px var(--alert-soft), var(--shadow-card);
+}
+
+.shipment__icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--safe-soft);
+  color: var(--safe-strong);
+}
+
+.shipment[data-tone="alert"] .shipment__icon {
+  background: var(--alert-soft);
+  color: var(--alert-strong);
+}
+
+.shipment[data-tone="pending"] .shipment__icon {
+  background: var(--ice-soft);
+  color: var(--ice-strong);
+}
+
+.shipment[data-tone="done"] .shipment__icon {
+  background: var(--canvas);
+  color: #475569;
+}
+
+.shipment__icon .icon {
+  width: 24px;
+  height: 24px;
+  stroke-width: 2.2;
+}
+
+.shipment__body {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.shipment__title {
+  font-size: 15px;
+  font-weight: 650;
+  line-height: 1.25;
+}
+
+.shipment__line {
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.shipment[data-tone="alert"] .shipment__line {
+  color: var(--alert-strong);
+  font-weight: 600;
+}
+
+.shipment__temp {
+  font-size: 16px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
 /* 12. Motion preferences --------------------------------------------------- */
 @media (prefers-reduced-motion: reduce) {
   *,
