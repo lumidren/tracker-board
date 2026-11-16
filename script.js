@@ -296,3 +296,35 @@ const isAuthed = (role = state.currentRole) => Boolean(state.session[role]);
 const clientTruck = () => getTruck(state.clientTruckId);
 /* The client sees only their own consignment; the admin sees the selected unit. */
 const viewTruck = () => (state.currentRole === 'client' ? clientTruck() : activeTruck());
+
+function formatTemp(value) {
+  const rounded = round1(value);
+  const sign = rounded > 0 ? '+' : '';
+  return `${sign}${rounded.toFixed(1)}°C`;
+}
+
+function formatClock(date, withSeconds = false) {
+  const base = `${pad2(date.getHours())}:${pad2(date.getMinutes())}`;
+  return withSeconds ? `${base}:${pad2(date.getSeconds())}` : base;
+}
+
+const dateTimeFormat = new Intl.DateTimeFormat('en-GB', {
+  day: '2-digit',
+  month: 'short',
+  year: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit',
+  hour12: false
+});
+
+const formatDateTime = (date) => dateTimeFormat.format(date);
+
+function formatDuration(totalMinutes) {
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return `${pad2(hours)} Hours ${pad2(minutes)} Minutes`;
+}
+
+function shortHash(hash) {
+  return hash ? `${hash.slice(0, 6)}...${hash.slice(-5)}` : '';
+}
