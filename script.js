@@ -2608,13 +2608,24 @@ function stepState(truck, index) {
 
 function renderClient() {
   const truck = clientTruck();
-  renderConsignmentPickers();
+  if (!truck) {
+    return;
+  }
   const cert = truck.certificate;
   const certMeta = CERT_STATUS[cert.status];
+  const kind = shipmentState(truck);
   const inExcursion = truck.status === 'excursion';
   const onStandby = truck.baseStatus === 'standby';
+  const delivered = truck.baseStatus === 'delivered';
   const inSpec = isInSpec(truck);
   const range = { min: plainTemp(truck.tempMin), max: plainTemp(truck.tempMax) };
+
+  /* The one-glance answer */
+  el['status-hero'].dataset.tone = kind.tone;
+  setAttribute(el['status-hero-icon'], 'href', `#${kind.icon}`);
+  setText(el['status-name'], shipmentName(truck));
+  setText(el['status-headline'], t(kind.headline));
+  setText(el['status-text'], t(kind.text));
 
   /* Reassurance banner */
   let bannerClass = 'banner banner--safe';
@@ -2635,19 +2646,18 @@ function renderClient() {
   setText(el['client-banner-title'], t(bannerTitle));
   setText(el['client-banner-note'], t(bannerNote));
 
-  /* Cargo snapshot */
+  /* Temperature */
+  let stateLabel = 'Temperature OK';
+  if (!inSpec) {
+    stateLabel = truck.tempCurrent > truck.tempMax ? 'Too Warm' : 'Too Cold';
+  }
   el['cargo-card'].dataset.tone = inSpec ? 'safe' : 'alert';
-  setText(el['cargo-consignment'], ltr(truck.consignmentId));
-  setText(el['cargo-type'], t(truck.cargo));
   setText(el['cargo-temp'], formatTemp(truck.tempCurrent));
+  setText(el['cargo-plain'], t('It should stay between {min} and {max}.', range));
+  setChip(el['cargo-state'], t(stateLabel), inSpec ? 'chip--safe' : 'chip--alert chip--flash');
   setText(
     el['cargo-target'],
     t('Target {target} • Permitted {min} to {max}', { target: plainTemp(truck.tempTarget), ...range })
-  );
-  setChip(
-    el['cargo-state'],
-    t(inSpec ? 'Within Spec' : 'Out of Spec'),
-    inSpec ? 'chip--safe' : 'chip--alert chip--flash'
   );
 
   const domainMin = truck.tempMin - 2;
@@ -2665,29 +2675,30 @@ function renderClient() {
   setText(el['meter-min'], formatTemp(truck.tempMin));
   setText(el['meter-max'], formatTemp(truck.tempMax));
 
-  setText(
-    el['cargo-corridor'],
-    truck.eta === null
-      ? t('{corridor} • Departure Pending', { corridor: truck.corridor })
-      : t('{corridor} • ETA: {eta} Mins', { corridor: truck.corridor, eta: truck.eta })
-  );
-
-  /* Route status */
+  /* Arrival */
   let routeLabel = 'In Transit';
   if (onStandby) {
     routeLabel = 'Pre-Departure';
+  } else if (delivered) {
+    routeLabel = 'Delivered';
   } else if (truck.routeStep === 2) {
     routeLabel = 'At Inspection Hub';
   }
-  setChip(el['route-chip'], t(routeLabel), 'chip--ice');
-  const stepState = (index) => {
-    if (index < truck.routeStep) {
-      return 'done';
-    }
-    return index === truck.routeStep ? 'current' : 'upcoming';
-  };
+  setChip(el['route-chip'], t(routeLabel), delivered ? 'chip--neutral' : 'chip--ice');
+  setText(el['arrival-headline'], arrivalHeadline(truck));
+  setText(el['arrival-place'], t('at {place}, {city}', { place: truck.destination, city: truck.destinationCity }));
+  el['arrival-progress'].style.setProperty('--fill', `${Math.round(truck.progress * 100)}%`);
+  setText(el['arrival-distance'], distanceText(truck, '{done} of {total} km done • {left} km to go'));
+  let corridor = t('{corridor} • ETA: {eta} Mins', { corridor: truck.corridor, eta: truck.eta });
+  if (onStandby) {
+    corridor = t('{corridor} • Departure Pending', { corridor: truck.corridor });
+  } else if (delivered) {
+    corridor = `${t(truck.corridor)} • ${t('Delivered')}`;
+  }
+  setText(el['cargo-corridor'], corridor);
+
   all('.stepper__step', el['route-stepper']).forEach((step, index) => {
-    step.dataset.state = stepState(index);
+    step.dataset.state = stepState(truck, index);
     setText(step.querySelector('.stepper__label'), t(ROUTE_STEPS[index]).replace('-', '‑'));
     if (index === truck.routeStep) {
       step.setAttribute('aria-current', 'step');
@@ -2696,12 +2707,23 @@ function renderClient() {
     }
   });
 
-  /* Journey */
-  setText(el['journey-title'], ltr(truck.consignmentId));
-  setText(el['journey-sub'], t('{origin} to {destination}', { origin: truck.origin, destination: truck.destination }));
-  const now = Date.now();
+  /* Shipment details */
+  setText(el['cargo-consignment'], ltr(truck.consignmentId));
+  setText(el['cargo-type'], t(truck.cargo));
+  setText(el['detail-quantity'], t('{count} pallets', { count: truck.pallets }));
+  setText(el['detail-from'], t('{place}, {city}', { place: truck.origin, city: truck.originCity }));
+  setText(el['detail-to'], t('{place}, {city}', { place: truck.destination, city: truck.destinationCity }));
+  setText(el['detail-driver'], t(truck.operator));
+  setText(el['detail-vehicle'], `${t(truck.vehicleClass)} • ${ltr(`#${truck.id}`)}`);
+  setText(el['detail-departed'], truck.departedAt ? formatDateTime(new Date(truck.departedAt)) : t('Not yet'));
+
+  /* Map and milestones */
+  setText(el['journey-title'], shipmentName(truck));
+  setText(el['journey-sub'], arrivalHeadline(truck));
+  renderClientMap(truck);
+  const stamps = [truck.departedAt, truck.hubPassedAt, truck.hubPassedAt, truck.arrivedAt];
   all('.timeline__step', el['journey-timeline']).forEach((step, index) => {
-    const stateName = stepState(index);
+    const stateName = stepState(truck, index);
     step.dataset.state = stateName;
     let place = truck.corridor;
     if (index === 0) {
@@ -2713,13 +2735,12 @@ function renderClient() {
     }
     let timeText = t('Awaiting departure');
     if (stateName === 'done') {
-      const minutesAgo = truck.milestonesAgo[index] || 0;
-      timeText = t('Completed {time}', { time: formatClock(new Date(loadedAt - minutesAgo * 60000)) });
+      timeText = stamps[index] ? t('Completed {time}', { time: formatClock(new Date(stamps[index])) }) : t('Completed');
     } else if (stateName === 'current') {
       timeText = t(onStandby ? 'Pre-cooling at origin dock' : 'In progress');
     } else if (truck.eta !== null) {
       const share = index === 3 ? 1 : 0.5;
-      timeText = t('Expected {time}', { time: formatClock(new Date(now + truck.eta * share * 60000)) });
+      timeText = t('Expected {time}', { time: formatClock(new Date(Date.now() + truck.eta * share * 60000)) });
     }
     setText(step.querySelector('.timeline__label'), t(ROUTE_STEPS[index]));
     setText(step.querySelector('.timeline__place'), t(place));
@@ -2730,14 +2751,28 @@ function renderClient() {
   setText(el['custody-operator'], t(truck.operator));
 
   /* Documents */
+  const docPlain = {
+    valid: 'This certificate proves your shipment stayed cold for the whole trip.',
+    hold: 'The certificate is on hold while the temperature problem is being fixed.',
+    revalidate: 'The certificate is being checked again and will be signed shortly.',
+    'not-issued': 'The certificate will be issued once your shipment is on its way.'
+  };
+  const figures = certificateFigures(truck);
+  setText(el['doc-plain'], t(docPlain[cert.status]));
   setText(el['doc-heading'], ltr(cert.serial));
   setChip(el['doc-status'], t(certMeta.label), certMeta.chip);
   setText(
     el['doc-validated'],
-    cert.signedAt && cert.status === 'valid' ? formatDateTime(cert.signedAt) : t(certMeta.label)
+    cert.signedAt && cert.status === 'valid' ? formatDateTime(new Date(cert.signedAt)) : t(certMeta.label)
   );
-  setText(el['doc-excursions'], excursionText(truck.log.excursions));
-  setText(el['doc-door'], t('{count} Unauthorized Openings', { count: truck.log.doorOpenings }));
+  setText(el['doc-excursions'], excursionText(figures.excursions));
+  setText(el['doc-door'], t('{count} Unauthorized Openings', { count: figures.doorOpenings }));
+}
+
+/* A valid certificate shows the figures it was signed with; otherwise the live log. */
+function certificateFigures(truck) {
+  const cert = truck.certificate;
+  return cert.status === 'valid' && cert.record ? cert.record : truck.log;
 }
 
 function excursionText(count) {
