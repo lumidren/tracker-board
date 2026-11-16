@@ -718,6 +718,34 @@
       excursions: truck.log.excursions,
       doorOpenings: truck.log.doorOpenings
     });
+
+    function clientTruck(truck) {
+      const view = {};
+      CLIENT_FIELDS.forEach((field) => {
+        const value = truck[field];
+        view[field] = Array.isArray(value) ? value.slice() : value;
+      });
+      view.log = logView(truck);
+      view.certificate = certificateView(truck);
+      return view;
+    }
+
+    function adminTruck(truck) {
+      const view = { ...truck, history: truck.history.slice() };
+      view.log = logView(truck);
+      view.certificate = certificateView(truck);
+      view.health = healthOf(truck);
+      view.signBlock = signBlock(truck);
+      view.openAlerts = openAlerts(truck.id).length;
+      return view;
+    }
+
+    function visibleTo(actor, truck) {
+      if (actor.portal === 'admin') {
+        return true;
+      }
+      return actor.access === 'receiver' ? truck.consigneeOrg === actor.org : truck.consignorOrg === actor.org;
+    }
     return {};
   }
 
