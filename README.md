@@ -18,8 +18,21 @@ No framework, no build step, no dependencies: `index.html`, `style.css`, `script
 
 - Fleet telemetry grid: chiller power, uplink and internal temperature per unit
 - Hardware health: seven checks per unit (probe battery, uplink, compressor, reserve tank, tamper seal, calibration, firmware), each rated Nominal, Attention or Fault
-- Incident drill: simulate a compressor failure and a +9.0 C excursion, normalize the sensor, then re-sign the certificate
-- Hash-chained audit log covering drills, signatures and sign-in activity
+- Incident drill: simulate a compressor failure and a +9.0 C excursion, normalize the sensor, acknowledge the alert, then re-sign the certificate
+- Alert history: every excursion stays on record after it ends, with start time, duration, peak reading and who acknowledged it. A certificate cannot be re-signed while its unit has an unacknowledged alert
+- Hash-chained audit log covering drills, acknowledgements, signatures and sign-in activity
+
+**Certificate verification**
+
+- Every signed certificate carries a real QR code, generated in the page with no library (byte mode, error correction level M, Reed-Solomon, automatic mask selection)
+- Scanning it opens a public verification page that recomputes the SHA-256 digest from the fields in the code and reports whether they match
+- Changing any field in the link (a reading, the excursion count, the signing time) makes verification fail
+
+**Languages**
+
+- English and Arabic, switched from the top bar and remembered per browser
+- Arabic uses a full right-to-left layout; identifiers, readings and numeric scales keep their left-to-right order
+- Translations live in one table in `script.js` keyed by the English text, so the markup needs no per-element keys
 
 **Access control**
 
@@ -55,4 +68,6 @@ This is a front-end prototype. Be clear about what is simulated:
 - **Authentication runs in the browser.** Demo accounts ship inside `script.js`, so sign-in is a user-experience layer, not a security boundary. A production build needs a server that verifies credentials, issues sessions and returns only the data each role may see.
 - **Telemetry is generated locally.** There is no device feed; a reload resets all state.
 - **The certificate digest is a real SHA-256** of the certificate fields, but nothing signs or stores it server-side.
-- **The verification block is a visual placeholder**, not a decodable QR code.
+- **Verification proves integrity, not origin.** The QR code carries the record and its digest, so the page can show the fields were not altered after signing. It cannot show who issued them; that needs a server-side registry or a digital signature whose private key never reaches the browser.
+- **A phone can only open the QR link if it can reach the address in it.** A code generated on `localhost` points at `localhost`; host the site, or open it through the computer's network address, before scanning from another device.
+- **Alert history lasts for the session**, like the rest of the simulated state.
