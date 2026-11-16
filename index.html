@@ -380,6 +380,34 @@
             </button>
           </section>
 
+          <!-- ================= ADMIN: MAP ================= -->
+          <section class="panel" data-role="admin" data-panel="map" aria-label="Fleet map" hidden>
+            <header class="panel__head">
+              <p class="eyebrow">Fleet Map</p>
+              <h1 class="panel__title">Live Positions</h1>
+              <p class="panel__sub" id="map-summary"></p>
+            </header>
+
+            <article class="card map-card">
+              <svg class="map" id="fleet-map" role="group" aria-label="Map of all units"></svg>
+              <p class="map__caption">Tap a unit on the map to see its details.</p>
+            </article>
+
+            <article class="card" id="map-unit-card" aria-labelledby="map-unit-id">
+              <header class="card__head">
+                <h2 class="unit-card__id" id="map-unit-id"></h2>
+                <span class="chip" id="map-unit-status"></span>
+              </header>
+              <dl class="facts">
+                <div class="facts__row"><dt>Cargo</dt><dd id="map-unit-cargo"></dd></div>
+                <div class="facts__row"><dt>Route</dt><dd id="map-unit-route"></dd></div>
+                <div class="facts__row"><dt>Internal Temperature</dt><dd id="map-unit-temp"></dd></div>
+                <div class="facts__row"><dt>Arrival</dt><dd id="map-unit-eta"></dd></div>
+              </dl>
+              <button type="button" class="btn btn--outline btn--block btn--small" data-action="goto-unit">Open Unit</button>
+            </article>
+          </section>
+
           <!-- ================= ADMIN: DIAGNOSTICS ================= -->
           <section class="panel" data-role="admin" data-panel="diagnostics" aria-label="Sensor and chiller diagnostics" hidden>
             <header class="panel__head">
