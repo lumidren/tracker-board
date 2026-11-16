@@ -876,3 +876,74 @@ function buildDock() {
       <span>${item.label}</span>
     </button>`).join('');
 }
+
+/* --------------------------------------------------------------------------
+   Rendering
+   -------------------------------------------------------------------------- */
+function render() {
+  renderShell();
+  renderClient();
+  renderFleet();
+  renderDiagnostics();
+  renderControls();
+  renderCertificate();
+  renderModal();
+}
+
+function renderShell() {
+  const role = state.currentRole;
+  const authed = isAuthed(role);
+  const truck = viewTruck();
+  const panelId = state.activePanel[role];
+  const alertInView = authed && (role === 'admin' ? state.isExcursionActive : truck.status === 'excursion');
+
+  el.app.dataset.role = role;
+  el.app.dataset.alert = String(alertInView);
+  el.app.dataset.authed = String(authed);
+  document.body.dataset.authed = String(authed);
+  el['role-switch'].dataset.role = role;
+
+  el['auth-panel'].hidden = authed;
+  el.dock.hidden = !authed;
+  el['live-chip'].hidden = !authed;
+  el['account-bar'].hidden = !authed;
+  if (authed) {
+    setText(el['account-name'], state.session[role].name);
+  }
+  renderAuth();
+
+  all('[data-role-target]').forEach((button) => {
+    button.setAttribute('aria-pressed', String(button.dataset.roleTarget === role));
+  });
+
+  all('.panel[data-panel]').forEach((panel) => {
+    const visible = authed && panel.dataset.role === role && panel.dataset.panel === panelId;
+    if (panel.hidden === visible) {
+      panel.hidden = !visible;
+    }
+  });
+
+  const items = DOCK_ITEMS[role];
+  const index = Math.max(0, items.findIndex((item) => item.id === panelId));
+  el.dock.style.setProperty('--dock-index', String(index));
+  all('.dock-item', el.dock).forEach((button) => {
+    if (button.dataset.panelTarget === panelId) {
+      button.setAttribute('aria-current', 'page');
+    } else {
+      button.removeAttribute('aria-current');
+    }
+  });
+
+  const showAdminAlert = authed && role === 'admin' && state.isExcursionActive;
+  el['admin-alert'].hidden = !showAdminAlert;
+  if (showAdminAlert) {
+    const affected = getTruck(state.excursionTruckId);
+    setText(el['admin-alert-title'], `Active Excursion • Unit #${affected.id}`);
+    setText(
+      el['admin-alert-note'],
+      `Internal temperature ${formatTemp(affected.tempCurrent)}, above the ${formatTemp(affected.tempMax)} limit. Compliance violation flagged.`
+    );
+  }
+
+  renderLiveChip();
+}
