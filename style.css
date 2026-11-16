@@ -1259,3 +1259,56 @@ button {
   font-size: 12px;
   color: var(--muted);
 }
+
+.audit {
+  display: grid;
+}
+
+.audit__entry {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  column-gap: 10px;
+  padding: 10px 0;
+  border-top: 1px solid var(--border);
+}
+
+.audit__entry:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.audit__entry:last-child {
+  padding-bottom: 0;
+}
+
+.audit__marker {
+  width: 8px;
+  height: 8px;
+  margin-top: 5px;
+  border-radius: 50%;
+  background: var(--ice);
+}
+
+.audit__entry[data-kind="alert"] .audit__marker {
+  background: var(--alert);
+}
+
+.audit__entry[data-kind="sign"] .audit__marker,
+.audit__entry[data-kind="ok"] .audit__marker {
+  background: var(--safe);
+}
+
+.audit__message {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.audit__meta {
+  grid-column: 2;
+  margin-top: 2px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
