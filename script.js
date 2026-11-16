@@ -1422,3 +1422,45 @@ function hideToast() {
   window.clearTimeout(toastTimer);
   el.toast.classList.remove('is-visible');
 }
+
+/* --------------------------------------------------------------------------
+   Live telemetry
+   -------------------------------------------------------------------------- */
+function jitter(span) {
+  return (Math.random() - 0.5) * span;
+}
+
+function sampleTemperature(truck) {
+  const base = truck.tempBaseline + (truck.status === 'excursion' ? EXCURSION_DELTA_C : 0);
+  return round1(base + jitter(0.5));
+}
+
+function liveTick() {
+  state.trucks.forEach((truck) => {
+    truck.tempCurrent = sampleTemperature(truck);
+    truck.history.push(truck.tempCurrent);
+    truck.history = truck.history.slice(-HISTORY_POINTS);
+    truck.uplinkPing = clamp(Math.round(truck.uplinkPing + jitter(6)), 28, 72);
+    if (truck.status === 'excursion') {
+      truck.log.max = Math.max(truck.log.max, truck.tempCurrent);
+    } else {
+      truck.compressorRpm = truck.compressorNominalRpm + Math.round(jitter(40));
+    }
+  });
+  renderShell();
+  renderClient();
+  renderFleet();
+  renderDiagnostics();
+  if (state.isExcursionActive) {
+    renderCertificate();
+  }
+}
+
+function etaTick() {
+  state.trucks.forEach((truck) => {
+    if (truck.eta !== null && truck.eta > 1) {
+      truck.eta -= 1;
+    }
+  });
+  renderClient();
+}
