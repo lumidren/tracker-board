@@ -509,6 +509,32 @@
         derive(truck);
       });
     }
+
+    /* Returns the reason a control room action is refused, or ''. */
+    function denied(actor, permission) {
+      const allowed = actor && actor.portal === 'admin' && Array.isArray(actor.permissions)
+        && actor.permissions.includes(permission);
+      return allowed ? '' : ROLE_ERROR;
+    }
+
+    const openAlerts = (truckId) => state.alerts.filter((alert) => alert.truckId === truckId && !alert.acknowledgedAt);
+
+    /* The English reason signing is blocked for a unit, or ''. */
+    function signBlock(truck) {
+      if (truck.status === 'excursion') {
+        return 'Signing is blocked while an excursion is active. Normalize the sensor first.';
+      }
+      if (truck.baseStatus === 'standby') {
+        return 'Unit is on standby. There is no in-transit log to validate yet.';
+      }
+      if (!isInSpec(truck)) {
+        return 'Signing is blocked while the reading is outside the permitted range.';
+      }
+      if (openAlerts(truck.id).length > 0) {
+        return 'Acknowledge the open alert for this unit before signing.';
+      }
+      return '';
+    }
     return {};
   }
 
