@@ -2608,45 +2608,53 @@ function renderCertificate() {
   const log = truck.log;
 
   el.certificate.dataset.tone = certMeta.tone;
-  setText(el['cert-serial'], cert.serial);
-  setText(el['cert-consignor'], `${truck.consignor} (${truck.consignorDept})`);
-  setText(el['cert-consignee'], `${truck.consignee} (${truck.consigneeTerminal})`);
-  setText(el['cert-vehicle'], `Unit #${truck.id} (${truck.vehicleClass})`);
-  setText(el['cert-operator'], truck.operator);
-  setText(el['cert-cargo'], `${truck.consignmentId} • ${truck.cargo}`);
+  setText(el['cert-serial'], ltr(cert.serial));
+  setText(el['cert-consignor'], `${t(truck.consignor)} (${t(truck.consignorDept)})`);
+  setText(el['cert-consignee'], `${t(truck.consignee)} (${t(truck.consigneeTerminal)})`);
+  setText(el['cert-vehicle'], t('Unit {id} ({vehicle})', { id: `#${truck.id}`, vehicle: truck.vehicleClass }));
+  setText(el['cert-operator'], t(truck.operator));
+  setText(el['cert-cargo'], `${ltr(truck.consignmentId)} • ${t(truck.cargo)}`);
   setText(
     el['cert-setpoint'],
-    `${formatTemp(truck.tempTarget)} (Permissible Range: ${formatTemp(truck.tempMin)} to ${formatTemp(truck.tempMax)})`
+    t('{target} (Permissible Range: {min} to {max})', {
+      target: plainTemp(truck.tempTarget),
+      min: plainTemp(truck.tempMin),
+      max: plainTemp(truck.tempMax)
+    })
   );
 
   setText(
     el['cert-duration'],
-    truck.baseStatus === 'standby' ? 'Not Commenced (Pre-Departure Conditioning)' : formatDuration(log.transitMinutes)
+    truck.baseStatus === 'standby' ? t('Not Commenced (Pre-Departure Conditioning)') : formatDuration(log.transitMinutes)
   );
   setText(el['cert-minmax'], `${formatTemp(log.min)} / ${formatTemp(log.max)}`);
-  setText(el['cert-excursions'], excursionText(truck));
+  setText(el['cert-excursions'], excursionText(log.excursions));
   el['cert-excursions'].dataset.tone = log.excursions === 0 ? 'default' : 'alert';
-  setText(el['cert-door'], `${log.doorOpenings} Unauthorized Openings`);
-  setText(el['cert-seal'], `#${truck.sealId} (Engaged)`);
+  setText(el['cert-door'], t('{count} Unauthorized Openings', { count: log.doorOpenings }));
+  setText(el['cert-seal'], t('{seal} (Engaged)', { seal: `#${truck.sealId}` }));
 
-  setText(el['cert-stamp-title'], certMeta.stamp);
-  let stampMeta = 'Certificate not in force';
+  setText(el['cert-stamp-title'], t(certMeta.stamp));
+  let stampMeta = t('Certificate not in force');
   if (cert.status === 'valid' && cert.signedAt) {
-    stampMeta = `Signed ${formatDateTime(cert.signedAt)} by ${PERSONNEL.qaOfficer}`;
+    stampMeta = t('Signed {time} by {name}', { time: formatDateTime(cert.signedAt), name: PERSONNEL.qaOfficer });
   } else if (cert.status === 'hold') {
-    stampMeta = 'Seal suspended pending corrective action and QA review';
+    stampMeta = t('Seal suspended pending corrective action and QA review');
   } else if (cert.status === 'revalidate') {
-    stampMeta = 'Telemetry nominal, awaiting signature';
+    stampMeta = t('Telemetry nominal, awaiting signature');
   }
   setText(el['cert-stamp-meta'], stampMeta);
-  el['cert-stamp-tick'].setAttribute(
-    'd',
-    cert.status === 'valid' ? 'M16.5 24.5l5 5 10-10.5' : cert.status === 'hold' ? 'M24 15v11M24 31.500v.500' : 'M17 24h14'
-  );
+
+  let tick = 'M17 24h14';
+  if (cert.status === 'valid') {
+    tick = 'M16.5 24.5l5 5 10-10.5';
+  } else if (cert.status === 'hold') {
+    tick = 'M24 15v11M24 31.5v.5';
+  }
+  el['cert-stamp-tick'].setAttribute('d', tick);
 
   setText(el['cert-hash'], hashLabel(cert));
-  setText(el['cert-signer'], cert.status === 'valid' ? PERSONNEL.qaOfficer : 'Signature pending');
-  renderVerificationBlock(`${cert.serial}|${cert.status}|${cert.hash}`);
+  setText(el['cert-signer'], t(cert.status === 'valid' ? PERSONNEL.qaOfficer : 'Signature pending'));
+  renderVerificationBlock(truck);
 }
 
 function renderModal() {
