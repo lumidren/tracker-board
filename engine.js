@@ -168,5 +168,25 @@
       warnings: levels.filter((item) => item === 'warn').length
     };
   }
+
+  /* The canonical record hashed when a certificate is signed, and hashed again
+     by anyone verifying it. */
+  function certificatePayload(truck, record) {
+    return [
+      truck.certificate.serial,
+      truck.id,
+      truck.consignmentId,
+      truck.tempTarget,
+      truck.tempMin,
+      truck.tempMax,
+      record.transitMinutes,
+      record.min,
+      record.max,
+      record.excursions,
+      record.doorOpenings,
+      truck.sealId,
+      new Date(record.signedAt).toISOString()
+    ].join('|');
+  }
   return {};
 });
