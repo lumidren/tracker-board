@@ -2301,28 +2301,34 @@ function chillerState(truck) {
 
 function renderFleet() {
   const enRoute = state.trucks.filter((truck) => truck.baseStatus === 'en-route').length;
-  const standby = state.trucks.length - enRoute;
-  setText(el['fleet-summary'], `${state.trucks.length} units monitored • ${enRoute} en route • ${standby} on standby`);
+  setText(
+    el['fleet-summary'],
+    t('{total} units monitored • {enRoute} en route • {standby} on standby', {
+      total: state.trucks.length,
+      enRoute,
+      standby: state.trucks.length - enRoute
+    })
+  );
 
   state.trucks.forEach((truck) => {
     const card = el['fleet-grid'].querySelector(`[data-truck="${truck.id}"]`);
     const meta = UNIT_STATUS[truck.status];
     const chiller = chillerState(truck);
+    const health = healthSummary(truck);
     const tempNode = card.querySelector('[data-field="temp"]');
     const chillerNode = card.querySelector('[data-field="chiller"]');
+    const healthNode = card.querySelector('[data-field="health"]');
 
     card.setAttribute('aria-pressed', String(truck.id === state.activeTruckId));
     card.dataset.status = truck.status;
-    setChip(card.querySelector('[data-field="status"]'), meta.label, meta.chip);
-    setText(card.querySelector('[data-field="cargo"]'), `${truck.cargoShort} • ${truck.consignmentId}`);
+    setText(card.querySelector('[data-field="unit"]'), t('Unit {id}', { id: `#${truck.id}` }));
+    setChip(card.querySelector('[data-field="status"]'), t(meta.label), meta.chip);
+    setText(card.querySelector('[data-field="cargo"]'), `${t(truck.cargoShort)} • ${ltr(truck.consignmentId)}`);
     setText(tempNode, formatTemp(truck.tempCurrent));
     tempNode.dataset.tone = isInSpec(truck) ? 'default' : 'alert';
-    setText(chillerNode, chiller.label);
+    setText(chillerNode, t(chiller.label));
     chillerNode.dataset.tone = chiller.tone;
-    setText(card.querySelector('[data-field="uplink"]'), `Online • ${truck.uplinkPing}ms`);
-
-    const health = healthSummary(truck);
-    const healthNode = card.querySelector('[data-field="health"]');
+    setText(card.querySelector('[data-field="uplink"]'), t('Online • {ping}', { ping: `${truck.uplinkPing}ms` }));
     setText(healthNode, health.label);
     healthNode.dataset.tone = health.tone;
   });
@@ -2333,7 +2339,7 @@ function renderFleet() {
     button.dataset.status = truck.status;
   });
 
-  setText(el['fleet-goto-label'], `Open Diagnostics for Unit #${state.activeTruckId}`);
+  setText(el['fleet-goto-label'], t('Open Diagnostics for Unit {id}', { id: `#${state.activeTruckId}` }));
 }
 
 function renderSparkline(truck) {
