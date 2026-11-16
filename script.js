@@ -814,3 +814,20 @@ function cacheElements() {
   el.modal = byId('certificate-modal');
   el.viewport = byId('viewport');
 }
+
+function buildStepper() {
+  el['route-stepper'].innerHTML = ROUTE_STEPS.map((label, index) => `
+    <li class="stepper__step" data-state="upcoming">
+      <span class="stepper__node"><span class="stepper__num">${index + 1}</span>${iconMarkup('i-check')}</span>
+      <span class="stepper__label">${label.replace('-', '‑')}</span>
+    </li>`).join('');
+}
+
+function buildTimeline() {
+  el['journey-timeline'].innerHTML = ROUTE_STEPS.map((label) => `
+    <li class="timeline__step" data-state="upcoming">
+      <p class="timeline__label">${label}</p>
+      <p class="timeline__place"></p>
+      <p class="timeline__time"></p>
+    </li>`).join('');
+}
