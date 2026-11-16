@@ -1041,3 +1041,46 @@ button {
 .metric__value[data-tone="alert"] {
   color: var(--alert-strong);
 }
+
+.unit-picker {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  padding: 4px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.unit-picker__option {
+  position: relative;
+  height: 36px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.unit-picker__option:hover {
+  color: var(--text);
+}
+
+.unit-picker__option[aria-pressed="true"] {
+  background: var(--ice-soft);
+  color: var(--ice-strong);
+  box-shadow: inset 0 0 0 1px var(--ice-line);
+}
+
+.unit-picker__option[data-status="excursion"] {
+  color: var(--alert-strong);
+}
+
+.unit-picker__option[data-status="excursion"][aria-pressed="true"] {
+  background: var(--alert-soft);
+  box-shadow: inset 0 0 0 1px var(--alert-line);
+}
