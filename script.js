@@ -455,3 +455,14 @@ function restoreSession() {
     state.clientTruckId = account.trucks.includes(saved.clientTruckId) ? saved.clientTruckId : account.trucks[0];
   }
 }
+
+function lockSecondsLeft(role = state.currentRole) {
+  return Math.max(0, Math.ceil((state.auth.lockedUntil[role] - Date.now()) / 1000));
+}
+
+function resetAuthForm() {
+  el['auth-form'].reset();
+  el['auth-password'].type = 'password';
+  el['auth-toggle'].setAttribute('aria-pressed', 'false');
+  setText(el['auth-toggle'], 'Show');
+}
