@@ -923,22 +923,24 @@ async function sha256Hex(text) {
 /* --------------------------------------------------------------------------
    Audit log (hash-chained entries)
    -------------------------------------------------------------------------- */
-function appendLog(kind, message) {
+/* Entries keep their English source and values, so the log can be shown in
+   either language while the chain is always hashed over the English text. */
+function appendLog(kind, source, params) {
   const entry = {
     seq: state.auditLog.length + 1,
     time: new Date(),
     kind,
-    message,
+    source,
+    params,
     digest: ''
   };
   state.auditLog.push(entry);
   renderAuditLog();
 
   logChain = logChain.then(async (previous) => {
-    const digest = await sha256Hex(`${previous}|${entry.seq}|${entry.time.toISOString()}|${entry.message}`);
-    entry.digest = digest || '';
+    entry.digest = await sha256Hex(`${previous}|${entry.seq}|${entry.time.toISOString()}|${fmt(source, params)}`);
     renderAuditLog();
-    return digest || previous;
+    return entry.digest;
   });
 }
 
