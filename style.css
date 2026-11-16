@@ -1938,3 +1938,112 @@ button {
 .link-btn:hover {
   text-decoration: underline;
 }
+
+.auth {
+  padding-top: 14px;
+}
+
+.auth__badge {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  margin-left: 4px;
+  border-radius: 16px;
+  border: 1px solid var(--ice-line);
+  background: var(--ice-soft);
+  color: var(--ice-strong);
+}
+
+.auth__badge .icon {
+  width: 24px;
+  height: 24px;
+}
+
+.auth__form {
+  display: grid;
+  gap: 14px;
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+}
+
+.field__label {
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--text-soft);
+}
+
+.field__group {
+  position: relative;
+}
+
+.field__input {
+  width: 100%;
+  height: 48px;
+  padding: 0 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: 13px;
+  background: var(--surface);
+  font: inherit;
+  font-size: 16px;
+  color: var(--text);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.field__input:hover {
+  border-color: #94A3B8;
+}
+
+.field__input:focus {
+  outline: none;
+  border-color: var(--ice);
+  box-shadow: 0 0 0 3px var(--ice-soft);
+}
+
+.field__group .field__input {
+  padding-right: 68px;
+}
+
+.field__toggle {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  height: 36px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 9px;
+  background: var(--canvas);
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--ice-strong);
+  cursor: pointer;
+}
+
+.auth__error {
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--alert-line);
+  background: var(--alert-soft);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--alert-strong);
+}
+
+.auth__demo-title {
+  font-weight: 650;
+  color: var(--text);
+}
+
+.auth__demo .btn {
+  margin-top: 10px;
+}
+
+.btn--small {
+  min-height: 38px;
+  padding: 0 14px;
+  border-radius: 12px;
+  font-size: 13px;
+}
