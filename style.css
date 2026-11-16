@@ -808,3 +808,104 @@ button {
 .stepper__step[data-state="current"] .stepper__label {
   color: var(--text);
 }
+
+/* Vertical journey timeline */
+.timeline {
+  display: grid;
+}
+
+.timeline__step {
+  position: relative;
+  padding: 0 0 18px 30px;
+}
+
+.timeline__step:last-child {
+  padding-bottom: 0;
+}
+
+.timeline__step::before {
+  content: "";
+  position: absolute;
+  top: 16px;
+  bottom: -2px;
+  left: 6px;
+  width: 2px;
+  background: var(--border);
+}
+
+.timeline__step:last-child::before {
+  display: none;
+}
+
+.timeline__step[data-state="done"]::before {
+  background: var(--ice);
+}
+
+.timeline__step::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 0;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--border-strong);
+  background: var(--surface);
+}
+
+.timeline__step[data-state="done"]::after {
+  border-color: var(--ice);
+  background: var(--ice);
+}
+
+.timeline__step[data-state="current"]::after {
+  border-color: var(--ice);
+  box-shadow: 0 0 0 4px var(--ice-soft);
+}
+
+.timeline__label {
+  font-size: 13.5px;
+  font-weight: 650;
+}
+
+.timeline__place {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.timeline__time {
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ice-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+.timeline__step[data-state="upcoming"] .timeline__label {
+  color: var(--text-soft);
+}
+
+.timeline__step[data-state="upcoming"] .timeline__time {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.doc-card .btn {
+  margin-top: 16px;
+}
+
+.note-card {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  background: var(--ice-soft);
+  border-color: var(--ice-line);
+  box-shadow: none;
+  font-size: 12.5px;
+  color: var(--text-soft);
+}
+
+.note-card .icon {
+  margin-top: 1px;
+  color: var(--ice-strong);
+}
