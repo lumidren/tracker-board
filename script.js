@@ -1536,3 +1536,29 @@ function handleKeydown(event) {
     first.focus();
   }
 }
+
+/* --------------------------------------------------------------------------
+   Boot
+   -------------------------------------------------------------------------- */
+function seedData() {
+  state.trucks.forEach((truck, index) => {
+    truck.history = Array.from({ length: HISTORY_POINTS }, () => sampleTemperature(truck));
+    truck.tempCurrent = truck.tempBaseline;
+    truck.history[truck.history.length - 1] = truck.tempCurrent;
+    if (truck.certificate.status === 'valid') {
+      truck.certificate.signedAt = new Date(loadedAt - (6 + index * 5) * 60000);
+    }
+  });
+}
+
+function seedAuditLog() {
+  appendLog('info', 'Telemetry session opened. 3 units reporting on 60 second sampling.');
+  state.trucks.forEach((truck) => {
+    appendLog('info', `Electronic seal #${truck.sealId} engaged on Unit #${truck.id}.`);
+  });
+  state.trucks
+    .filter((truck) => truck.certificate.status === 'valid')
+    .forEach((truck) => {
+      appendLog('sign', `Certificate ${truck.certificate.serial} validated by ${PERSONNEL.qaOfficer}.`);
+    });
+}
