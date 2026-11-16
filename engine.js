@@ -645,6 +645,33 @@
       });
       return done();
     }
+
+    function signCertificate(actor, truckId) {
+      const refusal = denied(actor, 'sign');
+      const truck = findTruck(truckId);
+      if (refusal) {
+        return fail(refusal);
+      }
+      if (!truck) {
+        return fail('Unknown unit.');
+      }
+      const reason = signBlock(truck);
+      if (reason) {
+        return fail(reason);
+      }
+      issue(truck, now(), actor.name);
+      log(
+        'sign',
+        'Certificate {serial} signed by {name}. Continuous log validated: {excursions} excursions, {openings} unauthorized openings.',
+        {
+          serial: truck.certificate.serial,
+          name: actor.name,
+          excursions: truck.log.excursions,
+          openings: truck.log.doorOpenings
+        }
+      );
+      return done();
+    }
     return {};
   }
 
