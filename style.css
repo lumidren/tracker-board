@@ -719,3 +719,92 @@ button {
   height: 18px;
   color: var(--ice);
 }
+
+/* Horizontal step progress */
+.stepper {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.stepper__step {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.stepper__step::before {
+  content: "";
+  position: absolute;
+  top: 12px;
+  right: 50%;
+  width: 100%;
+  height: 2px;
+  background: var(--border);
+}
+
+.stepper__step:first-child::before {
+  display: none;
+}
+
+.stepper__step[data-state="done"]::before,
+.stepper__step[data-state="current"]::before {
+  background: var(--ice);
+}
+
+.stepper__node {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.stepper__node .icon {
+  display: none;
+  width: 14px;
+  height: 14px;
+  stroke-width: 2.6;
+}
+
+.stepper__step[data-state="done"] .stepper__node {
+  border-color: var(--ice);
+  background: var(--ice);
+  color: #FFFFFF;
+}
+
+.stepper__step[data-state="done"] .stepper__node .icon {
+  display: block;
+}
+
+.stepper__step[data-state="done"] .stepper__num {
+  display: none;
+}
+
+.stepper__step[data-state="current"] .stepper__node {
+  border-color: var(--ice);
+  color: var(--ice-strong);
+  box-shadow: 0 0 0 4px var(--ice-soft);
+}
+
+.stepper__label {
+  padding: 0 3px;
+  font-size: 10.5px;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--muted);
+}
+
+.stepper__step[data-state="done"] .stepper__label,
+.stepper__step[data-state="current"] .stepper__label {
+  color: var(--text);
+}
