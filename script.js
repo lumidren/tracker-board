@@ -1579,3 +1579,41 @@ function secondTick() {
 function markActivity() {
   state.lastActivityAt = Date.now();
 }
+
+function init() {
+  cacheElements();
+  seedData();
+  restoreSession();
+
+  buildStepper();
+  buildTimeline();
+  buildFleet();
+  buildUnitPickers();
+  buildDock();
+
+  document.addEventListener('click', handleClick);
+  document.addEventListener('keydown', handleKeydown);
+  document.addEventListener('pointerdown', markActivity, { passive: true });
+  document.addEventListener('keydown', markActivity);
+  el['auth-form'].addEventListener('submit', (event) => {
+    event.preventDefault();
+    submitSignIn();
+  });
+  window.addEventListener('beforeprint', renderCertificate);
+
+  render();
+  seedAuditLog();
+  state.trucks.forEach((truck) => {
+    refreshCertificateHash(truck);
+  });
+
+  window.setInterval(liveTick, LIVE_TICK_MS);
+  window.setInterval(etaTick, ETA_TICK_MS);
+  window.setInterval(secondTick, 1000);
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
