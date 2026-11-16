@@ -89,3 +89,25 @@ function readBody(req) {
     req.on('error', reject);
   });
 }
+
+/* Requests that change something must be JSON sent by the page itself. A form
+   on another site cannot set this header or content type, and the session
+   cookie is SameSite=Strict as a second barrier. */
+function guardWrite(req) {
+  const type = String(req.headers['content-type'] || '');
+  if (!type.startsWith('application/json') || req.headers['x-requested-with'] !== 'maatora') {
+    throw new HttpError(403, 'forbidden');
+  }
+  const origin = req.headers.origin;
+  if (origin) {
+    let host = '';
+    try {
+      host = new URL(origin).host;
+    } catch (error) {
+      host = '';
+    }
+    if (host !== req.headers.host) {
+      throw new HttpError(403, 'forbidden');
+    }
+  }
+}
