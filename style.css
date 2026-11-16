@@ -1,0 +1,49 @@
+/* ==========================================================================
+   Maatora | Cold-Chain Monitoring
+   1. Design tokens        6. Client view            11. Certificate
+   2. Base & utilities     7. Admin view             12. Motion preferences
+   3. Stage & device       8. Glass dock & toast     13. Responsive
+   4. Top bar              9. Buttons                14. Print (A4 certificate)
+   5. Shared components   10. Modal
+   ========================================================================== */
+
+/* 1. Design tokens --------------------------------------------------------- */
+:root {
+  --surface: #FFFFFF;
+  --canvas: #F4F7FA;
+  --border: #E2E8F0;
+  --border-strong: #CBD5E1;
+  --text: #0F172A;
+  --text-soft: #334155;
+  --muted: #64748B;
+
+  --ice: #0284C7;
+  --ice-strong: #0369A1;
+  --ice-soft: rgba(2, 132, 199, 0.08);
+  --ice-line: rgba(2, 132, 199, 0.22);
+
+  --safe: #10B981;
+  --safe-strong: #047857;
+  --safe-soft: rgba(16, 185, 129, 0.1);
+  --safe-line: rgba(16, 185, 129, 0.3);
+
+  --alert: #EF4444;
+  --alert-strong: #B91C1C;
+  --alert-soft: rgba(239, 68, 68, 0.1);
+  --alert-line: rgba(239, 68, 68, 0.34);
+
+  --font-sans: "Inter", "Segoe UI Variable Text", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "Cascadia Mono", "SF Mono", Consolas, "Liberation Mono", monospace;
+
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 20px;
+  --radius-pill: 999px;
+
+  --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.04), 0 6px 16px -12px rgba(15, 23, 42, 0.12);
+  --shadow-float: 0 14px 34px -14px rgba(15, 23, 42, 0.3), 0 0 0 1px rgba(15, 23, 42, 0.05);
+  --shadow-chassis: 0 50px 90px -40px rgba(15, 23, 42, 0.34), 0 18px 36px -24px rgba(15, 23, 42, 0.22);
+
+  --ease-out: cubic-bezier(0.3, 0.8, 0.25, 1);
+  --dock-height: 66px;
+}
