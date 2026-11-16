@@ -2907,14 +2907,14 @@ function renderSparkline(truck) {
   const height = 84;
   const padY = 8;
   const values = truck.history;
+  const points = values.length;
   const low = Math.min(truck.tempMin - 1.5, ...values);
   const high = Math.max(truck.tempMax + 1.5, ...values) + 0.5;
   const toY = (value) => padY + ((high - value) / (high - low)) * (height - padY * 2);
-  const stepX = (width - 8) / Math.max(1, HISTORY_POINTS - 1);
-  const offset = HISTORY_POINTS - values.length;
+  const stepX = (width - 8) / Math.max(1, points - 1);
 
-  const points = values.map((value, index) => `${round1((offset + index) * stepX + 2)},${round1(toY(value))}`);
-  el['spark-line'].setAttribute('points', points.join(' '));
+  const coordinates = values.map((value, index) => `${round1(index * stepX + 2)},${round1(toY(value))}`);
+  el['spark-line'].setAttribute('points', coordinates.join(' '));
 
   const bandTop = toY(truck.tempMax);
   const bandBottom = toY(truck.tempMin);
@@ -2925,13 +2925,16 @@ function renderSparkline(truck) {
   el['spark-setpoint'].setAttribute('y1', setpointY);
   el['spark-setpoint'].setAttribute('y2', setpointY);
 
-  const last = points[points.length - 1].split(',');
+  const last = coordinates[coordinates.length - 1].split(',');
   el['spark-dot'].setAttribute('cx', last[0]);
   el['spark-dot'].setAttribute('cy', last[1]);
 }
 
-function renderDiagnostics() {
+function renderUnit() {
   const truck = activeTruck();
+  if (!truck) {
+    return;
+  }
   const meta = UNIT_STATUS[truck.status];
   const inExcursion = truck.status === 'excursion';
 
@@ -2950,19 +2953,19 @@ function renderDiagnostics() {
   );
   renderSparkline(truck);
 
+  /* Hardware health */
   const health = healthSummary(truck);
   setChip(el['health-chip'], health.label, health.chip);
-  Object.entries(hardwareChecks(truck)).forEach(([key, level]) => {
+  Object.entries(truck.health.checks).forEach(([key, level]) => {
     const levelMeta = HEALTH_LEVELS[level];
-    const stateNode = byId(`state-${key}`);
+    const stateNode = el[`state-${key}`];
     setText(stateNode, t(levelMeta.label));
     stateNode.dataset.tone = levelMeta.tone;
-    byId(`row-${key}`).dataset.tone = level === 'fault' ? 'alert' : 'default';
+    el[`row-${key}`].dataset.tone = level === 'fault' ? 'alert' : 'default';
   });
 
   setText(el['diag-battery'], t('{percent} (Li-SOCl2 Cell, 3.6V)', { percent: `${truck.sensorBattery}%` }));
   el['bar-battery'].parentElement.style.setProperty('--fill', `${truck.sensorBattery}%`);
-
   setText(
     el['diag-uplink'],
     t('4G LTE / Satellite Failover (Ping: {ping} • {signal})', {
@@ -2970,17 +2973,14 @@ function renderDiagnostics() {
       signal: `${truck.uplinkSignal} dBm`
     })
   );
-
   setText(
     el['diag-compressor'],
     inExcursion
       ? t('0 RPM (Compressor Fault, Inverter Trip)')
       : t('{rpm} RPM (Inverter Variable Frequency)', { rpm: truck.compressorRpm.toLocaleString('en-US') })
   );
-
   setText(el['diag-fuel'], t('{percent} Diesel Dedicated Auxiliary', { percent: `${truck.fuelPercent}%` }));
   el['bar-fuel'].parentElement.style.setProperty('--fill', `${truck.fuelPercent}%`);
-
   setText(
     el['diag-seal'],
     truck.log.doorOpenings === 0
@@ -2989,9 +2989,37 @@ function renderDiagnostics() {
   );
   setText(
     el['diag-calibration'],
-    t('±0.1°C Reference Probe, Verified {days} Days Ago', { days: truck.calibrationDays })
+    t(
+      truck.health.checks.calibration === 'ok'
+        ? '±0.1°C Reference Probe, Verified {days} Days Ago'
+        : '±0.1°C Reference Probe, Verified {days} Days Ago (Due)',
+      { days: truck.calibrationDays }
+    )
   );
   setText(el['diag-firmware'], t('{version} (Signed Build)', { version: truck.firmware }));
+
+  /* Trip */
+  const percent = `${Math.round(truck.progress * 100)}%`;
+  setChip(el['trip-chip'], t('{percent} complete', { percent }), 'chip--ice');
+  el['trip-progress'].style.setProperty('--fill', percent);
+  setText(el['trip-route'], t('{origin} to {destination}', { origin: truck.originCity, destination: truck.destinationCity }));
+  setText(el['trip-corridor'], t(truck.corridor));
+  setText(el['trip-distance'], distanceText(truck, '{done} of {total} km • {left} km to go'));
+  setText(el['trip-speed'], truck.speedKmh > 0 ? t('{speed} km/h', { speed: truck.speedKmh }) : t('Stationary'));
+  setText(el['trip-eta'], arrivalText(truck));
+  setText(el['trip-departed'], truck.departedAt ? formatDateTime(new Date(truck.departedAt)) : t('Not yet'));
+  setText(el['trip-operator'], t(truck.operator));
+  setText(el['trip-vehicle'], t(truck.vehicleClass));
+
+  /* Cargo and environment */
+  setText(el['load-consignment'], ltr(truck.consignmentId));
+  setText(el['load-cargo'], t(truck.cargo));
+  setText(el['load-quantity'], t('{count} pallets', { count: truck.pallets }));
+  setText(el['load-consignor'], t(truck.consignor));
+  setText(el['load-consignee'], t(truck.consignee));
+  setText(el['load-humidity'], ltr(`${truck.humidity}%`));
+  setText(el['load-ambient'], formatTemp(truck.ambientTemp));
+  setText(el['load-minmax'], `${formatTemp(truck.log.min)} / ${formatTemp(truck.log.max)}`);
 }
 
 function renderAlerts() {
