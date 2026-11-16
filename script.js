@@ -1329,6 +1329,29 @@ function qrPath(matrix) {
 }
 
 /* --------------------------------------------------------------------------
+   Certificate verification page
+   -------------------------------------------------------------------------- */
+/* The link carries the signed record itself, so any browser can recompute the
+   digest. It proves the fields were not altered; it is not proof of origin. */
+function verificationUrl(truck) {
+  const cert = truck.certificate;
+  if (cert.status !== 'valid' || !cert.hash || !cert.signedAt) {
+    return '';
+  }
+  const record = [
+    truck.id,
+    cert.signedAt.getTime(),
+    truck.log.transitMinutes,
+    truck.log.min,
+    truck.log.max,
+    truck.log.excursions,
+    truck.log.doorOpenings,
+    cert.hash.slice(0, VERIFY_DIGEST_LENGTH)
+  ].join('~');
+  return `${window.location.href.split('#')[0]}${VERIFY_PREFIX}${record}`;
+}
+
+/* --------------------------------------------------------------------------
    Actions
    -------------------------------------------------------------------------- */
 /* --- Authentication (simulated, browser only) --- */
