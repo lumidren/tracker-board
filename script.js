@@ -2304,11 +2304,18 @@ function syncCards(container, items, attribute, create) {
    -------------------------------------------------------------------------- */
 function render() {
   renderShell();
-  renderClient();
-  renderFleet();
-  renderDiagnostics();
-  renderAlerts();
-  renderControls();
+  if (state.views.client) {
+    renderShipments();
+    renderClient();
+  }
+  if (state.views.admin) {
+    renderFleet();
+    renderFleetMap();
+    renderUnit();
+    renderAlerts();
+    renderControls();
+    renderAuditLog();
+  }
   renderCertificate();
   renderModal();
 }
@@ -2317,10 +2324,11 @@ function renderShell() {
   const role = state.currentRole;
   const verifying = Boolean(state.verification);
   const authed = isAuthed(role);
-  const portal = authed && !verifying;
+  const ready = authed && Boolean(state.views[role]);
+  const portal = ready && !verifying;
   const truck = viewTruck();
   const panelId = state.activePanel[role];
-  const alertInView = portal && (role === 'admin' ? state.isExcursionActive : truck.status === 'excursion');
+  const alertInView = portal && (role === 'admin' ? state.isExcursionActive : Boolean(truck) && truck.status === 'excursion');
 
   el.app.dataset.role = role;
   el.app.dataset.alert = String(alertInView);
@@ -2334,8 +2342,8 @@ function renderShell() {
   el['auth-panel'].hidden = authed || verifying;
   el.dock.hidden = !portal;
   el['live-chip'].hidden = !portal;
-  el['account-bar'].hidden = !portal;
-  if (portal) {
+  el['account-bar'].hidden = !authed || verifying;
+  if (authed) {
     setText(el['account-name'], t(state.session[role].name));
   }
   renderAuth();
@@ -2364,7 +2372,7 @@ function renderShell() {
   });
   const badge = el.dock.querySelector('[data-dock-badge]');
   if (badge) {
-    const open = unacknowledgedAlerts().length;
+    const open = openAlertCount();
     badge.hidden = open === 0;
     setText(badge, String(open));
   }
@@ -2372,7 +2380,7 @@ function renderShell() {
   const showAdminAlert = portal && role === 'admin' && state.isExcursionActive;
   el['admin-alert'].hidden = !showAdminAlert;
   if (showAdminAlert) {
-    const affected = getTruck(state.excursionTruckId);
+    const affected = getTruck(state.views.admin.drillTruckId, 'admin');
     setText(el['admin-alert-title'], t('Active Excursion • Unit {id}', { id: `#${affected.id}` }));
     setText(
       el['admin-alert-note'],
