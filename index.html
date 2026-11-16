@@ -86,6 +86,52 @@
             </div>
           </div>
 
+          <!-- ================= PUBLIC CERTIFICATE VERIFICATION ================= -->
+          <section class="panel verify" id="verify-panel" aria-labelledby="verify-title" hidden>
+            <header class="panel__head">
+              <p class="eyebrow">Certificate Verification</p>
+              <h1 class="panel__title" id="verify-title">Verification Result</h1>
+              <p class="panel__sub">Opened from the QR code printed on a compliance certificate.</p>
+            </header>
+
+            <div class="banner banner--pending" id="verify-banner">
+              <span class="pulse-dot" aria-hidden="true"></span>
+              <div class="banner__body">
+                <p class="banner__title" id="verify-banner-title"></p>
+                <p class="banner__note" id="verify-banner-note"></p>
+              </div>
+            </div>
+
+            <article class="card" id="verify-card" aria-labelledby="verify-serial">
+              <header class="card__head">
+                <div>
+                  <p class="eyebrow">Certificate Serial</p>
+                  <h2 class="mono-id" id="verify-serial"></h2>
+                </div>
+                <span class="chip" id="verify-chip"></span>
+              </header>
+              <dl class="facts">
+                <div class="facts__row"><dt>Vehicle</dt><dd id="verify-vehicle"></dd></div>
+                <div class="facts__row"><dt>Consignment</dt><dd id="verify-consignment"></dd></div>
+                <div class="facts__row"><dt>Cargo</dt><dd id="verify-cargo"></dd></div>
+                <div class="facts__row"><dt>Permitted Range</dt><dd id="verify-range"></dd></div>
+                <div class="facts__row"><dt>Signed</dt><dd id="verify-signed"></dd></div>
+                <div class="facts__row"><dt>In-Transit Duration</dt><dd id="verify-duration"></dd></div>
+                <div class="facts__row"><dt>Recorded Min / Max</dt><dd id="verify-minmax"></dd></div>
+                <div class="facts__row"><dt>Temperature Excursions</dt><dd id="verify-excursions"></dd></div>
+                <div class="facts__row"><dt>Door Seal Check</dt><dd id="verify-door"></dd></div>
+                <div class="facts__row"><dt>Digest</dt><dd class="mono" id="verify-digest"></dd></div>
+              </dl>
+            </article>
+
+            <article class="card note-card">
+              <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-lock"></use></svg>
+              <p>This check recomputes the SHA-256 digest from the certificate fields carried in the QR code. It runs in your browser and does not consult a central registry.</p>
+            </article>
+
+            <button type="button" class="btn btn--outline btn--block" data-action="exit-verification">Back to Portal</button>
+          </section>
+
           <!-- ================= SIGN-IN (shared by both roles) ================= -->
           <section class="panel auth" id="auth-panel" aria-labelledby="auth-title" hidden>
             <div class="auth__badge" aria-hidden="true">
