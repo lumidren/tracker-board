@@ -328,6 +328,108 @@
         status: 'current'
       });
     }
+
+    function buildTruck(spec, index, startedAt) {
+      const route = seed.routes[spec.route];
+      const consignor = seed.orgs[spec.consignorOrg];
+      const consignee = seed.orgs[spec.consigneeOrg];
+      const lengthKm = routeLength(route.points);
+      const moving = spec.baseStatus === 'en-route';
+      const delivered = spec.baseStatus === 'delivered';
+
+      let progress = 0;
+      if (delivered) {
+        progress = 1;
+      } else if (moving) {
+        progress = clamp(1 - ((spec.etaMinutes * spec.speedKmh) / 60) / lengthKm, 0.02, 0.98);
+      }
+      const departedAt = spec.baseStatus === 'standby' ? null : startedAt - spec.departedMinutesAgo * 60000;
+      const arrivedAt = delivered ? startedAt - spec.arrivedMinutesAgo * 60000 : null;
+      let transitMinutes = 0;
+      if (delivered) {
+        transitMinutes = spec.departedMinutesAgo - spec.arrivedMinutesAgo;
+      } else if (moving) {
+        transitMinutes = spec.departedMinutesAgo;
+      }
+      let hubPassedAt = null;
+      if (delivered) {
+        hubPassedAt = arrivedAt - Math.round(((1 - route.hubAt) * lengthKm / spec.speedKmh) * 3600000);
+      } else if (moving && progress >= route.hubAt) {
+        hubPassedAt = startedAt - Math.round((((progress - route.hubAt) * lengthKm) / spec.speedKmh) * 3600000);
+      }
+
+      const truck = {
+        id: spec.id,
+        vehicleClass: spec.vehicleClass,
+        operator: spec.operator,
+        consignmentId: spec.consignmentId,
+        cargo: spec.cargo,
+        cargoShort: spec.cargoShort,
+        pallets: spec.pallets,
+        consignorOrg: spec.consignorOrg,
+        consigneeOrg: spec.consigneeOrg,
+        consignor: consignor.name,
+        consignorDept: consignor.dept,
+        consignee: consignee.name,
+        consigneeTerminal: consignee.terminal,
+        origin: spec.originName,
+        originCity: seed.places[spec.originPlace].name,
+        destination: consignee.name,
+        destinationCity: seed.places[spec.destinationPlace].name,
+        corridor: route.corridor,
+        routePoints: route.points,
+        routeKm: lengthKm,
+        hubAt: route.hubAt,
+        progress,
+        cruiseKmh: spec.speedKmh,
+        speedKmh: moving ? spec.speedKmh : 0,
+        departedAt,
+        hubPassedAt,
+        arrivedAt,
+        tempTarget: spec.tempTarget,
+        tempMin: spec.tempMin,
+        tempMax: spec.tempMax,
+        tempBaseline: spec.tempBaseline,
+        tempCurrent: spec.tempBaseline,
+        humidity: spec.humidity,
+        ambientTemp: spec.ambientTemp,
+        sealId: spec.sealId,
+        sensorBattery: spec.sensorBattery,
+        uplinkPing: spec.uplinkPing,
+        uplinkPingBase: spec.uplinkPing,
+        uplinkSignal: spec.uplinkSignal,
+        compressorRpm: spec.compressorNominalRpm,
+        compressorNominalRpm: spec.compressorNominalRpm,
+        fuelPercent: spec.fuelPercent,
+        firmware: spec.firmware,
+        calibrationDays: spec.calibrationDays,
+        status: spec.baseStatus,
+        baseStatus: spec.baseStatus,
+        history: [],
+        log: {
+          transitMinutes,
+          min: spec.log.min,
+          max: spec.log.max,
+          excursions: 0,
+          doorOpenings: 0
+        },
+        certificate: {
+          serial: spec.certificate.serial,
+          status: spec.certificate.status,
+          signedAt: null,
+          signedBy: null,
+          hash: '',
+          record: null
+        }
+      };
+      truck.history = Array.from({ length: HISTORY_POINTS }, () => sampleTemperature(truck));
+      truck.history[HISTORY_POINTS - 1] = truck.tempCurrent;
+      derive(truck);
+      if (spec.certificate.status === 'valid') {
+        issue(truck, startedAt - (6 + index * 5) * 60000, 'Lead Quality Assurance Auditor');
+      }
+      return truck;
+    }
     return {};
   }
 
