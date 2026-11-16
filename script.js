@@ -715,32 +715,41 @@ function t(source, params) {
 /* Keeps a standalone identifier or reading left-to-right inside Arabic text. */
 const ltr = (text) => (state.lang === 'ar' ? `⁦${text}⁩` : String(text));
 
-function formatTemp(value) {
+function plainTemp(value) {
   const rounded = round1(value);
   const sign = rounded > 0 ? '+' : '';
   return `${sign}${rounded.toFixed(1)}°C`;
 }
+
+const formatTemp = (value) => ltr(plainTemp(value));
 
 function formatClock(date, withSeconds = false) {
   const base = `${pad2(date.getHours())}:${pad2(date.getMinutes())}`;
   return withSeconds ? `${base}:${pad2(date.getSeconds())}` : base;
 }
 
-const dateTimeFormat = new Intl.DateTimeFormat('en-GB', {
-  day: '2-digit',
-  month: 'short',
-  year: 'numeric',
-  hour: '2-digit',
-  minute: '2-digit',
-  hour12: false
-});
-
-const formatDateTime = (date) => dateTimeFormat.format(date);
+function formatDateTime(date) {
+  const lang = state.lang;
+  if (!dateTimeFormats[lang]) {
+    dateTimeFormats[lang] = new Intl.DateTimeFormat(lang === 'ar' ? 'ar-EG-u-nu-latn' : 'en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    });
+  }
+  return dateTimeFormats[lang].format(date);
+}
 
 function formatDuration(totalMinutes) {
-  const hours = Math.floor(totalMinutes / 60);
-  const minutes = totalMinutes % 60;
-  return `${pad2(hours)} Hours ${pad2(minutes)} Minutes`;
+  return t('{h} Hours {m} Minutes', { h: pad2(Math.floor(totalMinutes / 60)), m: pad2(totalMinutes % 60) });
+}
+
+function formatSpan(milliseconds) {
+  const seconds = Math.max(0, Math.round(milliseconds / 1000));
+  return t('{m}m {s}s', { m: Math.floor(seconds / 60), s: pad2(seconds % 60) });
 }
 
 function shortHash(hash) {
