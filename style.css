@@ -2080,3 +2080,14 @@ button {
   color: var(--alert-strong);
   animation: flash 1s ease-in-out infinite;
 }
+
+/* 12. Motion preferences --------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
