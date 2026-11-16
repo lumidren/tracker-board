@@ -1891,3 +1891,50 @@ button {
   color: var(--muted);
   text-align: center;
 }
+
+/* 11b. Sign-in, account bar and hardware health ---------------------------- */
+.account-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 10px;
+  padding: 0 2px;
+}
+
+.account-bar__who {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-soft);
+}
+
+.account-bar__who .icon {
+  width: 16px;
+  height: 16px;
+  color: var(--ice-strong);
+}
+
+.account-bar__who span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.link-btn {
+  flex: none;
+  padding: 4px 2px;
+  border: 0;
+  background: none;
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--ice-strong);
+  cursor: pointer;
+}
+
+.link-btn:hover {
+  text-decoration: underline;
+}
