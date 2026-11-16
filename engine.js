@@ -241,5 +241,49 @@
     'tempTarget', 'tempMin', 'tempMax', 'tempCurrent', 'history',
     'status', 'baseStatus', 'sealId'
   ];
+
+  /* ------------------------------------------------------------------------
+     Engine
+     ------------------------------------------------------------------------ */
+  function createEngine(seed, options) {
+    const settings = options || {};
+    const now = settings.now || Date.now;
+    const random = settings.random || Math.random;
+    const timeScale = settings.timeScale || 1;
+    /* True on the server, whose registry decides whether a certificate is current. */
+    const authoritative = Boolean(settings.authoritative);
+    const jitter = (span) => (random() - 0.5) * span;
+
+    const state = {
+      trucks: [],
+      alerts: [],
+      audit: [],
+      registry: [],
+      drillTruckId: null,
+      chain: GENESIS,
+      auditSeq: 0,
+      alertSeq: 0,
+      lastTickAt: now(),
+      minuteCarry: 0
+    };
+
+    const findTruck = (id) => state.trucks.find((truck) => truck.id === id);
+    const fail = (error) => ({ ok: false, error });
+    const done = () => ({ ok: true });
+
+    function log(kind, source, params) {
+      state.auditSeq += 1;
+      const entry = { seq: state.auditSeq, time: now(), kind, source, params: params || null, digest: '' };
+      entry.digest = sha256(`${state.chain}|${entry.seq}|${new Date(entry.time).toISOString()}|${fill(source, params)}`);
+      state.chain = entry.digest;
+      state.audit.push(entry);
+      if (state.audit.length > AUDIT_KEEP) {
+        state.audit.shift();
+      }
+      return entry;
+    }
+    return {};
+  }
+
   return {};
 });
