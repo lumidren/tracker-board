@@ -2131,6 +2131,48 @@ function renderFleetMap() {
   setText(el['map-unit-eta'], arrivalText(selected));
 }
 
+function renderClientMap(truck) {
+  const svg = el['client-map'];
+  if (!SEED.geography) {
+    return;
+  }
+  buildMap(svg);
+  const projected = truck.routePoints.map(project);
+  const xs = projected.map((point) => point[0]);
+  const ys = projected.map((point) => point[1]);
+  const pad = 26;
+  let width = Math.max(...xs) - Math.min(...xs) + pad * 2;
+  let height = Math.max(...ys) - Math.min(...ys) + pad * 2;
+  /* Keep a steady 4:3 picture whatever shape the route has. */
+  if (width * 0.75 > height) {
+    height = width * 0.75;
+  } else {
+    width = height / 0.75;
+  }
+  const centreX = (Math.max(...xs) + Math.min(...xs)) / 2;
+  const centreY = (Math.max(...ys) + Math.min(...ys)) / 2;
+  const k = frameMap(svg, centreX - width / 2, centreY - height / 2, width, height);
+  mapLabels(svg, k, []);
+
+  const first = projected[0];
+  const last = projected[projected.length - 1];
+  const endLabel = (point, name, above) => `<circle class="map__end" cx="${point[0]}" cy="${point[1]}" r="${round1(4 * k)}"/>`
+    + `<text class="map__label map__label--end" x="${point[0]}" y="${round1(point[1] + (above ? -8 : 15) * k)}" text-anchor="middle">${t(name)}</text>`;
+  const originAbove = first[1] < last[1];
+  svg.querySelector('[data-layer="routes"]').innerHTML = routeMarkup(truck)
+    + endLabel(first, truck.originCity, originAbove)
+    + endLabel(last, truck.destinationCity, !originAbove);
+  svg.querySelector('[data-layer="trucks"]').innerHTML = truckMarker(truck, k, false);
+
+  let caption = t('Your shipment is here, on the way to {city}.', { city: truck.destinationCity });
+  if (truck.baseStatus === 'standby') {
+    caption = t('Your shipment is waiting in {city}.', { city: truck.originCity });
+  } else if (truck.baseStatus === 'delivered') {
+    caption = t('Your shipment has arrived in {city}.', { city: truck.destinationCity });
+  }
+  setText(el['client-map-caption'], caption);
+}
+
 /* --------------------------------------------------------------------------
    One-time DOM construction
    -------------------------------------------------------------------------- */
