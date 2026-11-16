@@ -3,13 +3,14 @@ plugins {
     id("org.jetbrains.kotlin.android")
 }
 
-// The web app in the repository root is the single source of truth. Its three files are
-// copied into the APK's assets on every build, so the phone app and the website cannot
+// The web app in the repository root is the single source of truth. Its files (page,
+// styles, interface, shared engine and test dataset) are copied into the APK's assets on
+// every build, so the phone app and the website cannot
 // drift apart and nothing is kept twice in git.
 val webAssets = layout.buildDirectory.dir("generated/webAssets")
 val copyWebApp = tasks.register<Copy>("copyWebApp") {
     from(rootProject.projectDir.parentFile) {
-        include("index.html", "style.css", "script.js")
+        include("index.html", "style.css", "script.js", "engine.js", "data.js")
     }
     into(webAssets)
 }
@@ -23,8 +24,8 @@ android {
         minSdk = 29
         // 34 keeps the system status bar outside the page; 35 would draw the page under it.
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 2
+        versionName = "1.1.0"
     }
 
     sourceSets["main"].assets.srcDir(webAssets)
