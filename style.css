@@ -1749,7 +1749,7 @@ button {
 .cert-table td {
   padding: 6px 10px;
   border-bottom: 1px solid var(--border);
-  text-align: left;
+  text-align: start;
   vertical-align: top;
 }
 
@@ -1761,7 +1761,7 @@ button {
 .cert-table th {
   width: 38%;
   background: var(--canvas);
-  border-right: 1px solid var(--border);
+  border-inline-end: 1px solid var(--border);
   font-weight: 600;
   color: var(--text-soft);
 }
@@ -2255,7 +2255,7 @@ button {
   .cert-table td {
     display: block;
     width: 100%;
-    border-right: 0;
+    border-inline-end: 0;
   }
 
   .cert-table th {
@@ -2411,7 +2411,7 @@ button {
 
   .cert-table th {
     width: 38%;
-    border-right: 1px solid var(--border);
+    border-inline-end: 1px solid var(--border);
     background: var(--canvas);
     color: var(--text-soft);
     font-weight: 600;
