@@ -2810,17 +2810,39 @@ function seedData() {
       truck.certificate.signedAt = new Date(loadedAt - (6 + index * 5) * 60000);
     }
   });
+
+  /* One earlier, already acknowledged event so the history is not empty. */
+  const dropoutAt = loadedAt - 95 * 60000;
+  state.alerts.push({
+    id: 'ALT-0001',
+    truckId: 'TRK-208',
+    kind: 'uplink',
+    startedAt: new Date(dropoutAt),
+    endedAt: new Date(dropoutAt + 38000),
+    peak: null,
+    limit: null,
+    acknowledgedAt: new Date(dropoutAt + 3 * 60000),
+    acknowledgedBy: PERSONNEL.qaOfficer
+  });
 }
 
 function seedAuditLog() {
-  appendLog('info', 'Telemetry session opened. 3 units reporting on 60 second sampling.');
+  appendLog('info', 'Telemetry session opened. {count} units reporting on 60 second sampling.', {
+    count: state.trucks.length
+  });
   state.trucks.forEach((truck) => {
-    appendLog('info', `Electronic seal #${truck.sealId} engaged on Unit #${truck.id}.`);
+    appendLog('info', 'Electronic seal {seal} engaged on Unit {id}.', {
+      seal: `#${truck.sealId}`,
+      id: `#${truck.id}`
+    });
   });
   state.trucks
     .filter((truck) => truck.certificate.status === 'valid')
     .forEach((truck) => {
-      appendLog('sign', `Certificate ${truck.certificate.serial} validated by ${PERSONNEL.qaOfficer}.`);
+      appendLog('sign', 'Certificate {serial} validated by {name}.', {
+        serial: truck.certificate.serial,
+        name: PERSONNEL.qaOfficer
+      });
     });
 }
 
