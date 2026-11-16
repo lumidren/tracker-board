@@ -1155,3 +1155,31 @@ function renderFleet() {
 
   setText(el['fleet-goto-label'], `Open Diagnostics for Unit #${state.activeTruckId}`);
 }
+
+function renderSparkline(truck) {
+  const width = 320;
+  const height = 84;
+  const padY = 8;
+  const values = truck.history;
+  const low = Math.min(truck.tempMin - 1.5, ...values);
+  const high = Math.max(truck.tempMax + 1.5, ...values) + 0.5;
+  const toY = (value) => padY + ((high - value) / (high - low)) * (height - padY * 2);
+  const stepX = (width - 8) / Math.max(1, HISTORY_POINTS - 1);
+  const offset = HISTORY_POINTS - values.length;
+
+  const points = values.map((value, index) => `${round1((offset + index) * stepX + 2)},${round1(toY(value))}`);
+  el['spark-line'].setAttribute('points', points.join(' '));
+
+  const bandTop = toY(truck.tempMax);
+  const bandBottom = toY(truck.tempMin);
+  el['spark-band'].setAttribute('y', String(round1(bandTop)));
+  el['spark-band'].setAttribute('height', String(round1(bandBottom - bandTop)));
+
+  const setpointY = String(round1(toY(truck.tempTarget)));
+  el['spark-setpoint'].setAttribute('y1', setpointY);
+  el['spark-setpoint'].setAttribute('y2', setpointY);
+
+  const last = points[points.length - 1].split(',');
+  el['spark-dot'].setAttribute('cx', last[0]);
+  el['spark-dot'].setAttribute('cy', last[1]);
+}
