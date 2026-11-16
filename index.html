@@ -509,10 +509,13 @@
                 </div>
 
                 <figure class="qr">
-                  <svg class="qr__code" viewBox="0 0 25 25" role="img" aria-label="Verification code block" shape-rendering="crispEdges">
-                    <path id="cert-qr" d=""/>
-                  </svg>
-                  <figcaption>Verification Reference</figcaption>
+                  <a class="qr__link" id="cert-verify-link" target="_blank" rel="noopener" aria-label="Open the verification page for this certificate" hidden>
+                    <svg class="qr__code" id="cert-qr-svg" viewBox="0 0 25 25" role="img" aria-label="Verification QR code" shape-rendering="crispEdges">
+                      <path id="cert-qr" d=""/>
+                    </svg>
+                  </a>
+                  <p class="qr__pending" id="cert-qr-pending">QR code issued on signing</p>
+                  <figcaption>Scan to Verify</figcaption>
                 </figure>
               </div>
 
