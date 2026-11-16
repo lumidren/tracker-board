@@ -2733,6 +2733,39 @@ button {
   text-align: center;
 }
 
+.select {
+  display: grid;
+  gap: 5px;
+}
+
+.select__label {
+  padding: 0 4px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.select__input {
+  width: 100%;
+  height: 46px;
+  padding: 0 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: 13px;
+  background: var(--surface);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.select__input:focus {
+  outline: none;
+  border-color: var(--ice);
+  box-shadow: 0 0 0 3px var(--ice-soft);
+}
+
 /* 12. Motion preferences --------------------------------------------------- */
 @media (prefers-reduced-motion: reduce) {
   *,
