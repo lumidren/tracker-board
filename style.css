@@ -2207,6 +2207,27 @@ button {
   transition: none !important;
 }
 
+/* 11e. Plain-language client dashboard ------------------------------------- */
+.status-dot {
+  width: 12px;
+  height: 12px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--safe);
+}
+
+.status-dot[data-tone="alert"] {
+  background: var(--alert);
+}
+
+.status-dot[data-tone="pending"] {
+  background: var(--ice);
+}
+
+.status-dot[data-tone="done"] {
+  background: #94A3B8;
+}
+
 /* 12. Motion preferences --------------------------------------------------- */
 @media (prefers-reduced-motion: reduce) {
   *,
