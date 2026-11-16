@@ -623,6 +623,28 @@
       );
       return done();
     }
+
+    function acknowledgeAlert(actor, alertId) {
+      const refusal = denied(actor, 'acknowledge');
+      if (refusal) {
+        return fail(refusal);
+      }
+      const alert = state.alerts.find((item) => item.id === alertId);
+      if (!alert) {
+        return fail('Unknown alert.');
+      }
+      if (alert.acknowledgedAt) {
+        return fail('This alert is already acknowledged.');
+      }
+      alert.acknowledgedAt = now();
+      alert.acknowledgedBy = actor.name;
+      log('ok', 'Alert {alert} on Unit {id} acknowledged by {name}.', {
+        alert: alert.id,
+        id: `#${alert.truckId}`,
+        name: actor.name
+      });
+      return done();
+    }
     return {};
   }
 
