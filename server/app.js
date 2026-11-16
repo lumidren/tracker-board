@@ -31,3 +31,61 @@ const SECURITY_HEADERS = {
   'Cross-Origin-Opener-Policy': 'same-origin',
   'Permissions-Policy': 'camera=(), microphone=(), geolocation=()'
 };
+
+class HttpError extends Error {
+  constructor(status, code, extra) {
+    super(code);
+    this.status = status;
+    this.body = { error: code, ...extra };
+  }
+}
+
+function sendJson(res, status, body, headers) {
+  const text = JSON.stringify(body);
+  res.writeHead(status, {
+    'Content-Type': 'application/json; charset=utf-8',
+    'Content-Length': Buffer.byteLength(text),
+    'Cache-Control': 'no-store',
+    ...headers
+  });
+  res.end(text);
+}
+
+function readCookies(req) {
+  const cookies = {};
+  String(req.headers.cookie || '').split(';').forEach((part) => {
+    const index = part.indexOf('=');
+    if (index > 0) {
+      cookies[part.slice(0, index).trim()] = part.slice(index + 1).trim();
+    }
+  });
+  return cookies;
+}
+
+function readBody(req) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    let size = 0;
+    req.on('data', (chunk) => {
+      size += chunk.length;
+      if (size > BODY_LIMIT) {
+        reject(new HttpError(413, 'too-large'));
+        req.destroy();
+      } else {
+        chunks.push(chunk);
+      }
+    });
+    req.on('end', () => {
+      try {
+        const parsed = JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}');
+        if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+          throw new Error('not an object');
+        }
+        resolve(parsed);
+      } catch (error) {
+        reject(new HttpError(400, 'bad-json'));
+      }
+    });
+    req.on('error', reject);
+  });
+}
