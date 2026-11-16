@@ -385,5 +385,126 @@
     </div>
   </div>
 
+  <!-- ================= COMPLIANCE CERTIFICATE MODAL ================= -->
+  <div class="modal" id="certificate-modal" hidden>
+    <div class="modal__backdrop" data-action="close-certificate"></div>
+    <div class="modal__dialog" role="dialog" aria-modal="true" aria-labelledby="cert-title">
+
+      <div class="modal__toolbar">
+        <p class="modal__label">Official Compliance Certificate</p>
+        <button type="button" class="icon-btn" data-action="close-certificate" aria-label="Close certificate">
+          <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-close"></use></svg>
+        </button>
+      </div>
+
+      <div class="modal__scroll">
+        <article class="certificate" id="certificate" data-tone="safe">
+          <div class="certificate__frame">
+
+            <header class="certificate__header">
+              <svg class="crest" viewBox="0 0 96 96" aria-hidden="true" focusable="false">
+                <circle class="crest__ring" cx="48" cy="48" r="45"/>
+                <circle class="crest__ring crest__ring--dashed" cx="48" cy="48" r="39"/>
+                <path class="crest__shield" d="M48 20l22 9v16c0 14.500-9.200 26.800-22 32-12.800-5.200-22-17.500-22-32V29l22-9z"/>
+                <path class="crest__mark" d="M48 33v26M36.700 39.500l22.600 13M59.300 39.500l-22.600 13"/>
+                <path class="crest__check" d="M39 63l6 6 12-12"/>
+              </svg>
+              <p class="certificate__authority">Department of Cold-Chain Regulatory Affairs</p>
+              <h2 class="certificate__title" id="cert-title">CERTIFICATE OF COLD-CHAIN INTEGRITY &amp; COMPLIANCE</h2>
+              <p class="certificate__sub">Official Cold-Chain Telematics Certificate of Compliance</p>
+              <p class="certificate__serial">Serial Reference: <span class="mono" id="cert-serial">REF-CERT-2026-8812-CC</span></p>
+            </header>
+
+            <section class="certificate__section" aria-labelledby="cert-meta-heading">
+              <h3 class="certificate__heading" id="cert-meta-heading">Consignment Particulars</h3>
+              <table class="cert-table">
+                <tbody>
+                  <tr><th scope="row">Carrier</th><td>Authorized Refrigerated Transit Operator</td></tr>
+                  <tr><th scope="row">Shipper / Consignor</th><td id="cert-consignor"></td></tr>
+                  <tr><th scope="row">Consignee Depot</th><td id="cert-consignee"></td></tr>
+                  <tr><th scope="row">Vehicle Identifier</th><td id="cert-vehicle"></td></tr>
+                  <tr><th scope="row">Transport Operator</th><td id="cert-operator"></td></tr>
+                  <tr><th scope="row">Consignment / Cargo</th><td id="cert-cargo"></td></tr>
+                  <tr><th scope="row">Calibrated Temperature Setpoint</th><td id="cert-setpoint"></td></tr>
+                </tbody>
+              </table>
+            </section>
+
+            <section class="certificate__section" aria-labelledby="cert-audit-heading">
+              <h3 class="certificate__heading" id="cert-audit-heading">Continuous Audit Summary</h3>
+              <table class="cert-table">
+                <tbody>
+                  <tr><th scope="row">Sampling Frequency</th><td>Every 60 Seconds</td></tr>
+                  <tr><th scope="row">Total In-Transit Duration</th><td id="cert-duration"></td></tr>
+                  <tr><th scope="row">Recorded Minimum / Maximum</th><td id="cert-minmax"></td></tr>
+                  <tr><th scope="row">Temperature Excursion Count</th><td id="cert-excursions"></td></tr>
+                  <tr><th scope="row">Electronic Door Seal Check</th><td id="cert-door"></td></tr>
+                  <tr><th scope="row">Electronic Seal Reference</th><td id="cert-seal"></td></tr>
+                </tbody>
+              </table>
+            </section>
+
+            <section class="certificate__signoff" aria-labelledby="cert-sign-heading">
+              <h3 class="certificate__heading" id="cert-sign-heading">Validation &amp; Sign-off</h3>
+
+              <div class="signoff">
+                <div class="signoff__main">
+                  <div class="stamp" id="cert-stamp">
+                    <svg class="stamp__glyph" viewBox="0 0 48 48" aria-hidden="true" focusable="false">
+                      <path class="stamp__hex" d="M24 3l18.200 10.500v21L24 45 5.800 34.500v-21L24 3z"/>
+                      <path class="stamp__hex stamp__hex--inner" d="M24 9l13 7.500v15L24 39l-13-7.500v-15L24 9z"/>
+                      <path class="stamp__tick" id="cert-stamp-tick" d="M16.500 24.500l5 5 10-10.500"/>
+                    </svg>
+                    <div class="stamp__text">
+                      <p class="stamp__title" id="cert-stamp-title">VERIFIED &amp; VALIDATED &bull; ZERO EXCURSIONS</p>
+                      <p class="stamp__meta" id="cert-stamp-meta"></p>
+                    </div>
+                  </div>
+
+                  <p class="certificate__hash">
+                    <span class="certificate__hash-label">Cryptographic verification hash</span>
+                    <span class="mono" id="cert-hash"></span>
+                  </p>
+                </div>
+
+                <figure class="qr">
+                  <svg class="qr__code" viewBox="0 0 25 25" role="img" aria-label="Verification code block" shape-rendering="crispEdges">
+                    <path id="cert-qr" d=""/>
+                  </svg>
+                  <figcaption>Verification Reference</figcaption>
+                </figure>
+              </div>
+
+              <div class="signatures">
+                <div class="signature">
+                  <p class="signature__name" id="cert-signer">Lead Quality Assurance Auditor</p>
+                  <p class="signature__role">Chief Quality Assurance Inspector &bull; Department of Cold-Chain Regulatory Affairs</p>
+                </div>
+                <div class="signature">
+                  <p class="signature__name">Cold-Chain Regulatory Officer</p>
+                  <p class="signature__role">Countersigning Inspector &bull; Regulatory Audit Desk</p>
+                </div>
+              </div>
+            </section>
+
+            <footer class="certificate__footer">
+              <p>Issued from continuous calibrated telemetry and a tamper-evident audit log. System-generated record, valid without a wet signature.</p>
+            </footer>
+          </div>
+        </article>
+      </div>
+
+      <div class="modal__actions">
+        <button type="button" class="btn btn--primary" data-action="print-certificate">
+          <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-print"></use></svg>
+          <span>Print Certificate / Save PDF</span>
+        </button>
+        <button type="button" class="btn btn--outline" data-action="close-certificate">
+          <span>Close Modal</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
 </body>
 </html>
