@@ -1,94 +1,117 @@
 # Maatora
 
-Cold-chain temperature monitoring for goods in active transit. One mobile-first web app with two portals: a **client portal** that answers "is my cargo safe?" and a **control room** that shows the hardware behind that answer.
+Cold-chain temperature monitoring for goods in active transit. One mobile-first interface with two portals: a **client portal** that answers "is my shipment safe?" in plain words, and a **control room** that shows the fleet, the hardware and the paperwork behind that answer.
 
-No framework, no build step, no dependencies: `index.html`, `style.css`, `script.js`.
+It runs three ways from the same code:
 
-## What it does
+| Way | What you get |
+| --- | --- |
+| **With the server** | Real accounts, a database, role enforcement, live updates on every device |
+| **As plain files** | An offline demo: the same engine runs inside the page with test data |
+| **Android app** | The offline demo packaged as an installable app |
 
-**Client portal** (consignor, shipper, receiving depot)
-
-- Reassurance banner, live temperature against the permitted range, route corridor and ETA
-- Four-stage route progress and a milestone timeline
-- Official compliance certificate, printable on a single A4 page
-- Scoped to the signed-in account's own consignments
-- Never shows hardware or sensor diagnostics
-
-**Control room** (dispatch and compliance controller)
-
-- Fleet telemetry grid: chiller power, uplink and internal temperature per unit
-- Hardware health: seven checks per unit (probe battery, uplink, compressor, reserve tank, tamper seal, calibration, firmware), each rated Nominal, Attention or Fault
-- Incident drill: simulate a compressor failure and a +9.0 C excursion, normalize the sensor, acknowledge the alert, then re-sign the certificate
-- Alert history: every excursion stays on record after it ends, with start time, duration, peak reading and who acknowledged it. A certificate cannot be re-signed while its unit has an unacknowledged alert
-- Hash-chained audit log covering drills, acknowledgements, signatures and sign-in activity
-
-**Certificate verification**
-
-- Every signed certificate carries a real QR code, generated in the page with no library (byte mode, error correction level M, Reed-Solomon, automatic mask selection)
-- Scanning it opens a public verification page that recomputes the SHA-256 digest from the fields in the code and reports whether they match
-- Changing any field in the link (a reading, the excursion count, the signing time) makes verification fail
-
-**Languages**
-
-- English and Arabic, switched from the top bar and remembered per browser
-- Arabic uses a full right-to-left layout; identifiers, readings and numeric scales keep their left-to-right order
-- Translations live in one table in `script.js` keyed by the English text, so the markup needs no per-element keys
-
-**Access control**
-
-- Separate sign-in page for each portal
-- Five failed attempts lock the form for 30 seconds
-- Idle sessions sign out automatically (10 minutes in the control room, 30 in the client portal)
-- The certificate cannot be opened or printed while signed out
+No framework, no build step for the web app, and **no dependencies anywhere**: the server uses only what ships with Node.
 
 ## Run it
 
-Any static file server works. With Python:
+**Server** (Node 22.13 or newer):
 
 ```bash
-python -m http.server 4180
+node server/server.js --demo
 ```
 
-Then open `http://localhost:4180`. Each sign-in page has a **Use Demo Credentials** button.
+Open `http://localhost:4190`. `--demo` puts a list of test accounts on each sign-in page; leave it off and the accounts still exist but are not advertised. Add `--lan` to let phones on the same network connect; the server prints the address to use.
+
+**Offline demo**: serve the folder with any static server, for example `python -m http.server 4180`.
+
+**Tests**:
+
+```bash
+cd server && node --test
+```
+
+## Client portal
+
+Written for someone who does not work in logistics.
+
+- **My Shipments**: one card per shipment with a green, red, blue or grey icon and a sentence such as "On the road, arrives in about 42 minutes". The heading says whether everything is safe
+- **Status**: one large answer ("Your shipment is safe"), the temperature now with "It should stay between ... and ...", when it arrives, how far it has gone, and a button for the certificate
+- **Map**: the route with the truck's position, plus milestones and chain of custody
+- **Documents**: the certificate status with one sentence explaining what it proves
+- A client sees only shipments their organisation sent or is receiving, and **never any hardware or sensor diagnostics**
+
+## Control room
+
+- **Fleet**: summary tiles, filters (All, Attention, On the Road, Parked) and a card per unit with temperature, chiller power, uplink and hardware health
+- **Map**: every unit on a map of the country; tap one for its details
+- **Unit**: temperature trace, seven hardware health checks, trip (route, distance, speed, arrival), cargo and environment
+- **Alerts**: every excursion with start, duration, peak reading and who acknowledged it
+- **Controls**: incident drill, sensor normalize, certificate signing, the hash-chained audit log, and the account list for roles allowed to see it
+
+### Roles
+
+| Account | Can |
+| --- | --- |
+| Lead Quality Assurance Auditor | Run drills, acknowledge alerts, sign certificates |
+| Fleet Dispatch Controller | Run drills, acknowledge alerts |
+| Cold-Chain Regulatory Officer | Read only |
+| Platform Administrator | Everything, plus the account list |
+| Three consignors | Their own shipments |
+| Three receiving depots | Shipments addressed to them |
+
+Identifiers and demo passwords are in `data.js`.
+
+## Certificate and verification
+
+- Printable on one A4 page, in English or Arabic
+- Every signed certificate carries a QR code generated in the page (byte mode, level M error correction, Reed-Solomon, automatic masking), cross-checked module for module against a reference encoder
+- With the server, verification consults the **issuing registry**: it reports Verified, Not Current (suspended or replaced by a newer certificate), Not On Record, or Digest Mismatch
+- Without the server it can only recompute the SHA-256 digest, which shows the fields were not altered but not who issued them
+
+## How it is built
+
+```
+index.html   style.css   script.js      the interface: draws views, sends commands
+engine.js                               the rules, with no screen attached
+data.js                                 test dataset: 10 units, 10 routes, 10 accounts
+server/                                 accounts, sessions, database, API, live stream
+android/                                native shell that bundles the web files
+```
+
+`engine.js` is the centre. It owns telemetry, route progress, drills, alerts, signing, the audit chain and, most importantly, **what each kind of account is allowed to receive**. The server runs it as the source of truth; the offline demo runs the very same file in the browser. The interface cannot tell the difference: both sit behind one small backend interface in `script.js`.
+
+### Security, with the server
+
+- Passwords stored only as scrypt hashes with a per-account salt
+- Sign-in answers identically for a wrong password and an unknown account, and spends the same time on both
+- Five failed attempts lock an identifier for 30 seconds; a per-address limit backs that up
+- Sessions are random 256-bit tokens kept only as hashes, in `HttpOnly`, `SameSite=Strict` cookies, with a 10 minute idle limit in the control room and 30 minutes for clients
+- Writes must be JSON carrying a page-only header and a matching origin, so another site cannot submit them
+- Roles are enforced in the engine, not in the page; a hidden button is a courtesy, not the control
+- Client responses are built from an allow-list of fields, so hardware data cannot leak by omission
+- Static files are an allow-list; the dataset sent to browsers has the accounts and units stripped out
+- A strict Content-Security-Policy and the usual hardening headers on every response
+
+Twenty-three tests cover these, including a restart that must continue an active drill from the database.
+
+## Languages
+
+English and Arabic, switched from the top bar and remembered per browser. Arabic uses a full right-to-left layout; identifiers, readings and maps keep their left-to-right order. Translations live in one table in `script.js` keyed by the English text.
 
 ## Android app
-
-`android/` holds a native Android app (Kotlin, no libraries) that wraps the same interface.
-
-- The three web files are copied into the APK on every build, so the app and the site are always the same code
-- Works with no network and requests **no permissions**
-- Certificates print through Android's own print service, including Save as PDF
-- The back button closes the certificate or verification view, then sends the app to the background without ending the session
-- Verification links of the form `maatora://verify/<record>` open straight into the app; only record characters are accepted, so a crafted link cannot inject script
-
-Build it with JDK 17 or 21 and the Android SDK (platform 35):
 
 ```bash
 cd android && ./gradlew assembleDebug
 ```
 
-The APK lands in `android/app/build/outputs/apk/debug/`. Android 10 or newer is required. A debug build is signed with a machine-local key: fine for sideloading, not for a store listing or for updating a copy signed elsewhere.
-
-QR codes generated inside the app use the `maatora://` link, which only opens on a phone that has the app. Set `PUBLIC_VERIFY_URL` in `script.js` to the hosted site address to make every code open in any browser instead.
-
-## Structure
-
-| File | Role |
-| --- | --- |
-| `index.html` | Semantic markup, inline SVG icon sprite, certificate document |
-| `style.css` | Design tokens, phone frame, glass dock, components, A4 print rules |
-| `script.js` | Single state object, role and session logic, simulation, rendering |
-| `android/` | Native shell: one activity, a print bridge, link and back-button handling |
-
-There are no inline styles, inline scripts or emojis anywhere in the code.
+Needs JDK 17 or 21 and the Android SDK (platform 35); produces `android/app/build/outputs/apk/debug/app-debug.apk` for Android 10 or newer. The app requests no permissions, prints certificates through Android's print service, and handles the back button and `maatora://verify/<record>` links. It runs the offline demo; to use the server from a phone, open the server's address in the phone's browser.
 
 ## Limits of this build
 
-This is a front-end prototype. Be clear about what is simulated:
-
-- **Authentication runs in the browser.** Demo accounts ship inside `script.js`, so sign-in is a user-experience layer, not a security boundary. A production build needs a server that verifies credentials, issues sessions and returns only the data each role may see.
-- **Telemetry is generated locally.** There is no device feed; a reload resets all state.
-- **The certificate digest is a real SHA-256** of the certificate fields, but nothing signs or stores it server-side.
-- **Verification proves integrity, not origin.** The QR code carries the record and its digest, so the page can show the fields were not altered after signing. It cannot show who issued them; that needs a server-side registry or a digital signature whose private key never reaches the browser.
-- **A phone can only open the QR link if it can reach the address in it.** A code generated on `localhost` points at `localhost`; host the site, or open it through the computer's network address, before scanning from another device.
-- **Alert history lasts for the session**, like the rest of the simulated state.
+- **Telemetry is simulated.** The engine generates readings and moves units along their routes; no device is connected. Feeding it real sensor data is the next step.
+- **The map is a schematic drawn from simplified outlines**, not a street map. It needs no internet and no map service, at the cost of detail.
+- **Demo accounts have published passwords.** They are test data. A real deployment needs its own accounts, HTTPS in front of the server (`--secure-cookies`), and the `--demo` flag left off.
+- **The offline demo and the Android app are not secure**, by design: everything runs in the page, including the accounts.
+- **The Android app does not talk to the server yet.**
+- **The Arabic has not been reviewed by a native speaker.**
+- **Node's built-in SQLite is still marked experimental** and prints a warning at start-up.
