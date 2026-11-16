@@ -1464,3 +1464,75 @@ function etaTick() {
   });
   renderClient();
 }
+
+/* --------------------------------------------------------------------------
+   Events
+   -------------------------------------------------------------------------- */
+function handleClick(event) {
+  const target = event.target instanceof Element ? event.target : null;
+  if (!target) {
+    return;
+  }
+
+  const roleButton = target.closest('[data-role-target]');
+  if (roleButton) {
+    setRole(roleButton.dataset.roleTarget);
+    return;
+  }
+
+  const panelButton = target.closest('[data-panel-target]');
+  if (panelButton) {
+    setPanel(panelButton.dataset.panelTarget);
+    return;
+  }
+
+  const consignmentButton = target.closest('[data-consignment]');
+  if (consignmentButton) {
+    selectConsignment(consignmentButton.dataset.consignment);
+    return;
+  }
+
+  const truckButton = target.closest('[data-truck]');
+  if (truckButton) {
+    selectTruck(truckButton.dataset.truck);
+    return;
+  }
+
+  const actionButton = target.closest('[data-action]');
+  if (actionButton && !actionButton.disabled) {
+    const action = ACTIONS[actionButton.dataset.action];
+    if (action) {
+      action();
+    }
+  }
+}
+
+function handleKeydown(event) {
+  if (!state.certificateModalOpen) {
+    return;
+  }
+  if (event.key === 'Escape') {
+    event.preventDefault();
+    closeCertificate();
+    return;
+  }
+  if (event.key !== 'Tab') {
+    return;
+  }
+  const focusable = all('button:not([disabled])', el.modal);
+  if (focusable.length === 0) {
+    return;
+  }
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault();
+    last.focus();
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    first.focus();
+  } else if (!el.modal.contains(document.activeElement)) {
+    event.preventDefault();
+    first.focus();
+  }
+}
