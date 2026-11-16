@@ -779,3 +779,38 @@ const ACTIONS = {
   'fill-demo': fillDemoCredentials,
   'toggle-password': togglePasswordVisibility
 };
+
+/* --------------------------------------------------------------------------
+   One-time DOM construction
+   -------------------------------------------------------------------------- */
+function cacheElements() {
+  [
+    'app', 'viewport', 'role-switch', 'live-chip', 'live-chip-text', 'dock', 'dock-items', 'toast',
+    'account-bar', 'account-name', 'auth-panel', 'auth-title', 'auth-sub', 'auth-form',
+    'auth-identifier', 'auth-identifier-label', 'auth-password', 'auth-toggle', 'auth-error',
+    'auth-submit', 'auth-demo-note', 'health-chip',
+    'admin-alert', 'admin-alert-title', 'admin-alert-note',
+    'client-banner', 'client-banner-title', 'client-banner-note',
+    'cargo-card', 'cargo-consignment', 'cargo-state', 'cargo-type', 'cargo-temp', 'cargo-target',
+    'cargo-meter', 'meter-min', 'meter-max', 'cargo-corridor', 'route-chip', 'route-stepper',
+    'journey-title', 'journey-sub', 'journey-timeline',
+    'custody-consignor', 'custody-consignee', 'custody-operator',
+    'doc-heading', 'doc-status', 'doc-validated', 'doc-excursions', 'doc-door',
+    'fleet-summary', 'fleet-grid', 'fleet-goto-label',
+    'diag-title', 'diag-sub', 'trace-card', 'diag-temp', 'diag-status', 'diag-range',
+    'spark-band', 'spark-setpoint', 'spark-line', 'spark-dot',
+    'diag-battery', 'bar-battery', 'diag-uplink', 'row-uplink', 'diag-compressor', 'row-compressor',
+    'diag-fuel', 'bar-fuel', 'diag-seal', 'diag-calibration', 'diag-firmware',
+    'controls-title', 'seal-card', 'seal-serial', 'seal-status', 'seal-note', 'seal-signed',
+    'seal-hash', 'seal-excursions', 'btn-incident', 'btn-normalize', 'btn-sign', 'tools-hint',
+    'audit-log', 'log-count',
+    'certificate', 'cert-serial', 'cert-consignor', 'cert-consignee', 'cert-vehicle', 'cert-operator',
+    'cert-cargo', 'cert-setpoint', 'cert-duration', 'cert-minmax', 'cert-excursions', 'cert-door',
+    'cert-seal', 'cert-stamp-title', 'cert-stamp-meta', 'cert-stamp-tick', 'cert-hash', 'cert-qr',
+    'cert-signer'
+  ].forEach((id) => {
+    el[id] = byId(id);
+  });
+  el.modal = byId('certificate-modal');
+  el.viewport = byId('viewport');
+}
