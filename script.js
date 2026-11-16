@@ -328,3 +328,24 @@ function formatDuration(totalMinutes) {
 function shortHash(hash) {
   return hash ? `${hash.slice(0, 6)}...${hash.slice(-5)}` : '';
 }
+
+function setText(node, text) {
+  if (node && node.textContent !== text) {
+    node.textContent = text;
+  }
+}
+
+function setChip(node, label, modifiers) {
+  if (!node) {
+    return;
+  }
+  setText(node, label);
+  const className = `chip ${modifiers}`.trim();
+  if (node.className !== className) {
+    node.className = className;
+  }
+}
+
+function iconMarkup(name) {
+  return `<svg class="icon" aria-hidden="true" focusable="false"><use href="#${name}"></use></svg>`;
+}
