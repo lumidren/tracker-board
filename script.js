@@ -2134,7 +2134,7 @@ function renderConsignmentPickers() {
     if (picker.dataset.signature !== signature) {
       picker.dataset.signature = signature;
       picker.innerHTML = trucks.map((id) => `
-        <button type="button" class="unit-picker__option" data-consignment="${id}" aria-pressed="false">${getTruck(id).consignmentId}</button>`).join('');
+        <button type="button" class="unit-picker__option" data-consignment="${id}" aria-pressed="false" dir="ltr">${getTruck(id).consignmentId}</button>`).join('');
     }
     all('[data-consignment]', picker).forEach((button) => {
       const truck = getTruck(button.dataset.consignment);
@@ -2146,7 +2146,7 @@ function renderConsignmentPickers() {
 
 function renderLiveChip() {
   const alertInView = el.app.dataset.alert === 'true';
-  setText(el['live-chip-text'], `${alertInView ? 'Alert' : 'Live'} • ${formatClock(new Date(), true)}`);
+  setText(el['live-chip-text'], `${t(alertInView ? 'Alert' : 'Live')} • ${ltr(formatClock(new Date(), true))}`);
 }
 
 function renderClient() {
