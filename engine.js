@@ -138,5 +138,35 @@
   }
 
   const isInSpec = (truck) => truck.tempCurrent >= truck.tempMin && truck.tempCurrent <= truck.tempMax;
+
+  /* Seven hardware checks, each rated ok, warn or fault. */
+  function hardwareChecks(truck) {
+    const level = (fault, warn) => {
+      if (fault) {
+        return 'fault';
+      }
+      return warn ? 'warn' : 'ok';
+    };
+    return {
+      battery: level(truck.sensorBattery < 15, truck.sensorBattery < 35),
+      uplink: level(truck.uplinkSignal < -105, truck.uplinkSignal < -95 || truck.uplinkPing > 150),
+      compressor: level(truck.status === 'excursion' || truck.compressorRpm === 0, false),
+      fuel: level(truck.fuelPercent < 15, truck.fuelPercent < 30),
+      seal: level(truck.log.doorOpenings > 0, false),
+      calibration: level(false, truck.calibrationDays > 30),
+      firmware: 'ok'
+    };
+  }
+
+  function healthOf(truck) {
+    const checks = hardwareChecks(truck);
+    const levels = Object.values(checks);
+    return {
+      checks,
+      total: levels.length,
+      faults: levels.filter((item) => item === 'fault').length,
+      warnings: levels.filter((item) => item === 'warn').length
+    };
+  }
   return {};
 });
