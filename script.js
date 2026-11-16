@@ -383,3 +383,36 @@ function appendLog(kind, message) {
     return digest || previous;
   });
 }
+
+/* --------------------------------------------------------------------------
+   Certificate digest
+   -------------------------------------------------------------------------- */
+async function refreshCertificateHash(truck) {
+  const cert = truck.certificate;
+  if (cert.status !== 'valid' || !cert.signedAt) {
+    cert.hash = '';
+    return;
+  }
+  const payload = [
+    cert.serial,
+    truck.id,
+    truck.consignmentId,
+    truck.tempTarget,
+    truck.tempMin,
+    truck.tempMax,
+    truck.log.transitMinutes,
+    truck.log.min,
+    truck.log.max,
+    truck.log.excursions,
+    truck.log.doorOpenings,
+    truck.sealId,
+    cert.signedAt.toISOString()
+  ].join('|');
+  const signedAt = cert.signedAt;
+  const hash = await sha256Hex(payload);
+  if (cert.status === 'valid' && cert.signedAt === signedAt) {
+    cert.hash = hash || '';
+    renderCertificate();
+    renderControls();
+  }
+}
