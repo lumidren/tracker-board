@@ -1307,6 +1307,27 @@ function qrEncode(text, forcedMask = -1) {
   return { version, size, modules };
 }
 
+/* One SVG path, with each horizontal run of dark modules drawn as a rectangle. */
+function qrPath(matrix) {
+  let path = '';
+  matrix.modules.forEach((row, y) => {
+    let x = 0;
+    while (x < matrix.size) {
+      if (row[x]) {
+        let length = 1;
+        while (x + length < matrix.size && row[x + length]) {
+          length += 1;
+        }
+        path += `M${x} ${y}h${length}v1h-${length}z`;
+        x += length;
+      } else {
+        x += 1;
+      }
+    }
+  });
+  return path;
+}
+
 /* --------------------------------------------------------------------------
    Actions
    -------------------------------------------------------------------------- */
