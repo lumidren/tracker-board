@@ -2792,68 +2792,83 @@ function chillerState(truck) {
 }
 
 function healthSummary(truck) {
-  const levels = Object.values(hardwareChecks(truck));
-  const faults = levels.filter((item) => item === 'fault').length;
-  const warnings = levels.filter((item) => item === 'warn').length;
-  if (faults > 0) {
-    const label = faults === 1 ? t('1 Fault') : t('{count} Faults', { count: faults });
+  const health = truck.health;
+  if (health.faults > 0) {
+    const label = health.faults === 1 ? t('1 Fault') : t('{count} Faults', { count: health.faults });
     return { label, tone: 'alert', chip: 'chip--alert chip--flash' };
   }
-  if (warnings > 0) {
-    return { label: t('{count} Attention', { count: warnings }), tone: 'ice', chip: 'chip--ice' };
+  if (health.warnings > 0) {
+    return { label: t('{count} Attention', { count: health.warnings }), tone: 'ice', chip: 'chip--ice' };
   }
   return {
-    label: t('{ok} / {total} Nominal', { ok: levels.length, total: levels.length }),
+    label: t('{ok} / {total} Nominal', { ok: health.total, total: health.total }),
     tone: 'safe',
     chip: 'chip--safe'
   };
 }
 
-/* --- Alert history --- */
-const unacknowledgedAlerts = (truckId) => state.alerts.filter(
-  (alert) => !alert.acknowledgedAt && (!truckId || alert.truckId === truckId)
-);
+const needsAttention = (truck) => truck.status === 'excursion' || truck.health.faults > 0
+  || truck.health.warnings > 0 || truck.openAlerts > 0;
 
-function openAlert(truck) {
-  state.alerts.push({
-    id: `ALT-${String(state.alerts.length + 1).padStart(4, '0')}`,
-    truckId: truck.id,
-    kind: 'excursion',
-    startedAt: new Date(),
-    endedAt: null,
-    peak: truck.tempCurrent,
-    limit: truck.tempMax,
-    acknowledgedAt: null,
-    acknowledgedBy: null
-  });
-}
-
-function activeAlert(truckId) {
-  return state.alerts.find((alert) => alert.truckId === truckId && alert.kind === 'excursion' && !alert.endedAt);
-}
+const FLEET_FILTERS = {
+  all: () => true,
+  attention: needsAttention,
+  moving: (truck) => truck.baseStatus === 'en-route',
+  parked: (truck) => truck.baseStatus !== 'en-route'
+};
 
 function renderFleet() {
-  const enRoute = state.trucks.filter((truck) => truck.baseStatus === 'en-route').length;
+  const snapshot = state.views.admin;
+  if (!snapshot) {
+    return;
+  }
+  const trucks = snapshot.trucks;
+  const moving = trucks.filter((truck) => truck.baseStatus === 'en-route').length;
+  const standby = trucks.filter((truck) => truck.baseStatus === 'standby').length;
+  const attention = trucks.filter(needsAttention).length;
+  const openAlerts = openAlertCount();
+
   setText(
     el['fleet-summary'],
-    t('{total} units monitored • {enRoute} en route • {standby} on standby', {
-      total: state.trucks.length,
-      enRoute,
-      standby: state.trucks.length - enRoute
+    t('{total} units monitored • {moving} on the road • {standby} on standby • {delivered} delivered', {
+      total: trucks.length,
+      moving,
+      standby,
+      delivered: trucks.length - moving - standby
     })
   );
+  setText(el['tile-total'], String(trucks.length));
+  setText(el['tile-moving'], String(moving));
+  setText(el['tile-attention'], String(attention));
+  setText(el['tile-alerts'], String(openAlerts));
+  el['tile-attention-box'].dataset.tone = attention > 0 ? 'ice' : 'default';
+  el['tile-alerts-box'].dataset.tone = openAlerts > 0 ? 'alert' : 'default';
 
-  state.trucks.forEach((truck) => {
-    const card = el['fleet-grid'].querySelector(`[data-truck="${truck.id}"]`);
+  all('[data-filter]', el['fleet-filters']).forEach((button) => {
+    button.setAttribute('aria-pressed', String(button.dataset.filter === state.fleetFilter));
+  });
+
+  const grid = el['fleet-grid'];
+  const matches = FLEET_FILTERS[state.fleetFilter];
+  let shown = 0;
+  syncCards(grid, trucks, 'truck', createUnitCard).forEach((card, index) => {
+    const truck = trucks[index];
     const meta = UNIT_STATUS[truck.status];
     const chiller = chillerState(truck);
     const health = healthSummary(truck);
+    const visible = matches(truck);
+    if (card.parentElement !== grid) {
+      grid.append(card);
+    }
+    card.hidden = !visible;
+    shown += visible ? 1 : 0;
+
     const tempNode = card.querySelector('[data-field="temp"]');
     const chillerNode = card.querySelector('[data-field="chiller"]');
     const healthNode = card.querySelector('[data-field="health"]');
-
     card.setAttribute('aria-pressed', String(truck.id === state.activeTruckId));
     card.dataset.status = truck.status;
+    all('[data-label]', card).forEach((label) => setText(label, t(label.dataset.label)));
     setText(card.querySelector('[data-field="unit"]'), t('Unit {id}', { id: `#${truck.id}` }));
     setChip(card.querySelector('[data-field="status"]'), t(meta.label), meta.chip);
     setText(card.querySelector('[data-field="cargo"]'), `${t(truck.cargoShort)} • ${ltr(truck.consignmentId)}`);
@@ -2865,14 +2880,26 @@ function renderFleet() {
     setText(healthNode, health.label);
     healthNode.dataset.tone = health.tone;
   });
+  el['fleet-empty'].hidden = shown > 0;
+  setText(el['fleet-goto-label'], t('Open Unit {id}', { id: `#${state.activeTruckId}` }));
 
-  all('.unit-picker__option[data-truck]').forEach((button) => {
-    const truck = getTruck(button.dataset.truck);
-    button.setAttribute('aria-pressed', String(truck.id === state.activeTruckId));
-    button.dataset.status = truck.status;
+  /* Unit pickers on the Unit and Controls panels. */
+  const signature = `${state.lang}|${trucks.map((truck) => truck.id).join(',')}`;
+  all('[data-unit-select]').forEach((select) => {
+    if (select.dataset.signature !== signature) {
+      select.dataset.signature = signature;
+      select.innerHTML = '';
+      trucks.forEach((truck) => {
+        const option = document.createElement('option');
+        option.value = truck.id;
+        option.textContent = `#${truck.id} • ${t(truck.cargoShort)}`;
+        select.append(option);
+      });
+    }
+    if (select.value !== state.activeTruckId) {
+      select.value = state.activeTruckId;
+    }
   });
-
-  setText(el['fleet-goto-label'], t('Open Diagnostics for Unit {id}', { id: `#${state.activeTruckId}` }));
 }
 
 function renderSparkline(truck) {
