@@ -589,6 +589,40 @@
       );
       return done();
     }
+
+    function normalizeSensor(actor) {
+      const refusal = denied(actor, 'drill');
+      if (refusal) {
+        return fail(refusal);
+      }
+      const truck = findTruck(state.drillTruckId);
+      if (!truck) {
+        return fail('No drill is active.');
+      }
+      const cert = truck.certificate;
+      truck.status = truck.baseStatus;
+      truck.tempCurrent = truck.tempBaseline;
+      truck.compressorRpm = truck.compressorNominalRpm;
+      truck.history.push(truck.tempCurrent);
+      truck.history = truck.history.slice(-HISTORY_POINTS);
+      truck.log.max = truck.log.maxBeforeDrill;
+      truck.log.excursions = Math.max(0, truck.log.excursions - 1);
+      delete truck.log.maxBeforeDrill;
+      cert.status = cert.statusBeforeDrill === 'not-issued' ? 'not-issued' : 'revalidate';
+      delete cert.statusBeforeDrill;
+
+      const alert = state.alerts.find((item) => item.truckId === truck.id && item.kind === 'excursion' && !item.endedAt);
+      if (alert) {
+        alert.endedAt = now();
+      }
+      state.drillTruckId = null;
+      log(
+        'ok',
+        'Sensor normalized on Unit {id} by {name}. Telemetry back at baseline {temp}. Drill closed and excluded from the compliance record.',
+        { id: `#${truck.id}`, name: actor.name, temp: plainTemp(truck.tempCurrent) }
+      );
+      return done();
+    }
     return {};
   }
 
