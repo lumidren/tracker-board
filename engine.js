@@ -746,6 +746,23 @@
       }
       return actor.access === 'receiver' ? truck.consigneeOrg === actor.org : truck.consignorOrg === actor.org;
     }
+
+    function snapshot(actor, extras) {
+      const base = { time: now(), portal: actor.portal, user: publicUser(actor), excursionDelta: EXCURSION_DELTA_C };
+      if (actor.portal !== 'admin') {
+        return { ...base, trucks: state.trucks.filter((truck) => visibleTo(actor, truck)).map(clientTruck) };
+      }
+      const seesAccounts = (actor.permissions || []).includes('accounts');
+      return {
+        ...base,
+        drillTruckId: state.drillTruckId,
+        trucks: state.trucks.map(adminTruck),
+        alerts: state.alerts.map((alert) => ({ ...alert })),
+        audit: state.audit.slice(-AUDIT_VISIBLE).map((entry) => ({ ...entry })),
+        auditCount: state.auditSeq,
+        accounts: seesAccounts ? ((extras && extras.accounts) || []) : null
+      };
+    }
     return {};
   }
 
