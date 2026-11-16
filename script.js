@@ -466,3 +466,61 @@ function resetAuthForm() {
   el['auth-toggle'].setAttribute('aria-pressed', 'false');
   setText(el['auth-toggle'], 'Show');
 }
+
+function submitSignIn() {
+  const role = state.currentRole;
+  const copy = AUTH_COPY[role];
+  if (lockSecondsLeft(role) > 0) {
+    renderAuth();
+    return;
+  }
+
+  const identifier = el['auth-identifier'].value.trim().toLowerCase();
+  const password = el['auth-password'].value;
+  if (!identifier || !password) {
+    state.auth.error = `Enter your ${copy.identifierLabel.toLowerCase()} and password.`;
+    renderAuth();
+    return;
+  }
+
+  const account = DEMO_ACCOUNTS.find(
+    (item) => item.role === role && item.identifier.toLowerCase() === identifier && item.password === password
+  );
+
+  if (!account) {
+    state.auth.attempts[role] += 1;
+    const attempt = state.auth.attempts[role];
+    if (attempt >= MAX_SIGN_IN_ATTEMPTS) {
+      state.auth.attempts[role] = 0;
+      state.auth.lockedUntil[role] = Date.now() + LOCKOUT_MS;
+      state.auth.error = '';
+      appendLog(
+        'alert',
+        `Sign-in locked on the ${copy.scope} for ${LOCKOUT_MS / 1000} seconds after ${MAX_SIGN_IN_ATTEMPTS} failed attempts.`
+      );
+    } else {
+      const left = MAX_SIGN_IN_ATTEMPTS - attempt;
+      state.auth.error = `Those details do not match an account. ${left} ${left === 1 ? 'attempt' : 'attempts'} left before a temporary lock.`;
+      appendLog('alert', `Failed sign-in attempt on the ${copy.scope} (${attempt} of ${MAX_SIGN_IN_ATTEMPTS}).`);
+    }
+    el['auth-password'].value = '';
+    renderAuth();
+    el['auth-password'].focus();
+    return;
+  }
+
+  state.auth.attempts[role] = 0;
+  state.auth.error = '';
+  state.session[role] = account;
+  if (role === 'client' && !account.trucks.includes(state.clientTruckId)) {
+    state.clientTruckId = account.trucks[0];
+  }
+  state.lastActivityAt = Date.now();
+  resetAuthForm();
+  persistSession();
+  appendLog('ok', `Sign-in on the ${copy.scope}: ${account.name}.`);
+  showToast(`Signed in as ${account.name}`, 'safe');
+  render();
+  el.viewport.scrollTop = 0;
+  el.viewport.focus();
+}
