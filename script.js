@@ -3372,9 +3372,9 @@ function handleClick(event) {
     return;
   }
 
-  const consignmentButton = target.closest('[data-consignment]');
-  if (consignmentButton) {
-    selectConsignment(consignmentButton.dataset.consignment);
+  const shipmentButton = target.closest('[data-shipment]');
+  if (shipmentButton) {
+    selectShipment(shipmentButton.dataset.shipment);
     return;
   }
 
@@ -3384,12 +3384,31 @@ function handleClick(event) {
     return;
   }
 
+  const filterButton = target.closest('[data-filter]');
+  if (filterButton) {
+    setFleetFilter(filterButton.dataset.filter);
+    return;
+  }
+
+  const demoButton = target.closest('[data-demo-account]');
+  if (demoButton) {
+    fillDemoAccount(demoButton);
+    return;
+  }
+
   const actionButton = target.closest('[data-action]');
   if (actionButton && !actionButton.disabled) {
     const action = ACTIONS[actionButton.dataset.action];
     if (action) {
       action(actionButton);
     }
+  }
+}
+
+function handleChange(event) {
+  const select = event.target instanceof Element ? event.target.closest('[data-unit-select]') : null;
+  if (select) {
+    selectTruck(select.value);
   }
 }
 
@@ -3408,6 +3427,13 @@ function handleBack() {
 }
 
 function handleKeydown(event) {
+  /* Map markers are not buttons, so Enter and Space select them here. */
+  const marker = event.target instanceof Element ? event.target.closest('.map__truck') : null;
+  if (marker && (event.key === 'Enter' || event.key === ' ')) {
+    event.preventDefault();
+    selectTruck(marker.dataset.truck);
+    return;
+  }
   if (!state.certificateModalOpen) {
     return;
   }
