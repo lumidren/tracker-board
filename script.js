@@ -2851,7 +2851,7 @@ function secondTick() {
   const now = Date.now();
   ['client', 'admin'].forEach((role) => {
     if (state.session[role] && now - state.lastActivityAt > IDLE_LIMIT_MS[role]) {
-      signOut(role, 'idle timeout');
+      signOut(role, true);
     }
   });
   if (!isAuthed()) {
@@ -2867,12 +2867,13 @@ function init() {
   cacheElements();
   seedData();
   restoreSession();
+  restoreLanguage();
 
   buildStepper();
   buildTimeline();
   buildFleet();
   buildUnitPickers();
-  buildDock();
+  collectStaticText();
 
   document.addEventListener('click', handleClick);
   document.addEventListener('keydown', handleKeydown);
@@ -2883,12 +2884,14 @@ function init() {
     submitSignIn();
   });
   window.addEventListener('beforeprint', renderCertificate);
+  window.addEventListener('hashchange', loadVerification);
 
-  render();
+  applyLanguage();
   seedAuditLog();
   state.trucks.forEach((truck) => {
     refreshCertificateHash(truck);
   });
+  loadVerification();
 
   window.setInterval(liveTick, LIVE_TICK_MS);
   window.setInterval(etaTick, ETA_TICK_MS);
