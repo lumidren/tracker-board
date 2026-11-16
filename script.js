@@ -638,3 +638,35 @@ function selectTruck(id) {
   state.activeTruckId = id;
   render();
 }
+
+function triggerIncident() {
+  if (state.isExcursionActive) {
+    return;
+  }
+  const truck = activeTruck();
+  const cert = truck.certificate;
+
+  state.isExcursionActive = true;
+  state.excursionTruckId = truck.id;
+
+  truck.status = 'excursion';
+  truck.tempCurrent = round1(truck.tempBaseline + EXCURSION_DELTA_C);
+  truck.compressorRpm = 0;
+  truck.history.push(truck.tempCurrent);
+  truck.history = truck.history.slice(-HISTORY_POINTS);
+
+  truck.log.maxBeforeDrill = truck.log.max;
+  truck.log.max = Math.max(truck.log.max, truck.tempCurrent);
+  truck.log.excursions += 1;
+
+  cert.statusBeforeDrill = cert.status;
+  cert.status = 'hold';
+  cert.hash = '';
+
+  appendLog(
+    'alert',
+    `Incident drill: compressor failure on Unit #${truck.id}. Internal temperature ${formatTemp(truck.tempCurrent)} (+${EXCURSION_DELTA_C.toFixed(1)}°C excursion). Compliance violation flagged.`
+  );
+  showToast(`Excursion triggered on Unit #${truck.id}`, 'alert');
+  render();
+}
