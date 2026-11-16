@@ -788,150 +788,38 @@ const state = {
   activeTruckId: 'TRK-104',
   isExcursionActive: false,
   certificateModalOpen: false,
+  /* The units the signed-in account is allowed to see, as last sent by the backend. */
+  trucks: [],
 
-  activePanel: { client: 'overview', admin: 'fleet' },
-  excursionTruckId: null,
-  auditLog: [],
-
+  activePanel: { client: 'shipments', admin: 'fleet' },
   session: { client: null, admin: null },
-  clientTruckId: 'TRK-104',
+  views: { client: null, admin: null },
+  landing: { client: false, admin: false },
+  clientTruckId: null,
+  fleetFilter: 'all',
   auth: {
-    attempts: { client: 0, admin: 0 },
+    busy: false,
     lockedUntil: { client: 0, admin: 0 },
-    error: null
+    error: null,
+    demoAccounts: { client: null, admin: null }
   },
   lastActivityAt: Date.now(),
+  lastTouchAt: 0,
 
   lang: 'en',
-  alerts: [],
-  verification: null,
-
-  trucks: [
-    {
-      id: 'TRK-104',
-      vehicleClass: 'Heavy Refrigerated Rigid 26T',
-      operator: 'Certified Transport Operator #104',
-      consignmentId: 'BATCH-REF-8841-X',
-      cargo: 'Pharmaceutical Vaccines (Ultra-Cold)',
-      cargoShort: 'Vaccines',
-      consignor: 'National Logistics & Biopharma Consignor S.A.E.',
-      consignorDept: 'Certified Pharmaceutical Logistics Dept.',
-      consignee: 'Northern Regional Medical Depot #04',
-      consigneeTerminal: 'Regional Receiving Terminal #04',
-      origin: 'Central Biopharma Distribution Hub',
-      destination: 'Northern Regional Medical Depot #04',
-      corridor: 'Transit Corridor 4',
-      routeStep: 1,
-      milestonesAgo: [258],
-      tempTarget: -20.0,
-      tempMin: -24.0,
-      tempMax: -18.0,
-      tempBaseline: -21.5,
-      tempCurrent: -21.5,
-      eta: 42,
-      sealId: 'EGY-9921-X',
-      sensorBattery: 96,
-      uplinkPing: 42,
-      uplinkSignal: -74,
-      compressorRpm: 1850,
-      compressorNominalRpm: 1850,
-      fuelPercent: 88,
-      firmware: 'TLM-FW 4.2.1',
-      calibrationDays: 14,
-      status: 'en-route',
-      baseStatus: 'en-route',
-      history: [],
-      log: { transitMinutes: 258, min: -22.1, max: -20.8, excursions: 0, doorOpenings: 0 },
-      certificate: { serial: 'REF-CERT-2026-8812-CC', status: 'valid', signedAt: null, hash: '' }
-    },
-    {
-      id: 'TRK-208',
-      vehicleClass: 'Medium Refrigerated Rigid 18T',
-      operator: 'Certified Transport Operator #208',
-      consignmentId: 'BATCH-REF-8856-K',
-      cargo: 'Perishable Biologics (Chilled 2–8°C)',
-      cargoShort: 'Perishable Biologics',
-      consignor: 'National Logistics & Biopharma Consignor S.A.E.',
-      consignorDept: 'Certified Pharmaceutical Logistics Dept.',
-      consignee: 'Delta Regional Clinical Depot #02',
-      consigneeTerminal: 'Regional Receiving Terminal #02',
-      origin: 'Central Biopharma Distribution Hub',
-      destination: 'Delta Regional Clinical Depot #02',
-      corridor: 'Transit Corridor 7',
-      routeStep: 2,
-      milestonesAgo: [203, 21],
-      tempTarget: 4.0,
-      tempMin: 2.0,
-      tempMax: 8.0,
-      tempBaseline: 3.2,
-      tempCurrent: 3.2,
-      eta: 27,
-      sealId: 'EGY-9934-K',
-      sensorBattery: 91,
-      uplinkPing: 58,
-      uplinkSignal: -81,
-      compressorRpm: 1420,
-      compressorNominalRpm: 1420,
-      fuelPercent: 74,
-      firmware: 'TLM-FW 4.2.1',
-      calibrationDays: 9,
-      status: 'en-route',
-      baseStatus: 'en-route',
-      history: [],
-      log: { transitMinutes: 203, min: 2.8, max: 3.9, excursions: 0, doorOpenings: 0 },
-      certificate: { serial: 'REF-CERT-2026-8813-CC', status: 'valid', signedAt: null, hash: '' }
-    },
-    {
-      id: 'TRK-315',
-      vehicleClass: 'Heavy Refrigerated Articulated 40T',
-      operator: 'Certified Transport Operator #315',
-      consignmentId: 'BATCH-REF-8872-M',
-      cargo: 'Frozen Seafood (Deep-Frozen)',
-      cargoShort: 'Frozen Seafood',
-      consignor: 'National Cold-Chain Provisions Consignor S.A.E.',
-      consignorDept: 'Certified Food-Grade Logistics Dept.',
-      consignee: 'Coastal Cold Storage Terminal #07',
-      consigneeTerminal: 'Regional Receiving Terminal #07',
-      origin: 'Origin Cold Dock B',
-      destination: 'Coastal Cold Storage Terminal #07',
-      corridor: 'Origin Cold Dock B',
-      routeStep: 0,
-      milestonesAgo: [],
-      tempTarget: -18.0,
-      tempMin: -22.0,
-      tempMax: -15.0,
-      tempBaseline: -18.0,
-      tempCurrent: -18.0,
-      eta: null,
-      sealId: 'EGY-9951-M',
-      sensorBattery: 99,
-      uplinkPing: 36,
-      uplinkSignal: -69,
-      compressorRpm: 2100,
-      compressorNominalRpm: 2100,
-      fuelPercent: 97,
-      firmware: 'TLM-FW 4.2.1',
-      calibrationDays: 3,
-      status: 'standby',
-      baseStatus: 'standby',
-      history: [],
-      log: { transitMinutes: 0, min: -18.4, max: -17.6, excursions: 0, doorOpenings: 0 },
-      certificate: { serial: 'REF-CERT-2026-8814-CC', status: 'not-issued', signedAt: null, hash: '' }
-    }
-  ]
+  verification: null
 };
 
 /* --------------------------------------------------------------------------
    Helpers
    -------------------------------------------------------------------------- */
 const el = {};
-const loadedAt = Date.now();
 const staticText = [];
 const dateTimeFormats = {};
+let backend = null;
 let toastTimer = null;
 let lastFocused = null;
 let verificationToken = 0;
-let logChain = Promise.resolve('MAATORA-AUDIT-GENESIS');
 
 const byId = (id) => document.getElementById(id);
 const all = (selector, root = document) => Array.from(root.querySelectorAll(selector));
@@ -939,14 +827,17 @@ const round1 = (value) => Math.round(value * 10) / 10;
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 const pad2 = (value) => String(value).padStart(2, '0');
 
-const getTruck = (id) => state.trucks.find((truck) => truck.id === id);
-const activeTruck = () => getTruck(state.activeTruckId);
-const isInSpec = (truck) => truck.tempCurrent >= truck.tempMin && truck.tempCurrent <= truck.tempMax;
-
-const isAuthed = (role = state.currentRole) => Boolean(state.session[role]);
-const clientTruck = () => getTruck(state.clientTruckId);
+const view = (role = state.currentRole) => state.views[role];
+const trucksOf = (role) => (state.views[role] ? state.views[role].trucks : []);
+const getTruck = (id, role = state.currentRole) => trucksOf(role).find((truck) => truck.id === id) || null;
+const activeTruck = () => getTruck(state.activeTruckId, 'admin') || trucksOf('admin')[0] || null;
+const clientTruck = () => getTruck(state.clientTruckId, 'client') || trucksOf('client')[0] || null;
 /* The client sees only their own consignment; the admin sees the selected unit. */
 const viewTruck = () => (state.currentRole === 'client' ? clientTruck() : activeTruck());
+const isAuthed = (role = state.currentRole) => Boolean(state.session[role]);
+const isInSpec = (truck) => truck.tempCurrent >= truck.tempMin && truck.tempCurrent <= truck.tempMax;
+const can = (permission) => Boolean(state.session.admin && state.session.admin.permissions.includes(permission));
+const openAlertCount = () => (state.views.admin ? state.views.admin.alerts.filter((alert) => !alert.acknowledgedAt).length : 0);
 
 /* Fills {placeholders} in an English source string. */
 function fmt(source, params) {
