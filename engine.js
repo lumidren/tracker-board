@@ -430,6 +430,38 @@
       }
       return truck;
     }
+
+    function seedState() {
+      const startedAt = now();
+      state.trucks = seed.trucks.map((spec, index) => buildTruck(spec, index, startedAt));
+      (seed.pastAlerts || []).forEach((past) => {
+        const started = startedAt - past.startedMinutesAgo * 60000;
+        state.alertSeq += 1;
+        state.alerts.push({
+          id: `ALT-${String(state.alertSeq).padStart(4, '0')}`,
+          truckId: past.truckId,
+          kind: past.kind,
+          startedAt: started,
+          endedAt: started + past.lastedSeconds * 1000,
+          peak: null,
+          limit: null,
+          acknowledgedAt: started + past.lastedSeconds * 1000 + 150000,
+          acknowledgedBy: past.acknowledgedBy
+        });
+      });
+      log('info', 'Telemetry session opened. {count} units reporting on 60 second sampling.', {
+        count: state.trucks.length
+      });
+      state.trucks.forEach((truck) => {
+        log('info', 'Electronic seal {seal} engaged on Unit {id}.', { seal: `#${truck.sealId}`, id: `#${truck.id}` });
+      });
+      state.trucks.filter((truck) => truck.certificate.status === 'valid').forEach((truck) => {
+        log('sign', 'Certificate {serial} validated by {name}.', {
+          serial: truck.certificate.serial,
+          name: truck.certificate.signedBy
+        });
+      });
+    }
     return {};
   }
 
