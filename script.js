@@ -988,3 +988,123 @@ function renderLiveChip() {
   const alertInView = el.app.dataset.alert === 'true';
   setText(el['live-chip-text'], `${alertInView ? 'Alert' : 'Live'} • ${formatClock(new Date(), true)}`);
 }
+
+function renderClient() {
+  const truck = clientTruck();
+  renderConsignmentPickers();
+  const cert = truck.certificate;
+  const certMeta = CERT_STATUS[cert.status];
+  const inExcursion = truck.status === 'excursion';
+  const onStandby = truck.baseStatus === 'standby';
+  const inSpec = isInSpec(truck);
+
+  /* Reassurance banner */
+  let bannerClass = 'banner banner--safe';
+  let bannerTitle = 'REFRIGERATION GUARANTEED • SAFE SPEC';
+  let bannerNote = 'Your cargo is held inside its certified temperature range and monitored continuously.';
+  if (inExcursion) {
+    bannerClass = 'banner banner--alert';
+    bannerTitle = 'TEMPERATURE EXCURSION • QA NOTIFIED';
+    bannerNote = 'The reading is outside the permitted range. Quality assurance has been alerted and corrective action is under way.';
+  } else if (onStandby) {
+    bannerClass = 'banner banner--pending';
+    bannerTitle = 'PRE-COOLING IN PROGRESS • DEPARTURE PENDING';
+    bannerNote = 'Your cargo bay is being conditioned to its certified temperature before departure.';
+  }
+  if (el['client-banner'].className !== bannerClass) {
+    el['client-banner'].className = bannerClass;
+  }
+  setText(el['client-banner-title'], bannerTitle);
+  setText(el['client-banner-note'], bannerNote);
+
+  /* Cargo snapshot */
+  el['cargo-card'].dataset.tone = inSpec ? 'safe' : 'alert';
+  setText(el['cargo-consignment'], truck.consignmentId);
+  setText(el['cargo-type'], truck.cargo);
+  setText(el['cargo-temp'], formatTemp(truck.tempCurrent));
+  setText(
+    el['cargo-target'],
+    `Target ${formatTemp(truck.tempTarget)} • Permitted ${formatTemp(truck.tempMin)} to ${formatTemp(truck.tempMax)}`
+  );
+  setChip(el['cargo-state'], inSpec ? 'Within Spec' : 'Out of Spec', inSpec ? 'chip--safe' : 'chip--alert chip--flash');
+
+  const domainMin = truck.tempMin - 2;
+  const domainMax = truck.tempMax + EXCURSION_DELTA_C;
+  const toPercent = (value) => clamp(((value - domainMin) / (domainMax - domainMin)) * 100, 3, 97);
+  const meter = el['cargo-meter'];
+  meter.style.setProperty('--band-start', `${toPercent(truck.tempMin)}%`);
+  meter.style.setProperty('--band-end', `${toPercent(truck.tempMax)}%`);
+  meter.style.setProperty('--setpoint', `${toPercent(truck.tempTarget)}%`);
+  meter.style.setProperty('--marker', `${toPercent(truck.tempCurrent)}%`);
+  meter.setAttribute(
+    'aria-label',
+    `Current ${formatTemp(truck.tempCurrent)}, permitted range ${formatTemp(truck.tempMin)} to ${formatTemp(truck.tempMax)}`
+  );
+  setText(el['meter-min'], formatTemp(truck.tempMin));
+  setText(el['meter-max'], formatTemp(truck.tempMax));
+
+  const etaText = truck.eta === null ? 'Departure Pending' : `ETA: ${truck.eta} Mins`;
+  setText(el['cargo-corridor'], `${truck.corridor} • ${etaText}`);
+
+  /* Route status */
+  const routeLabel = onStandby ? 'Pre-Departure' : truck.routeStep === 2 ? 'At Inspection Hub' : 'In Transit';
+  setChip(el['route-chip'], routeLabel, 'chip--ice');
+  const stepState = (index) => {
+    if (index < truck.routeStep) {
+      return 'done';
+    }
+    return index === truck.routeStep ? 'current' : 'upcoming';
+  };
+  all('.stepper__step', el['route-stepper']).forEach((step, index) => {
+    step.dataset.state = stepState(index);
+    if (index === truck.routeStep) {
+      step.setAttribute('aria-current', 'step');
+    } else {
+      step.removeAttribute('aria-current');
+    }
+  });
+
+  /* Journey */
+  setText(el['journey-title'], truck.consignmentId);
+  setText(el['journey-sub'], `${truck.origin} to ${truck.destination}`);
+  const now = Date.now();
+  all('.timeline__step', el['journey-timeline']).forEach((step, index) => {
+    const stateName = stepState(index);
+    step.dataset.state = stateName;
+    let place = truck.corridor;
+    if (index === 0) {
+      place = truck.origin;
+    } else if (index === 2) {
+      place = 'Regional Inspection Hub Checkpoint';
+    } else if (index === 3) {
+      place = truck.destination;
+    }
+    let timeText = 'Awaiting departure';
+    if (stateName === 'done') {
+      const minutesAgo = truck.milestonesAgo[index] || 0;
+      timeText = `Completed ${formatClock(new Date(loadedAt - minutesAgo * 60000))}`;
+    } else if (stateName === 'current') {
+      timeText = onStandby ? 'Pre-cooling at origin dock' : 'In progress';
+    } else if (truck.eta !== null) {
+      const share = index === 3 ? 1 : 0.5;
+      timeText = `Expected ${formatClock(new Date(now + truck.eta * share * 60000))}`;
+    }
+    setText(step.querySelector('.timeline__place'), place);
+    setText(step.querySelector('.timeline__time'), timeText);
+  });
+  setText(el['custody-consignor'], truck.consignor);
+  setText(el['custody-consignee'], truck.consignee);
+  setText(el['custody-operator'], truck.operator);
+
+  /* Documents */
+  setText(el['doc-heading'], cert.serial);
+  setChip(el['doc-status'], certMeta.label, certMeta.chip);
+  setText(el['doc-validated'], cert.signedAt && cert.status === 'valid' ? formatDateTime(cert.signedAt) : certMeta.label);
+  setText(el['doc-excursions'], excursionText(truck));
+  setText(el['doc-door'], `${truck.log.doorOpenings} Unauthorized Openings`);
+}
+
+function excursionText(truck) {
+  const count = truck.log.excursions;
+  return count === 0 ? '0 (Zero Breaches Recorded)' : `${count} (Breach Recorded, Under Review)`;
+}
