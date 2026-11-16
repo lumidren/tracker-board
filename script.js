@@ -1428,7 +1428,11 @@ async function loadVerification() {
 }
 
 function exitVerification() {
-  window.history.replaceState(null, '', window.location.href.split('#')[0]);
+  try {
+    window.history.replaceState(null, '', window.location.href.split('#')[0]);
+  } catch (error) {
+    /* Some hosts refuse to rewrite the address; the record is dropped below regardless. */
+  }
   verificationToken += 1;
   state.verification = null;
   render();
@@ -2791,6 +2795,20 @@ function handleClick(event) {
   }
 }
 
+/* Called by the phone app for the system back button. Returns true when the
+   page had something open to close. */
+function handleBack() {
+  if (state.certificateModalOpen) {
+    closeCertificate();
+    return true;
+  }
+  if (state.verification) {
+    exitVerification();
+    return true;
+  }
+  return false;
+}
+
 function handleKeydown(event) {
   if (!state.certificateModalOpen) {
     return;
@@ -2908,6 +2926,7 @@ function init() {
   });
   window.addEventListener('beforeprint', renderCertificate);
   window.addEventListener('hashchange', loadVerification);
+  window.maatoraHandleBack = handleBack;
 
   applyLanguage();
   seedAuditLog();
