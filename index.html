@@ -404,6 +404,22 @@
             </article>
           </section>
 
+          <!-- ================= ADMIN: ALERTS ================= -->
+          <section class="panel" data-role="admin" data-panel="alerts" aria-label="Alert history" hidden>
+            <header class="panel__head">
+              <p class="eyebrow">Alert History</p>
+              <h1 class="panel__title">Excursions &amp; Events</h1>
+              <p class="panel__sub" id="alerts-summary"></p>
+            </header>
+
+            <div class="alerts" id="alert-list"></div>
+
+            <article class="card note-card" id="alerts-empty" hidden>
+              <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-bell"></use></svg>
+              <p>No alerts have been recorded in this session.</p>
+            </article>
+          </section>
+
           <!-- ================= ADMIN: CONTROLS ================= -->
           <section class="panel" data-role="admin" data-panel="controls" aria-label="Simulation and compliance controls" hidden>
             <header class="panel__head">
