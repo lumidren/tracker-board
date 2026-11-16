@@ -701,3 +701,37 @@ function normalizeSensor() {
   showToast(`Unit #${truck.id} returned to nominal range`, 'safe');
   render();
 }
+
+function signBlockReason(truck) {
+  if (truck.status === 'excursion') {
+    return 'Signing is blocked while an excursion is active. Normalize the sensor first.';
+  }
+  if (truck.baseStatus === 'standby') {
+    return 'Unit is on standby. There is no in-transit log to validate yet.';
+  }
+  if (!isInSpec(truck)) {
+    return 'Signing is blocked while the reading is outside the permitted range.';
+  }
+  return '';
+}
+
+function signCertificate() {
+  const truck = activeTruck();
+  const reason = signBlockReason(truck);
+  if (reason) {
+    showToast(reason, 'alert');
+    return;
+  }
+  const cert = truck.certificate;
+  cert.status = 'valid';
+  cert.signedAt = new Date();
+  cert.hash = '';
+
+  appendLog(
+    'sign',
+    `Certificate ${cert.serial} signed by ${PERSONNEL.qaOfficer}. Continuous log validated: ${truck.log.excursions} excursions, ${truck.log.doorOpenings} unauthorized openings.`
+  );
+  showToast(`Certificate signed for Unit #${truck.id}`, 'safe');
+  render();
+  refreshCertificateHash(truck);
+}
