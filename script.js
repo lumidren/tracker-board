@@ -603,3 +603,38 @@ function healthSummary(truck) {
   }
   return { label: `${levels.length} / ${levels.length} Nominal`, tone: 'safe', chip: 'chip--safe' };
 }
+
+function setRole(role) {
+  if (role !== 'client' && role !== 'admin') {
+    return;
+  }
+  if (state.currentRole === role) {
+    return;
+  }
+  state.currentRole = role;
+  state.auth.error = '';
+  resetAuthForm();
+  persistSession();
+  hideToast();
+  buildDock();
+  render();
+  el.viewport.scrollTop = 0;
+}
+
+function setPanel(panelId) {
+  const valid = DOCK_ITEMS[state.currentRole].some((item) => item.id === panelId);
+  if (!valid) {
+    return;
+  }
+  state.activePanel[state.currentRole] = panelId;
+  render();
+  el.viewport.scrollTop = 0;
+}
+
+function selectTruck(id) {
+  if (!getTruck(id) || state.activeTruckId === id) {
+    return;
+  }
+  state.activeTruckId = id;
+  render();
+}
