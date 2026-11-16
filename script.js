@@ -2101,6 +2101,36 @@ function truckMarker(truck, k, selected) {
     </g>`;
 }
 
+function renderFleetMap() {
+  const svg = el['fleet-map'];
+  const snapshot = state.views.admin;
+  if (!snapshot || !SEED.geography) {
+    return;
+  }
+  buildMap(svg);
+  const k = frameMap(svg, 0, 0, MAP.width, MAP.height);
+  mapLabels(svg, k, SEED.geography.labels);
+
+  const selected = activeTruck();
+  svg.querySelector('[data-layer="routes"]').innerHTML = selected ? routeMarkup(selected) : '';
+  /* The selected unit is drawn last so it sits on top of its neighbours. */
+  const ordered = snapshot.trucks.filter((truck) => truck !== selected).concat(selected ? [selected] : []);
+  svg.querySelector('[data-layer="trucks"]').innerHTML = ordered.map((truck) => truckMarker(truck, k, truck === selected)).join('');
+
+  const moving = snapshot.trucks.filter((truck) => truck.baseStatus === 'en-route').length;
+  setText(el['map-summary'], t('{moving} units on the road right now', { moving }));
+  if (!selected) {
+    return;
+  }
+  const meta = UNIT_STATUS[selected.status];
+  setText(el['map-unit-id'], t('Unit {id}', { id: `#${selected.id}` }));
+  setChip(el['map-unit-status'], t(meta.label), meta.chip);
+  setText(el['map-unit-cargo'], t(selected.cargoShort));
+  setText(el['map-unit-route'], t('{origin} to {destination}', { origin: selected.originCity, destination: selected.destinationCity }));
+  setText(el['map-unit-temp'], formatTemp(selected.tempCurrent));
+  setText(el['map-unit-eta'], arrivalText(selected));
+}
+
 /* --------------------------------------------------------------------------
    One-time DOM construction
    -------------------------------------------------------------------------- */
