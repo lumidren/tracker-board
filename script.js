@@ -1950,11 +1950,36 @@ function buildUnitPickers() {
 }
 
 function buildDock() {
-  el['dock-items'].innerHTML = DOCK_ITEMS[state.currentRole].map((item) => `
+  const items = DOCK_ITEMS[state.currentRole];
+  el.dock.style.setProperty('--dock-count', String(items.length));
+  el['dock-items'].innerHTML = items.map((item) => `
     <button type="button" class="dock-item" data-panel-target="${item.id}">
       ${iconMarkup(item.icon)}
-      <span>${item.label}</span>
+      <span>${t(item.label)}</span>
+      ${item.id === 'alerts' ? '<span class="dock-item__badge" data-dock-badge aria-hidden="true" hidden></span>' : ''}
     </button>`).join('');
+}
+
+function createAlertCard(alert) {
+  const card = document.createElement('article');
+  card.className = 'card alert-card';
+  card.dataset.alert = alert.id;
+  card.innerHTML = `
+    <header class="card__head">
+      <div>
+        <p class="eyebrow" data-field="ref"></p>
+        <h2 class="card__title" data-field="title"></h2>
+      </div>
+      <span class="chip" data-field="status"></span>
+    </header>
+    <dl class="facts">
+      <div class="facts__row"><dt data-field="started-label"></dt><dd data-field="started"></dd></div>
+      <div class="facts__row"><dt data-field="duration-label"></dt><dd data-field="duration"></dd></div>
+      <div class="facts__row"><dt data-field="detail-label"></dt><dd data-field="detail"></dd></div>
+      <div class="facts__row"><dt data-field="ack-label"></dt><dd data-field="ack"></dd></div>
+    </dl>
+    <button type="button" class="btn btn--outline btn--block btn--small" data-action="acknowledge-alert" data-alert-id="${alert.id}"></button>`;
+  return card;
 }
 
 /* --------------------------------------------------------------------------
