@@ -3163,6 +3163,43 @@ function renderControls() {
   }
 }
 
+function renderAccounts(accounts) {
+  const list = el['accounts-list'];
+  const signature = `${state.lang}|${accounts.map((account) => `${account.id}:${account.sessions}:${account.lastSignIn}`).join(',')}`;
+  setText(el['accounts-count'], t('{count} accounts', { count: accounts.length }));
+  if (list.dataset.signature === signature) {
+    return;
+  }
+  list.dataset.signature = signature;
+  list.innerHTML = '';
+  accounts.forEach((account) => {
+    const row = document.createElement('li');
+    row.className = 'accounts__row';
+
+    const body = document.createElement('div');
+    const name = document.createElement('p');
+    name.className = 'accounts__name';
+    name.textContent = t(account.name);
+    const meta = document.createElement('p');
+    meta.className = 'accounts__meta';
+    meta.textContent = `${t(account.portal === 'admin' ? 'Control room' : 'Client portal')} • ${t(account.title)} • ${ltr(account.identifier)}`;
+    body.append(name, meta);
+
+    const status = document.createElement('p');
+    status.className = 'accounts__state';
+    status.dataset.active = String(account.sessions > 0);
+    if (account.sessions > 0) {
+      status.textContent = t('Signed in now');
+    } else if (account.lastSignIn) {
+      status.textContent = t('Last sign-in {time}', { time: formatClock(new Date(account.lastSignIn)) });
+    } else {
+      status.textContent = t('Never signed in');
+    }
+    row.append(body, status);
+    list.append(row);
+  });
+}
+
 function hashLabel(cert) {
   if (cert.status !== 'valid') {
     return t(cert.status === 'hold' ? 'Withheld (Compliance Hold)' : 'Not issued');
