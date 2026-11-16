@@ -59,6 +59,20 @@ class MainActivity : Activity() {
         verificationRecord(intent.data)?.let(::showVerification)
     }
 
+    /**
+     * Back first closes whatever the page has open (the certificate, the verification
+     * view). With nothing open it sends the app to the background instead of ending it,
+     * so the session and the alert history survive.
+     */
+    @Deprecated("Deprecated in the platform; still the right hook below predictive back.")
+    override fun onBackPressed() {
+        web.evaluateJavascript("Boolean(window.maatoraHandleBack && window.maatoraHandleBack());") { handled ->
+            if (handled != "true") {
+                moveTaskToBack(true)
+            }
+        }
+    }
+
     override fun onDestroy() {
         web.destroy()
         super.onDestroy()
