@@ -1844,7 +1844,12 @@ function closeCertificate() {
 
 function printCertificate() {
   renderCertificate();
-  window.print();
+  /* The Android app has no browser print dialog, so it prints through its own bridge. */
+  if (window.MaatoraNative && typeof window.MaatoraNative.print === 'function') {
+    window.MaatoraNative.print();
+  } else {
+    window.print();
+  }
 }
 
 const ACTIONS = {
