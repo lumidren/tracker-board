@@ -2434,6 +2434,72 @@ function renderDiagnostics() {
   setText(el['diag-firmware'], t('{version} (Signed Build)', { version: truck.firmware }));
 }
 
+function renderAlerts() {
+  const list = el['alert-list'];
+  setText(
+    el['alerts-summary'],
+    t('{open} unacknowledged • {total} recorded', { open: unacknowledgedAlerts().length, total: state.alerts.length })
+  );
+  el['alerts-empty'].hidden = state.alerts.length > 0;
+
+  state.alerts.forEach((alert) => {
+    let card = list.querySelector(`[data-alert="${alert.id}"]`);
+    if (!card) {
+      card = createAlertCard(alert);
+      list.prepend(card);
+    }
+    const field = (name) => card.querySelector(`[data-field="${name}"]`);
+    const kind = ALERT_KINDS[alert.kind];
+    const ended = Boolean(alert.endedAt);
+    const acknowledged = Boolean(alert.acknowledgedAt);
+
+    let stateName = 'acknowledged';
+    let statusLabel = 'Acknowledged';
+    let statusChip = 'chip--safe';
+    if (!ended) {
+      stateName = 'active';
+      statusLabel = 'Active';
+      statusChip = 'chip--alert chip--flash';
+    } else if (!acknowledged) {
+      stateName = 'open';
+      statusLabel = 'Ended, Unacknowledged';
+      statusChip = 'chip--alert';
+    }
+    card.dataset.state = stateName;
+
+    setText(field('ref'), t('{alert} • Unit {id}', { alert: alert.id, id: `#${alert.truckId}` }));
+    setText(field('title'), t(kind.title));
+    setChip(field('status'), t(statusLabel), statusChip);
+    setText(field('started-label'), t('Started'));
+    setText(field('started'), formatDateTime(alert.startedAt));
+    setText(field('duration-label'), t('Duration'));
+    setText(
+      field('duration'),
+      ended
+        ? formatSpan(alert.endedAt - alert.startedAt)
+        : t('Ongoing ({span})', { span: formatSpan(Date.now() - alert.startedAt) })
+    );
+    setText(field('detail-label'), t(kind.detailLabel));
+    setText(
+      field('detail'),
+      alert.kind === 'excursion'
+        ? t('{peak} against a {limit} limit', { peak: plainTemp(alert.peak), limit: plainTemp(alert.limit) })
+        : t('Satellite failover engaged, no samples lost')
+    );
+    setText(field('ack-label'), t('Acknowledgement'));
+    setText(
+      field('ack'),
+      acknowledged
+        ? t('{name}, {time}', { name: alert.acknowledgedBy, time: formatDateTime(alert.acknowledgedAt) })
+        : t('Pending')
+    );
+
+    const button = card.querySelector('[data-action="acknowledge-alert"]');
+    button.hidden = acknowledged;
+    setText(button, t('Acknowledge'));
+  });
+}
+
 function renderControls() {
   const truck = activeTruck();
   const cert = truck.certificate;
