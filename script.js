@@ -2456,25 +2456,32 @@ function renderAuth() {
 }
 
 function renderVerification() {
-  const record = state.verification;
-  if (!record) {
+  const result = state.verification;
+  if (!result) {
     return;
   }
-  const view = VERIFY_STATUS[record.status];
-  const bannerClass = `banner ${view.banner}`;
+  const status = VERIFY_STATUS[result.status] || VERIFY_STATUS.invalid;
+  const bannerClass = `banner ${status.banner}`;
   if (el['verify-banner'].className !== bannerClass) {
     el['verify-banner'].className = bannerClass;
   }
-  setText(el['verify-banner-title'], t(view.title));
-  setText(el['verify-banner-note'], t(view.note));
+  setText(el['verify-banner-title'], t(status.title));
+  setText(el['verify-banner-note'], t(status.note));
+  setText(
+    el['verify-method'],
+    t(result.source === 'registry'
+      ? 'Checked against the issuing registry on the Maatora server, which also confirms the certificate is still the current one.'
+      : 'This check recomputes the SHA-256 digest from the certificate fields carried in the QR code. It runs in your browser and does not consult a central registry.')
+  );
 
-  el['verify-card'].hidden = !record.truck;
-  if (!record.truck) {
+  el['verify-card'].hidden = !result.truck;
+  if (!result.truck) {
     return;
   }
-  const truck = record.truck;
-  setText(el['verify-serial'], truck.certificate.serial);
-  setChip(el['verify-chip'], t(view.label), view.chip);
+  const truck = result.truck;
+  const record = result.record;
+  setText(el['verify-serial'], truck.serial);
+  setChip(el['verify-chip'], t(status.label), status.chip);
   setText(el['verify-vehicle'], t('Unit {id} ({vehicle})', { id: `#${truck.id}`, vehicle: truck.vehicleClass }));
   setText(el['verify-consignment'], ltr(truck.consignmentId));
   setText(el['verify-cargo'], t(truck.cargo));
@@ -2485,25 +2492,6 @@ function renderVerification() {
   setText(el['verify-excursions'], excursionText(record.excursions));
   setText(el['verify-door'], t('{count} Unauthorized Openings', { count: record.doorOpenings }));
   setText(el['verify-digest'], ltr(`SHA256: ${record.digest}`));
-}
-
-function renderConsignmentPickers() {
-  const account = state.session.client;
-  const trucks = account ? account.trucks : [];
-  const signature = trucks.join(',');
-  all('[data-consignment-picker]').forEach((picker) => {
-    picker.hidden = trucks.length < 2;
-    if (picker.dataset.signature !== signature) {
-      picker.dataset.signature = signature;
-      picker.innerHTML = trucks.map((id) => `
-        <button type="button" class="unit-picker__option" data-consignment="${id}" aria-pressed="false" dir="ltr">${getTruck(id).consignmentId}</button>`).join('');
-    }
-    all('[data-consignment]', picker).forEach((button) => {
-      const truck = getTruck(button.dataset.consignment);
-      button.setAttribute('aria-pressed', String(truck.id === state.clientTruckId));
-      button.dataset.status = truck.status;
-    });
-  });
 }
 
 function renderLiveChip() {
