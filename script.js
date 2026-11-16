@@ -777,6 +777,42 @@ function iconMarkup(name) {
   return `<svg class="icon" aria-hidden="true" focusable="false"><use href="#${name}"></use></svg>`;
 }
 
+/* --------------------------------------------------------------------------
+   Language
+   -------------------------------------------------------------------------- */
+/* Registers every static text node and aria-label that has a translation, so
+   the markup stays plain English and needs no per-element keys. */
+function collectStaticText() {
+  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+  let node = walker.nextNode();
+  while (node) {
+    const source = node.nodeValue.replace(/\s+/g, ' ').trim();
+    if (source && AR[source]) {
+      staticText.push({ node, source, original: node.nodeValue });
+    }
+    node = walker.nextNode();
+  }
+  all('[aria-label]').forEach((element) => {
+    const source = element.getAttribute('aria-label');
+    if (AR[source]) {
+      staticText.push({ element, source });
+    }
+  });
+}
+
+function applyStaticText() {
+  staticText.forEach((entry) => {
+    if (entry.node) {
+      const next = state.lang === 'ar' ? AR[entry.source] : entry.original;
+      if (entry.node.nodeValue !== next) {
+        entry.node.nodeValue = next;
+      }
+    } else {
+      entry.element.setAttribute('aria-label', t(entry.source));
+    }
+  });
+}
+
 async function sha256Hex(text) {
   if (!window.crypto || !window.crypto.subtle || typeof TextEncoder === 'undefined') {
     return null;
