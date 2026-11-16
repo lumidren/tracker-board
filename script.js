@@ -1619,6 +1619,47 @@ function healthSummary(truck) {
   };
 }
 
+/* --- Alert history --- */
+const unacknowledgedAlerts = (truckId) => state.alerts.filter(
+  (alert) => !alert.acknowledgedAt && (!truckId || alert.truckId === truckId)
+);
+
+function openAlert(truck) {
+  state.alerts.push({
+    id: `ALT-${String(state.alerts.length + 1).padStart(4, '0')}`,
+    truckId: truck.id,
+    kind: 'excursion',
+    startedAt: new Date(),
+    endedAt: null,
+    peak: truck.tempCurrent,
+    limit: truck.tempMax,
+    acknowledgedAt: null,
+    acknowledgedBy: null
+  });
+}
+
+function activeAlert(truckId) {
+  return state.alerts.find((alert) => alert.truckId === truckId && alert.kind === 'excursion' && !alert.endedAt);
+}
+
+function acknowledgeAlert(button) {
+  const alert = state.alerts.find((item) => item.id === button.dataset.alertId);
+  const account = state.session.admin;
+  if (!alert || alert.acknowledgedAt || !account) {
+    return;
+  }
+  alert.acknowledgedAt = new Date();
+  alert.acknowledgedBy = account.name;
+  appendLog('ok', 'Alert {alert} on Unit {id} acknowledged by {name}.', {
+    alert: alert.id,
+    id: `#${alert.truckId}`,
+    name: account.name
+  });
+  showToast(t('Alert {id} acknowledged', { id: alert.id }), 'safe');
+  render();
+  el.viewport.focus();
+}
+
 function setRole(role) {
   if (role !== 'client' && role !== 'admin') {
     return;
