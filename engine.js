@@ -688,6 +688,36 @@
           return fail('Unknown action.');
       }
     }
+
+    /* --- Views: what each kind of account receives --- */
+    const publicUser = (actor) => ({
+      id: actor.id,
+      portal: actor.portal,
+      name: actor.name,
+      title: actor.title || '',
+      permissions: actor.portal === 'admin' ? (actor.permissions || []).slice() : []
+    });
+
+    function certificateView(truck) {
+      const cert = truck.certificate;
+      return {
+        serial: cert.serial,
+        status: cert.status,
+        signedAt: cert.signedAt,
+        signedBy: cert.signedBy,
+        hash: cert.hash,
+        record: cert.record ? { ...cert.record } : null,
+        verification: verificationRecord(truck)
+      };
+    }
+
+    const logView = (truck) => ({
+      transitMinutes: truck.log.transitMinutes,
+      min: truck.log.min,
+      max: truck.log.max,
+      excursions: truck.log.excursions,
+      doorOpenings: truck.log.doorOpenings
+    });
     return {};
   }
 
