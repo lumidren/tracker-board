@@ -3463,36 +3463,46 @@ function handleKeydown(event) {
   }
 }
 
+/* --------------------------------------------------------------------------
+   Boot
+   -------------------------------------------------------------------------- */
 function secondTick() {
   renderLiveChip();
   const now = Date.now();
-  ['client', 'admin'].forEach((role) => {
-    if (state.session[role] && now - state.lastActivityAt > IDLE_LIMIT_MS[role]) {
+  PORTALS.forEach((role) => {
+    if (!state.session[role]) {
+      return;
+    }
+    if (backend.mode === 'local' && now - state.lastActivityAt > IDLE_LIMIT_MS[role]) {
       signOut(role, true);
     }
   });
-  if (!isAuthed()) {
+  if (!isAuthed() || !state.views[state.currentRole]) {
     renderAuth();
   }
 }
 
+/* The server ends idle sessions itself, so it has to hear that someone is still here. */
 function markActivity() {
-  state.lastActivityAt = Date.now();
+  const now = Date.now();
+  state.lastActivityAt = now;
+  if (now - state.lastTouchAt > TOUCH_EVERY_MS) {
+    state.lastTouchAt = now;
+    PORTALS.filter((role) => state.session[role]).forEach((role) => backend.touch(role));
+  }
 }
 
-function init() {
+async function init() {
   cacheElements();
-  seedData();
-  restoreSession();
   restoreLanguage();
+  backend = REMOTE ? createRemoteBackend() : createLocalBackend();
 
   buildStepper();
   buildTimeline();
-  buildFleet();
-  buildUnitPickers();
   collectStaticText();
 
   document.addEventListener('click', handleClick);
+  document.addEventListener('change', handleChange);
   document.addEventListener('keydown', handleKeydown);
   document.addEventListener('pointerdown', markActivity, { passive: true });
   document.addEventListener('keydown', markActivity);
@@ -3504,15 +3514,31 @@ function init() {
   window.addEventListener('hashchange', loadVerification);
   window.maatoraHandleBack = handleBack;
 
+  try {
+    const role = window.sessionStorage.getItem(`${SESSION_KEY}.role`);
+    if (PORTALS.includes(role)) {
+      state.currentRole = role;
+    }
+  } catch (error) {
+    state.currentRole = 'client';
+  }
+
   applyLanguage();
-  seedAuditLog();
-  state.trucks.forEach((truck) => {
-    refreshCertificateHash(truck);
-  });
   loadVerification();
 
-  window.setInterval(liveTick, LIVE_TICK_MS);
-  window.setInterval(etaTick, ETA_TICK_MS);
+  /* Pick up sessions that were already open before the page was reloaded. */
+  let sessions = { client: null, admin: null };
+  try {
+    sessions = await backend.restore();
+  } catch (error) {
+    sessions = { client: null, admin: null };
+  }
+  PORTALS.forEach((role) => {
+    if (sessions[role]) {
+      startSession(role, sessions[role], false);
+    }
+  });
+
   window.setInterval(secondTick, 1000);
 }
 
