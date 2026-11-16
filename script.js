@@ -1305,3 +1305,50 @@ function renderAuditLog() {
   });
   setText(el['log-count'], `${state.auditLog.length} Entries`);
 }
+
+/* Deterministic verification block: QR-styled placeholder seeded from the
+   certificate serial and digest. It is not a decodable QR symbol. */
+function renderVerificationBlock(seed) {
+  const size = 25;
+  let hashState = 2166136261;
+  for (let index = 0; index < seed.length; index += 1) {
+    hashState ^= seed.charCodeAt(index);
+    hashState = Math.imul(hashState, 16777619);
+  }
+  const next = () => {
+    hashState |= 0;
+    hashState = (hashState + 0x6D2B79F5) | 0;
+    let mixed = Math.imul(hashState ^ (hashState >>> 15), 1 | hashState);
+    mixed = (mixed + Math.imul(mixed ^ (mixed >>> 7), 61 | mixed)) ^ mixed;
+    return ((mixed ^ (mixed >>> 14)) >>> 0) / 4294967296;
+  };
+
+  const finders = [[0, 0], [size - 7, 0], [0, size - 7]];
+  const finderCell = (x, y) => {
+    for (const [fx, fy] of finders) {
+      const dx = x - fx;
+      const dy = y - fy;
+      if (dx >= -1 && dx <= 7 && dy >= -1 && dy <= 7) {
+        if (dx < 0 || dx > 6 || dy < 0 || dy > 6) {
+          return 0;
+        }
+        const ring = dx === 0 || dx === 6 || dy === 0 || dy === 6;
+        const core = dx >= 2 && dx <= 4 && dy >= 2 && dy <= 4;
+        return ring || core ? 1 : 0;
+      }
+    }
+    return -1;
+  };
+
+  let path = '';
+  for (let y = 0; y < size; y += 1) {
+    for (let x = 0; x < size; x += 1) {
+      const fixed = finderCell(x, y);
+      const filled = fixed === -1 ? next() > 0.52 : fixed === 1;
+      if (filled) {
+        path += `M${x} ${y}h1v1h-1z`;
+      }
+    }
+  }
+  el['cert-qr'].setAttribute('d', path);
+}
