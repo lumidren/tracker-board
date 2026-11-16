@@ -1,7 +1,8 @@
 /* ==========================================================================
    Maatora | Cold-Chain Monitoring
-   Single state object, role-based views, incident simulation and the
-   printable compliance certificate. No dependencies.
+   Single state object, role-based views, incident simulation, alert history,
+   English and Arabic interfaces, and the printable compliance certificate
+   with a scannable verification code. No dependencies.
    ========================================================================== */
 'use strict';
 
@@ -18,6 +19,9 @@ const MAX_SIGN_IN_ATTEMPTS = 5;
 const LOCKOUT_MS = 30000;
 const IDLE_LIMIT_MS = { client: 30 * 60000, admin: 10 * 60000 };
 const SESSION_KEY = 'maatora.session';
+const LANG_KEY = 'maatora.lang';
+const VERIFY_PREFIX = '#verify=';
+const VERIFY_DIGEST_LENGTH = 32;
 
 const ROUTE_STEPS = [
   'Origin Departure',
@@ -40,6 +44,7 @@ const DOCK_ITEMS = {
   admin: [
     { id: 'fleet', label: 'Fleet', icon: 'i-fleet' },
     { id: 'diagnostics', label: 'Diagnostics', icon: 'i-activity' },
+    { id: 'alerts', label: 'Alerts', icon: 'i-bell' },
     { id: 'controls', label: 'Controls', icon: 'i-sliders' }
   ]
 };
@@ -79,6 +84,7 @@ const AUTH_COPY = {
     title: 'Client Portal Sign-In',
     sub: 'Follow your consignment temperature, route progress and compliance certificate.',
     identifierLabel: 'Account Email',
+    missing: 'Enter your account email and password.',
     inputMode: 'email',
     scope: 'client portal',
     demoNote: 'Sign-in is simulated in this browser. Load the demo consignor account to explore the client portal.'
@@ -87,6 +93,7 @@ const AUTH_COPY = {
     title: 'Control Room Sign-In',
     sub: 'Dispatch and compliance controllers only: fleet telemetry, hardware health and certificate signing.',
     identifierLabel: 'Operator ID',
+    missing: 'Enter your operator ID and password.',
     inputMode: 'text',
     scope: 'control room console',
     demoNote: 'Sign-in is simulated in this browser. Load the demo controller account to open the control room.'
@@ -133,6 +140,42 @@ const CERT_STATUS = {
     tone: 'pending',
     stamp: 'NOT YET ISSUED • TRANSIT NOT COMMENCED',
     note: 'Unit is on standby. A certificate is issued once the transit log opens.'
+  }
+};
+
+const ALERT_KINDS = {
+  excursion: { title: 'Temperature Excursion', detailLabel: 'Peak Reading' },
+  uplink: { title: 'Telemetry Uplink Dropout', detailLabel: 'Detail' }
+};
+
+const VERIFY_STATUS = {
+  checking: {
+    banner: 'banner--pending',
+    chip: 'chip--ice',
+    label: 'Checking',
+    title: 'CHECKING CERTIFICATE',
+    note: 'Recomputing the digest from the scanned fields.'
+  },
+  verified: {
+    banner: 'banner--safe',
+    chip: 'chip--safe',
+    label: 'Verified',
+    title: 'CERTIFICATE VERIFIED • DIGEST MATCHES',
+    note: 'The scanned fields match the digest issued when the certificate was signed.'
+  },
+  failed: {
+    banner: 'banner--alert',
+    chip: 'chip--alert',
+    label: 'Failed',
+    title: 'VERIFICATION FAILED • DIGEST MISMATCH',
+    note: 'The scanned fields do not match the digest. Treat this certificate as altered.'
+  },
+  invalid: {
+    banner: 'banner--alert',
+    chip: 'chip--alert',
+    label: 'Failed',
+    title: 'VERIFICATION FAILED • UNREADABLE CODE',
+    note: 'This link does not contain a recognisable certificate record.'
   }
 };
 
