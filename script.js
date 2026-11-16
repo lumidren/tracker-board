@@ -1903,140 +1903,63 @@ function setFleetFilter(filter) {
   renderFleet();
 }
 
-function triggerIncident() {
-  if (state.isExcursionActive) {
+/* Sends a control room command and reports the outcome. */
+async function runCommand(name, payload, success) {
+  let result = { ok: false, error: 'The server could not be reached. Check the connection and try again.' };
+  try {
+    result = await backend.command(name, payload);
+  } catch (error) {
+    /* Keep the unreachable message. */
+  }
+  if (result.expired) {
+    endSession('admin', true);
     return;
   }
+  if (!result.ok) {
+    showToast(t(result.error), 'alert');
+    return;
+  }
+  showToast(success.text, success.tone);
+}
+
+function triggerIncident() {
   const truck = activeTruck();
-  const cert = truck.certificate;
-
-  state.isExcursionActive = true;
-  state.excursionTruckId = truck.id;
-
-  truck.status = 'excursion';
-  truck.tempCurrent = round1(truck.tempBaseline + EXCURSION_DELTA_C);
-  truck.compressorRpm = 0;
-  truck.history.push(truck.tempCurrent);
-  truck.history = truck.history.slice(-HISTORY_POINTS);
-
-  truck.log.maxBeforeDrill = truck.log.max;
-  truck.log.max = Math.max(truck.log.max, truck.tempCurrent);
-  truck.log.excursions += 1;
-
-  cert.statusBeforeDrill = cert.status;
-  cert.status = 'hold';
-  cert.hash = '';
-
-  openAlert(truck);
-  appendLog(
-    'alert',
-    'Incident drill: compressor failure on Unit {id}. Internal temperature {temp} ({delta} excursion). Compliance violation flagged.',
-    { id: `#${truck.id}`, temp: plainTemp(truck.tempCurrent), delta: `+${EXCURSION_DELTA_C.toFixed(1)}°C` }
-  );
-  showToast(t('Excursion triggered on Unit {id}', { id: `#${truck.id}` }), 'alert');
-  render();
+  if (truck) {
+    runCommand('trigger-incident', { truckId: truck.id }, {
+      text: t('Excursion triggered on Unit {id}', { id: `#${truck.id}` }),
+      tone: 'alert'
+    });
+  }
 }
 
 function normalizeSensor() {
-  if (!state.isExcursionActive) {
-    return;
+  const drillId = state.views.admin ? state.views.admin.drillTruckId : null;
+  if (drillId) {
+    runCommand('normalize-sensor', {}, {
+      text: t('Unit {id} returned to nominal range', { id: `#${drillId}` }),
+      tone: 'safe'
+    });
   }
-  const truck = getTruck(state.excursionTruckId);
-  const cert = truck.certificate;
-  const alert = activeAlert(truck.id);
-
-  truck.status = truck.baseStatus;
-  truck.tempCurrent = truck.tempBaseline;
-  truck.compressorRpm = truck.compressorNominalRpm;
-  truck.history.push(truck.tempCurrent);
-  truck.history = truck.history.slice(-HISTORY_POINTS);
-
-  truck.log.max = truck.log.maxBeforeDrill;
-  truck.log.excursions = Math.max(0, truck.log.excursions - 1);
-  delete truck.log.maxBeforeDrill;
-
-  cert.status = cert.statusBeforeDrill === 'not-issued' ? 'not-issued' : 'revalidate';
-  delete cert.statusBeforeDrill;
-
-  if (alert) {
-    alert.endedAt = new Date();
-  }
-  state.isExcursionActive = false;
-  state.excursionTruckId = null;
-
-  appendLog(
-    'ok',
-    'Sensor normalized on Unit {id}. Telemetry back at baseline {temp}. Drill closed and excluded from the compliance record.',
-    { id: `#${truck.id}`, temp: plainTemp(truck.tempCurrent) }
-  );
-  showToast(t('Unit {id} returned to nominal range', { id: `#${truck.id}` }), 'safe');
-  render();
-}
-
-/* Returns the English source of the reason signing is blocked, or ''. */
-function signBlockReason(truck) {
-  if (truck.status === 'excursion') {
-    return 'Signing is blocked while an excursion is active. Normalize the sensor first.';
-  }
-  if (truck.baseStatus === 'standby') {
-    return 'Unit is on standby. There is no in-transit log to validate yet.';
-  }
-  if (!isInSpec(truck)) {
-    return 'Signing is blocked while the reading is outside the permitted range.';
-  }
-  if (unacknowledgedAlerts(truck.id).length > 0) {
-    return 'Acknowledge the open alert for this unit before signing.';
-  }
-  return '';
 }
 
 function signCertificate() {
   const truck = activeTruck();
-  const reason = signBlockReason(truck);
-  if (reason) {
-    showToast(t(reason), 'alert');
-    return;
+  if (truck) {
+    runCommand('sign-certificate', { truckId: truck.id }, {
+      text: t('Certificate signed for Unit {id}', { id: `#${truck.id}` }),
+      tone: 'safe'
+    });
   }
-  const cert = truck.certificate;
-  cert.status = 'valid';
-  cert.signedAt = new Date();
-  cert.hash = '';
-
-  appendLog(
-    'sign',
-    'Certificate {serial} signed by {name}. Continuous log validated: {excursions} excursions, {openings} unauthorized openings.',
-    {
-      serial: cert.serial,
-      name: PERSONNEL.qaOfficer,
-      excursions: truck.log.excursions,
-      openings: truck.log.doorOpenings
-    }
-  );
-  showToast(t('Certificate signed for Unit {id}', { id: `#${truck.id}` }), 'safe');
-  render();
-  refreshCertificateHash(truck);
 }
 
 function acknowledgeAlert(button) {
-  const alert = state.alerts.find((item) => item.id === button.dataset.alertId);
-  const account = state.session.admin;
-  if (!alert || alert.acknowledgedAt || !account) {
-    return;
-  }
-  alert.acknowledgedAt = new Date();
-  alert.acknowledgedBy = account.name;
-  appendLog('ok', 'Alert {alert} on Unit {id} acknowledged by {name}.', {
-    alert: alert.id,
-    id: `#${alert.truckId}`,
-    name: account.name
-  });
-  showToast(t('Alert {id} acknowledged', { id: alert.id }), 'safe');
-  render();
+  const alertId = button.dataset.alertId;
+  runCommand('acknowledge-alert', { alertId }, { text: t('Alert {id} acknowledged', { id: alertId }), tone: 'safe' });
   el.viewport.focus();
 }
 
 function openCertificate() {
-  if (state.certificateModalOpen || !isAuthed() || state.verification) {
+  if (state.certificateModalOpen || !isAuthed() || state.verification || !viewTruck()) {
     return;
   }
   lastFocused = document.activeElement;
@@ -2078,9 +2001,8 @@ const ACTIONS = {
   'trigger-incident': triggerIncident,
   'normalize-sensor': normalizeSensor,
   'sign-certificate': signCertificate,
-  'goto-diagnostics': () => setPanel('diagnostics'),
+  'goto-unit': () => setPanel('unit'),
   'sign-out': () => signOut(),
-  'fill-demo': fillDemoCredentials,
   'toggle-password': togglePasswordVisibility,
   'toggle-language': toggleLanguage,
   'acknowledge-alert': acknowledgeAlert,
