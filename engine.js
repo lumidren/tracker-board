@@ -229,5 +229,17 @@
       doorOpenings: numbers[5]
     };
   }
+
+  /* What a client account may receive about a unit. Anything not listed here,
+     including every hardware and sensor reading, never leaves the engine. */
+  const CLIENT_FIELDS = [
+    'id', 'vehicleClass', 'operator', 'consignmentId', 'cargo', 'cargoShort', 'pallets',
+    'consignor', 'consignorDept', 'consignee', 'consigneeTerminal',
+    'origin', 'originCity', 'destination', 'destinationCity', 'corridor',
+    'routePoints', 'routeKm', 'remainingKm', 'progress', 'position', 'eta', 'routeStep', 'speedKmh',
+    'departedAt', 'hubPassedAt', 'arrivedAt',
+    'tempTarget', 'tempMin', 'tempMax', 'tempCurrent', 'history',
+    'status', 'baseStatus', 'sealId'
+  ];
   return {};
 });
