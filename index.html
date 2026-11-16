@@ -171,13 +171,13 @@
               </button>
             </form>
 
-            <article class="card note-card auth__demo">
-              <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-shield-check"></use></svg>
-              <div>
-                <p class="auth__demo-title">Demonstration Environment</p>
-                <p id="auth-demo-note"></p>
-                <button type="button" class="btn btn--outline btn--small" data-action="fill-demo">Use Demo Credentials</button>
-              </div>
+            <article class="card auth__demo" id="auth-demo" hidden>
+              <header class="card__head">
+                <h2 class="card__title">Test Accounts</h2>
+                <span class="chip chip--ice">Demo</span>
+              </header>
+              <p class="auth__demo-note" id="auth-demo-note"></p>
+              <div class="account-list" id="auth-demo-list"></div>
             </article>
           </section>
 
