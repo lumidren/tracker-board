@@ -815,8 +815,13 @@ function applyStaticText() {
 
 function applyLanguage() {
   const arabic = state.lang === 'ar';
-  document.documentElement.lang = state.lang;
-  document.documentElement.dir = arabic ? 'rtl' : 'ltr';
+  const root = document.documentElement;
+  root.classList.add('is-switching-language');
+  root.lang = state.lang;
+  root.dir = arabic ? 'rtl' : 'ltr';
+  window.requestAnimationFrame(() => {
+    window.requestAnimationFrame(() => root.classList.remove('is-switching-language'));
+  });
   applyStaticText();
 
   const toggle = el['lang-toggle'];
