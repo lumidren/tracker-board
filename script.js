@@ -1273,3 +1273,35 @@ function hashLabel(cert) {
   }
   return cert.hash ? `SHA256: ${shortHash(cert.hash)}` : 'Digest unavailable in this browser';
 }
+
+function renderAuditLog() {
+  const list = el['audit-log'];
+  if (!list) {
+    return;
+  }
+  const entries = state.auditLog.slice(-AUDIT_LOG_VISIBLE).reverse();
+  list.innerHTML = '';
+  entries.forEach((entry) => {
+    const item = document.createElement('li');
+    item.className = 'audit__entry';
+    item.dataset.kind = entry.kind;
+    item.value = entry.seq;
+
+    const marker = document.createElement('span');
+    marker.className = 'audit__marker';
+    marker.setAttribute('aria-hidden', 'true');
+
+    const message = document.createElement('p');
+    message.className = 'audit__message';
+    message.textContent = entry.message;
+
+    const meta = document.createElement('p');
+    meta.className = 'audit__meta';
+    const digest = entry.digest ? `chain ${entry.digest.slice(0, 12)}` : 'chain pending';
+    meta.textContent = `#${pad2(entry.seq)} • ${formatClock(entry.time, true)} • ${digest}`;
+
+    item.append(marker, message, meta);
+    list.append(item);
+  });
+  setText(el['log-count'], `${state.auditLog.length} Entries`);
+}
