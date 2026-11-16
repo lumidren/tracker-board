@@ -2157,6 +2157,7 @@ function renderClient() {
   const inExcursion = truck.status === 'excursion';
   const onStandby = truck.baseStatus === 'standby';
   const inSpec = isInSpec(truck);
+  const range = { min: plainTemp(truck.tempMin), max: plainTemp(truck.tempMax) };
 
   /* Reassurance banner */
   let bannerClass = 'banner banner--safe';
@@ -2174,19 +2175,23 @@ function renderClient() {
   if (el['client-banner'].className !== bannerClass) {
     el['client-banner'].className = bannerClass;
   }
-  setText(el['client-banner-title'], bannerTitle);
-  setText(el['client-banner-note'], bannerNote);
+  setText(el['client-banner-title'], t(bannerTitle));
+  setText(el['client-banner-note'], t(bannerNote));
 
   /* Cargo snapshot */
   el['cargo-card'].dataset.tone = inSpec ? 'safe' : 'alert';
-  setText(el['cargo-consignment'], truck.consignmentId);
-  setText(el['cargo-type'], truck.cargo);
+  setText(el['cargo-consignment'], ltr(truck.consignmentId));
+  setText(el['cargo-type'], t(truck.cargo));
   setText(el['cargo-temp'], formatTemp(truck.tempCurrent));
   setText(
     el['cargo-target'],
-    `Target ${formatTemp(truck.tempTarget)} • Permitted ${formatTemp(truck.tempMin)} to ${formatTemp(truck.tempMax)}`
+    t('Target {target} • Permitted {min} to {max}', { target: plainTemp(truck.tempTarget), ...range })
   );
-  setChip(el['cargo-state'], inSpec ? 'Within Spec' : 'Out of Spec', inSpec ? 'chip--safe' : 'chip--alert chip--flash');
+  setChip(
+    el['cargo-state'],
+    t(inSpec ? 'Within Spec' : 'Out of Spec'),
+    inSpec ? 'chip--safe' : 'chip--alert chip--flash'
+  );
 
   const domainMin = truck.tempMin - 2;
   const domainMax = truck.tempMax + EXCURSION_DELTA_C;
@@ -2198,17 +2203,26 @@ function renderClient() {
   meter.style.setProperty('--marker', `${toPercent(truck.tempCurrent)}%`);
   meter.setAttribute(
     'aria-label',
-    `Current ${formatTemp(truck.tempCurrent)}, permitted range ${formatTemp(truck.tempMin)} to ${formatTemp(truck.tempMax)}`
+    t('Current {temp}, permitted range {min} to {max}', { temp: plainTemp(truck.tempCurrent), ...range })
   );
   setText(el['meter-min'], formatTemp(truck.tempMin));
   setText(el['meter-max'], formatTemp(truck.tempMax));
 
-  const etaText = truck.eta === null ? 'Departure Pending' : `ETA: ${truck.eta} Mins`;
-  setText(el['cargo-corridor'], `${truck.corridor} • ${etaText}`);
+  setText(
+    el['cargo-corridor'],
+    truck.eta === null
+      ? t('{corridor} • Departure Pending', { corridor: truck.corridor })
+      : t('{corridor} • ETA: {eta} Mins', { corridor: truck.corridor, eta: truck.eta })
+  );
 
   /* Route status */
-  const routeLabel = onStandby ? 'Pre-Departure' : truck.routeStep === 2 ? 'At Inspection Hub' : 'In Transit';
-  setChip(el['route-chip'], routeLabel, 'chip--ice');
+  let routeLabel = 'In Transit';
+  if (onStandby) {
+    routeLabel = 'Pre-Departure';
+  } else if (truck.routeStep === 2) {
+    routeLabel = 'At Inspection Hub';
+  }
+  setChip(el['route-chip'], t(routeLabel), 'chip--ice');
   const stepState = (index) => {
     if (index < truck.routeStep) {
       return 'done';
@@ -2217,6 +2231,7 @@ function renderClient() {
   };
   all('.stepper__step', el['route-stepper']).forEach((step, index) => {
     step.dataset.state = stepState(index);
+    setText(step.querySelector('.stepper__label'), t(ROUTE_STEPS[index]).replace('-', '‑'));
     if (index === truck.routeStep) {
       step.setAttribute('aria-current', 'step');
     } else {
@@ -2225,8 +2240,8 @@ function renderClient() {
   });
 
   /* Journey */
-  setText(el['journey-title'], truck.consignmentId);
-  setText(el['journey-sub'], `${truck.origin} to ${truck.destination}`);
+  setText(el['journey-title'], ltr(truck.consignmentId));
+  setText(el['journey-sub'], t('{origin} to {destination}', { origin: truck.origin, destination: truck.destination }));
   const now = Date.now();
   all('.timeline__step', el['journey-timeline']).forEach((step, index) => {
     const stateName = stepState(index);
@@ -2239,34 +2254,39 @@ function renderClient() {
     } else if (index === 3) {
       place = truck.destination;
     }
-    let timeText = 'Awaiting departure';
+    let timeText = t('Awaiting departure');
     if (stateName === 'done') {
       const minutesAgo = truck.milestonesAgo[index] || 0;
-      timeText = `Completed ${formatClock(new Date(loadedAt - minutesAgo * 60000))}`;
+      timeText = t('Completed {time}', { time: formatClock(new Date(loadedAt - minutesAgo * 60000)) });
     } else if (stateName === 'current') {
-      timeText = onStandby ? 'Pre-cooling at origin dock' : 'In progress';
+      timeText = t(onStandby ? 'Pre-cooling at origin dock' : 'In progress');
     } else if (truck.eta !== null) {
       const share = index === 3 ? 1 : 0.5;
-      timeText = `Expected ${formatClock(new Date(now + truck.eta * share * 60000))}`;
+      timeText = t('Expected {time}', { time: formatClock(new Date(now + truck.eta * share * 60000)) });
     }
-    setText(step.querySelector('.timeline__place'), place);
+    setText(step.querySelector('.timeline__label'), t(ROUTE_STEPS[index]));
+    setText(step.querySelector('.timeline__place'), t(place));
     setText(step.querySelector('.timeline__time'), timeText);
   });
-  setText(el['custody-consignor'], truck.consignor);
-  setText(el['custody-consignee'], truck.consignee);
-  setText(el['custody-operator'], truck.operator);
+  setText(el['custody-consignor'], t(truck.consignor));
+  setText(el['custody-consignee'], t(truck.consignee));
+  setText(el['custody-operator'], t(truck.operator));
 
   /* Documents */
-  setText(el['doc-heading'], cert.serial);
-  setChip(el['doc-status'], certMeta.label, certMeta.chip);
-  setText(el['doc-validated'], cert.signedAt && cert.status === 'valid' ? formatDateTime(cert.signedAt) : certMeta.label);
-  setText(el['doc-excursions'], excursionText(truck));
-  setText(el['doc-door'], `${truck.log.doorOpenings} Unauthorized Openings`);
+  setText(el['doc-heading'], ltr(cert.serial));
+  setChip(el['doc-status'], t(certMeta.label), certMeta.chip);
+  setText(
+    el['doc-validated'],
+    cert.signedAt && cert.status === 'valid' ? formatDateTime(cert.signedAt) : t(certMeta.label)
+  );
+  setText(el['doc-excursions'], excursionText(truck.log.excursions));
+  setText(el['doc-door'], t('{count} Unauthorized Openings', { count: truck.log.doorOpenings }));
 }
 
-function excursionText(truck) {
-  const count = truck.log.excursions;
-  return count === 0 ? '0 (Zero Breaches Recorded)' : `${count} (Breach Recorded, Under Review)`;
+function excursionText(count) {
+  return count === 0
+    ? t('0 (Zero Breaches Recorded)')
+    : t('{count} (Breach Recorded, Under Review)', { count });
 }
 
 function chillerState(truck) {
