@@ -43,3 +43,52 @@ const DOCK_ITEMS = {
     { id: 'controls', label: 'Controls', icon: 'i-sliders' }
   ]
 };
+
+/* Demonstration accounts. Sign-in is simulated in the browser: these values
+   ship with the page and are not a security boundary. A production build must
+   authenticate against a server and never deliver credentials to the client. */
+const DEMO_ACCOUNTS = [
+  {
+    id: 'client-biopharma',
+    role: 'client',
+    identifier: 'consignor@maatora.test',
+    password: 'ColdChain-Demo-2026',
+    name: 'National Logistics & Biopharma Consignor S.A.E.',
+    trucks: ['TRK-104', 'TRK-208']
+  },
+  {
+    id: 'client-provisions',
+    role: 'client',
+    identifier: 'provisions@maatora.test',
+    password: 'FrozenDock-Demo-2026',
+    name: 'National Cold-Chain Provisions Consignor S.A.E.',
+    trucks: ['TRK-315']
+  },
+  {
+    id: 'admin-qa',
+    role: 'admin',
+    identifier: 'QA-0104',
+    password: 'Dispatch-Demo-2026',
+    name: 'Lead Quality Assurance Auditor',
+    trucks: []
+  }
+];
+
+const AUTH_COPY = {
+  client: {
+    title: 'Client Portal Sign-In',
+    sub: 'Follow your consignment temperature, route progress and compliance certificate.',
+    identifierLabel: 'Account Email',
+    inputMode: 'email',
+    scope: 'client portal',
+    demoNote: 'Sign-in is simulated in this browser. Load the demo consignor account to explore the client portal.'
+  },
+  admin: {
+    title: 'Control Room Sign-In',
+    sub: 'Dispatch and compliance controllers only: fleet telemetry, hardware health and certificate signing.',
+    identifierLabel: 'Operator ID',
+    inputMode: 'text',
+    scope: 'control room console',
+    demoNote: 'Sign-in is simulated in this browser. Load the demo controller account to open the control room.'
+  }
+};
