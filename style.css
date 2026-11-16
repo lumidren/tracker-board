@@ -2165,6 +2165,40 @@ button {
   border-color: var(--ice);
 }
 
+/* 11d. Right-to-left layout and Arabic typography -------------------------- */
+:root[lang="ar"] {
+  --font-sans: "Segoe UI", "Noto Sans Arabic", "Geeza Pro", "Dubai", Tahoma, system-ui, sans-serif;
+}
+
+/* Letter spacing breaks the joins between Arabic letters. */
+[dir="rtl"] * {
+  letter-spacing: 0 !important;
+}
+
+[dir="rtl"] .eyebrow,
+[dir="rtl"] .chip,
+[dir="rtl"] .metric__label,
+[dir="rtl"] .diag__state,
+[dir="rtl"] .stepper__label,
+[dir="rtl"] .dock-item {
+  font-size: 11.5px;
+}
+
+[dir="rtl"] .certificate__title,
+[dir="rtl"] .signature__name {
+  font-family: var(--font-sans);
+  font-style: normal;
+}
+
+/* Numeric scales keep their left-to-right reading order in every language. */
+.range-meter {
+  direction: ltr;
+}
+
+[dir="rtl"] .icon--directional {
+  transform: scaleX(-1);
+}
+
 /* 12. Motion preferences --------------------------------------------------- */
 @media (prefers-reduced-motion: reduce) {
   *,
