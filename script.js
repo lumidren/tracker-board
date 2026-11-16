@@ -1152,6 +1152,161 @@ function qrPenalty(modules) {
   return score + Math.floor(Math.abs(dark * 20 - size * size * 10) / (size * size)) * 10;
 }
 
+/* Returns the module matrix for the text, or null when it is too long. A mask
+   can be forced so the output can be compared against a reference encoder. */
+function qrEncode(text, forcedMask = -1) {
+  const bytes = Array.from(new TextEncoder().encode(text));
+  let version = 1;
+  while (4 + (version < 10 ? 8 : 16) + bytes.length * 8 > qrDataCodewords(version) * 8) {
+    version += 1;
+    if (version > QR_MAX_VERSION) {
+      return null;
+    }
+  }
+
+  const size = version * 4 + 17;
+  const modules = Array.from({ length: size }, () => new Array(size).fill(false));
+  const reserved = Array.from({ length: size }, () => new Array(size).fill(false));
+  const setFunction = (x, y, dark) => {
+    modules[y][x] = dark;
+    reserved[y][x] = true;
+  };
+
+  /* Timing patterns. */
+  for (let i = 0; i < size; i += 1) {
+    setFunction(6, i, i % 2 === 0);
+    setFunction(i, 6, i % 2 === 0);
+  }
+
+  /* Finder patterns with their separators. */
+  [[3, 3], [size - 4, 3], [3, size - 4]].forEach(([centreX, centreY]) => {
+    for (let dy = -4; dy <= 4; dy += 1) {
+      for (let dx = -4; dx <= 4; dx += 1) {
+        const x = centreX + dx;
+        const y = centreY + dy;
+        const distance = Math.max(Math.abs(dx), Math.abs(dy));
+        if (x >= 0 && x < size && y >= 0 && y < size) {
+          setFunction(x, y, distance !== 2 && distance !== 4);
+        }
+      }
+    }
+  });
+
+  /* Alignment patterns. */
+  const alignPositions = [];
+  if (version > 1) {
+    const alignCount = Math.floor(version / 7) + 2;
+    const step = Math.ceil((version * 4 + 4) / (alignCount * 2 - 2)) * 2;
+    for (let position = size - 7; alignPositions.length < alignCount - 1; position -= step) {
+      alignPositions.unshift(position);
+    }
+    alignPositions.unshift(6);
+  }
+  const lastAlign = alignPositions.length - 1;
+  alignPositions.forEach((centreY, i) => {
+    alignPositions.forEach((centreX, j) => {
+      const onFinder = (i === 0 && j === 0) || (i === 0 && j === lastAlign) || (i === lastAlign && j === 0);
+      if (!onFinder) {
+        for (let dy = -2; dy <= 2; dy += 1) {
+          for (let dx = -2; dx <= 2; dx += 1) {
+            setFunction(centreX + dx, centreY + dy, Math.max(Math.abs(dx), Math.abs(dy)) !== 1);
+          }
+        }
+      }
+    });
+  });
+
+  /* Format information: level M with the chosen mask, protected by BCH(15,5). */
+  const drawFormat = (mask) => {
+    let remainder = mask;
+    for (let i = 0; i < 10; i += 1) {
+      remainder = (remainder << 1) ^ ((remainder >>> 9) * 0x537);
+    }
+    const bits = ((mask << 10) | remainder) ^ 0x5412;
+    const bit = (index) => ((bits >>> index) & 1) !== 0;
+    for (let i = 0; i <= 5; i += 1) {
+      setFunction(8, i, bit(i));
+    }
+    setFunction(8, 7, bit(6));
+    setFunction(8, 8, bit(7));
+    setFunction(7, 8, bit(8));
+    for (let i = 9; i < 15; i += 1) {
+      setFunction(14 - i, 8, bit(i));
+    }
+    for (let i = 0; i < 8; i += 1) {
+      setFunction(size - 1 - i, 8, bit(i));
+    }
+    for (let i = 8; i < 15; i += 1) {
+      setFunction(8, size - 15 + i, bit(i));
+    }
+    setFunction(8, size - 8, true);
+  };
+  drawFormat(0);
+
+  /* Version information for version 7 and above, protected by BCH(18,6). */
+  if (version >= 7) {
+    let remainder = version;
+    for (let i = 0; i < 12; i += 1) {
+      remainder = (remainder << 1) ^ ((remainder >>> 11) * 0x1F25);
+    }
+    const bits = (version << 12) | remainder;
+    for (let i = 0; i < 18; i += 1) {
+      const dark = ((bits >>> i) & 1) !== 0;
+      const a = size - 11 + (i % 3);
+      const b = Math.floor(i / 3);
+      setFunction(a, b, dark);
+      setFunction(b, a, dark);
+    }
+  }
+
+  /* Data placement: two-column zigzag from the bottom-right corner. */
+  const codewords = qrCodewords(bytes, version);
+  let bitIndex = 0;
+  for (let right = size - 1; right >= 1; right -= 2) {
+    if (right === 6) {
+      right = 5;
+    }
+    for (let vertical = 0; vertical < size; vertical += 1) {
+      for (let j = 0; j < 2; j += 1) {
+        const x = right - j;
+        const upward = ((right + 1) & 2) === 0;
+        const y = upward ? size - 1 - vertical : vertical;
+        if (!reserved[y][x] && bitIndex < codewords.length * 8) {
+          modules[y][x] = ((codewords[bitIndex >>> 3] >>> (7 - (bitIndex & 7))) & 1) !== 0;
+          bitIndex += 1;
+        }
+      }
+    }
+  }
+
+  /* Try every mask and keep the one with the lowest penalty. */
+  const applyMask = (mask) => {
+    for (let y = 0; y < size; y += 1) {
+      for (let x = 0; x < size; x += 1) {
+        if (!reserved[y][x] && QR_MASKS[mask](x, y)) {
+          modules[y][x] = !modules[y][x];
+        }
+      }
+    }
+  };
+  let bestMask = Math.max(0, forcedMask);
+  let bestPenalty = Infinity;
+  for (let mask = 0; forcedMask < 0 && mask < QR_MASKS.length; mask += 1) {
+    applyMask(mask);
+    drawFormat(mask);
+    const penalty = qrPenalty(modules);
+    if (penalty < bestPenalty) {
+      bestPenalty = penalty;
+      bestMask = mask;
+    }
+    applyMask(mask);
+  }
+  applyMask(bestMask);
+  drawFormat(bestMask);
+
+  return { version, size, modules };
+}
+
 /* --------------------------------------------------------------------------
    Actions
    -------------------------------------------------------------------------- */
