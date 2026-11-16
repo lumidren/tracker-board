@@ -32,3 +32,37 @@ async function verifyPassword(password, stored) {
   });
   return crypto.timingSafeEqual(key, expected);
 }
+
+const hashToken = (token) => crypto.createHash('sha256').update(token).digest('hex');
+
+function toUser(row) {
+  return {
+    id: row.id,
+    portal: row.portal,
+    identifier: row.identifier,
+    name: row.name,
+    title: row.title,
+    org: row.org,
+    access: row.access,
+    permissions: JSON.parse(row.permissions)
+  };
+}
+
+/* Creates the test accounts on a fresh database. Only hashes are stored. */
+async function seedUsers(db, users) {
+  if (db.prepare('SELECT COUNT(*) AS count FROM users').get().count > 0) {
+    return 0;
+  }
+  const rows = [];
+  for (const user of users) {
+    rows.push([
+      user.id, user.portal, user.identifier, user.name, user.title || '',
+      user.org || null, user.access || null, JSON.stringify(user.permissions || []),
+      await hashPassword(user.password)
+    ]);
+  }
+  const insert = db.prepare(`INSERT INTO users (id, portal, identifier, name, title, org, access, permissions, password_hash)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`);
+  transaction(db, () => rows.forEach((row) => insert.run(...row)));
+  return rows.length;
+}
