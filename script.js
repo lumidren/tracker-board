@@ -47,13 +47,15 @@ const PERSONNEL = {
 
 const DOCK_ITEMS = {
   client: [
-    { id: 'overview', label: 'Overview', icon: 'i-shield-check' },
-    { id: 'journey', label: 'Journey', icon: 'i-route' },
+    { id: 'shipments', label: 'Shipments', icon: 'i-list' },
+    { id: 'status', label: 'Status', icon: 'i-shield-check' },
+    { id: 'map', label: 'Map', icon: 'i-pin' },
     { id: 'documents', label: 'Documents', icon: 'i-document' }
   ],
   admin: [
     { id: 'fleet', label: 'Fleet', icon: 'i-fleet' },
-    { id: 'diagnostics', label: 'Diagnostics', icon: 'i-activity' },
+    { id: 'map', label: 'Map', icon: 'i-pin' },
+    { id: 'unit', label: 'Unit', icon: 'i-activity' },
     { id: 'alerts', label: 'Alerts', icon: 'i-bell' },
     { id: 'controls', label: 'Controls', icon: 'i-sliders' }
   ]
@@ -66,8 +68,7 @@ const AUTH_COPY = {
     identifierLabel: 'Account Email',
     missing: 'Enter your account email and password.',
     inputMode: 'email',
-    scope: 'client portal',
-    demoNote: 'Sign-in is simulated in this browser. Load the demo consignor account to explore the client portal.'
+    scope: 'client portal'
   },
   admin: {
     title: 'Control Room Sign-In',
@@ -75,8 +76,7 @@ const AUTH_COPY = {
     identifierLabel: 'Operator ID',
     missing: 'Enter your operator ID and password.',
     inputMode: 'text',
-    scope: 'control room console',
-    demoNote: 'Sign-in is simulated in this browser. Load the demo controller account to open the control room.'
+    scope: 'control room console'
   }
 };
 
@@ -89,6 +89,7 @@ const HEALTH_LEVELS = {
 const UNIT_STATUS = {
   'en-route': { label: 'En Route', chip: 'chip--safe' },
   standby: { label: 'Standby / Pre-Cooling', chip: 'chip--ice' },
+  delivered: { label: 'Delivered', chip: 'chip--neutral' },
   excursion: { label: 'Excursion', chip: 'chip--alert chip--flash' }
 };
 
@@ -143,6 +144,20 @@ const VERIFY_STATUS = {
     title: 'CERTIFICATE VERIFIED • DIGEST MATCHES',
     note: 'The scanned fields match the digest issued when the certificate was signed.'
   },
+  revoked: {
+    banner: 'banner--alert',
+    chip: 'chip--alert',
+    label: 'Not Current',
+    title: 'CERTIFICATE NO LONGER CURRENT',
+    note: 'This certificate was genuine when issued, but it has since been suspended or replaced by a newer one.'
+  },
+  unknown: {
+    banner: 'banner--alert',
+    chip: 'chip--alert',
+    label: 'Failed',
+    title: 'VERIFICATION FAILED • NOT ON RECORD',
+    note: 'The issuing registry has no certificate with these details.'
+  },
   failed: {
     banner: 'banner--alert',
     chip: 'chip--alert',
@@ -158,6 +173,44 @@ const VERIFY_STATUS = {
     note: 'This link does not contain a recognisable certificate record.'
   }
 };
+
+/* How a shipment is described to a client, in everyday words. */
+const SHIPMENT_STATES = {
+  safe: {
+    tone: 'safe',
+    icon: 'i-check',
+    headline: 'Your shipment is safe',
+    text: 'The temperature is right and it is on its way.'
+  },
+  alert: {
+    tone: 'alert',
+    icon: 'i-alert',
+    headline: 'There is a temperature problem',
+    text: 'The temperature went outside the safe range. Our quality team has been alerted and is fixing it now.'
+  },
+  pending: {
+    tone: 'pending',
+    icon: 'i-clock',
+    headline: 'Getting ready to leave',
+    text: 'Your shipment is being cooled to the right temperature before it leaves.'
+  },
+  done: {
+    tone: 'done',
+    icon: 'i-flag',
+    headline: 'Delivered safely',
+    text: 'Your shipment arrived and stayed at the right temperature for the whole trip.'
+  }
+};
+
+const PERMISSION_LABELS = {
+  drill: 'Run drills',
+  acknowledge: 'Acknowledge alerts',
+  sign: 'Sign certificates',
+  accounts: 'View accounts'
+};
+
+/* Map projection: a flat projection is accurate enough across one country. */
+const MAP = { lon0: 24.4, lat0: 32.7, kx: 0.885, scale: 30, width: 345, height: 330 };
 
 /* --------------------------------------------------------------------------
    Arabic translations (keyed by the English source string)
