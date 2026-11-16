@@ -3352,53 +3352,6 @@ function hideToast() {
 }
 
 /* --------------------------------------------------------------------------
-   Live telemetry
-   -------------------------------------------------------------------------- */
-function jitter(span) {
-  return (Math.random() - 0.5) * span;
-}
-
-function sampleTemperature(truck) {
-  const base = truck.tempBaseline + (truck.status === 'excursion' ? EXCURSION_DELTA_C : 0);
-  return round1(base + jitter(0.5));
-}
-
-function liveTick() {
-  state.trucks.forEach((truck) => {
-    truck.tempCurrent = sampleTemperature(truck);
-    truck.history.push(truck.tempCurrent);
-    truck.history = truck.history.slice(-HISTORY_POINTS);
-    truck.uplinkPing = clamp(Math.round(truck.uplinkPing + jitter(6)), 28, 72);
-    if (truck.status === 'excursion') {
-      truck.log.max = Math.max(truck.log.max, truck.tempCurrent);
-      const alert = activeAlert(truck.id);
-      if (alert) {
-        alert.peak = Math.max(alert.peak, truck.tempCurrent);
-      }
-    } else {
-      truck.compressorRpm = truck.compressorNominalRpm + Math.round(jitter(40));
-    }
-  });
-  renderShell();
-  renderClient();
-  renderFleet();
-  renderDiagnostics();
-  renderAlerts();
-  if (state.isExcursionActive) {
-    renderCertificate();
-  }
-}
-
-function etaTick() {
-  state.trucks.forEach((truck) => {
-    if (truck.eta !== null && truck.eta > 1) {
-      truck.eta -= 1;
-    }
-  });
-  renderClient();
-}
-
-/* --------------------------------------------------------------------------
    Events
    -------------------------------------------------------------------------- */
 function handleClick(event) {
@@ -3482,54 +3435,6 @@ function handleKeydown(event) {
     event.preventDefault();
     first.focus();
   }
-}
-
-/* --------------------------------------------------------------------------
-   Boot
-   -------------------------------------------------------------------------- */
-function seedData() {
-  state.trucks.forEach((truck, index) => {
-    truck.history = Array.from({ length: HISTORY_POINTS }, () => sampleTemperature(truck));
-    truck.tempCurrent = truck.tempBaseline;
-    truck.history[truck.history.length - 1] = truck.tempCurrent;
-    if (truck.certificate.status === 'valid') {
-      truck.certificate.signedAt = new Date(loadedAt - (6 + index * 5) * 60000);
-    }
-  });
-
-  /* One earlier, already acknowledged event so the history is not empty. */
-  const dropoutAt = loadedAt - 95 * 60000;
-  state.alerts.push({
-    id: 'ALT-0001',
-    truckId: 'TRK-208',
-    kind: 'uplink',
-    startedAt: new Date(dropoutAt),
-    endedAt: new Date(dropoutAt + 38000),
-    peak: null,
-    limit: null,
-    acknowledgedAt: new Date(dropoutAt + 3 * 60000),
-    acknowledgedBy: PERSONNEL.qaOfficer
-  });
-}
-
-function seedAuditLog() {
-  appendLog('info', 'Telemetry session opened. {count} units reporting on 60 second sampling.', {
-    count: state.trucks.length
-  });
-  state.trucks.forEach((truck) => {
-    appendLog('info', 'Electronic seal {seal} engaged on Unit {id}.', {
-      seal: `#${truck.sealId}`,
-      id: `#${truck.id}`
-    });
-  });
-  state.trucks
-    .filter((truck) => truck.certificate.status === 'valid')
-    .forEach((truck) => {
-      appendLog('sign', 'Certificate {serial} validated by {name}.', {
-        serial: truck.certificate.serial,
-        name: PERSONNEL.qaOfficer
-      });
-    });
 }
 
 function secondTick() {
