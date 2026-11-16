@@ -1990,6 +1990,7 @@ function render() {
   renderClient();
   renderFleet();
   renderDiagnostics();
+  renderAlerts();
   renderControls();
   renderCertificate();
   renderModal();
@@ -1997,32 +1998,38 @@ function render() {
 
 function renderShell() {
   const role = state.currentRole;
+  const verifying = Boolean(state.verification);
   const authed = isAuthed(role);
+  const portal = authed && !verifying;
   const truck = viewTruck();
   const panelId = state.activePanel[role];
-  const alertInView = authed && (role === 'admin' ? state.isExcursionActive : truck.status === 'excursion');
+  const alertInView = portal && (role === 'admin' ? state.isExcursionActive : truck.status === 'excursion');
 
   el.app.dataset.role = role;
   el.app.dataset.alert = String(alertInView);
   el.app.dataset.authed = String(authed);
-  document.body.dataset.authed = String(authed);
+  /* Print rules read this flag: the certificate prints only inside a portal. */
+  document.body.dataset.authed = String(portal);
   el['role-switch'].dataset.role = role;
+  el['role-switch'].hidden = verifying;
 
-  el['auth-panel'].hidden = authed;
-  el.dock.hidden = !authed;
-  el['live-chip'].hidden = !authed;
-  el['account-bar'].hidden = !authed;
-  if (authed) {
-    setText(el['account-name'], state.session[role].name);
+  el['verify-panel'].hidden = !verifying;
+  el['auth-panel'].hidden = authed || verifying;
+  el.dock.hidden = !portal;
+  el['live-chip'].hidden = !portal;
+  el['account-bar'].hidden = !portal;
+  if (portal) {
+    setText(el['account-name'], t(state.session[role].name));
   }
   renderAuth();
+  renderVerification();
 
   all('[data-role-target]').forEach((button) => {
     button.setAttribute('aria-pressed', String(button.dataset.roleTarget === role));
   });
 
   all('.panel[data-panel]').forEach((panel) => {
-    const visible = authed && panel.dataset.role === role && panel.dataset.panel === panelId;
+    const visible = portal && panel.dataset.role === role && panel.dataset.panel === panelId;
     if (panel.hidden === visible) {
       panel.hidden = !visible;
     }
@@ -2038,15 +2045,24 @@ function renderShell() {
       button.removeAttribute('aria-current');
     }
   });
+  const badge = el.dock.querySelector('[data-dock-badge]');
+  if (badge) {
+    const open = unacknowledgedAlerts().length;
+    badge.hidden = open === 0;
+    setText(badge, String(open));
+  }
 
-  const showAdminAlert = authed && role === 'admin' && state.isExcursionActive;
+  const showAdminAlert = portal && role === 'admin' && state.isExcursionActive;
   el['admin-alert'].hidden = !showAdminAlert;
   if (showAdminAlert) {
     const affected = getTruck(state.excursionTruckId);
-    setText(el['admin-alert-title'], `Active Excursion • Unit #${affected.id}`);
+    setText(el['admin-alert-title'], t('Active Excursion • Unit {id}', { id: `#${affected.id}` }));
     setText(
       el['admin-alert-note'],
-      `Internal temperature ${formatTemp(affected.tempCurrent)}, above the ${formatTemp(affected.tempMax)} limit. Compliance violation flagged.`
+      t('Internal temperature {temp}, above the {limit} limit. Compliance violation flagged.', {
+        temp: plainTemp(affected.tempCurrent),
+        limit: plainTemp(affected.tempMax)
+      })
     );
   }
 
