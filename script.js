@@ -2177,36 +2177,8 @@ function renderClientMap(truck) {
    One-time DOM construction
    -------------------------------------------------------------------------- */
 function cacheElements() {
-  [
-    'app', 'viewport', 'role-switch', 'live-chip', 'live-chip-text', 'lang-toggle', 'dock', 'dock-items', 'toast',
-    'account-bar', 'account-name', 'auth-panel', 'auth-title', 'auth-sub', 'auth-form',
-    'auth-identifier', 'auth-identifier-label', 'auth-password', 'auth-toggle', 'auth-error',
-    'auth-submit', 'auth-demo-note', 'health-chip',
-    'verify-panel', 'verify-banner', 'verify-banner-title', 'verify-banner-note', 'verify-card',
-    'verify-serial', 'verify-chip', 'verify-vehicle', 'verify-consignment', 'verify-cargo', 'verify-range',
-    'verify-signed', 'verify-duration', 'verify-minmax', 'verify-excursions', 'verify-door', 'verify-digest',
-    'admin-alert', 'admin-alert-title', 'admin-alert-note',
-    'client-banner', 'client-banner-title', 'client-banner-note',
-    'cargo-card', 'cargo-consignment', 'cargo-state', 'cargo-type', 'cargo-temp', 'cargo-target',
-    'cargo-meter', 'meter-min', 'meter-max', 'cargo-corridor', 'route-chip', 'route-stepper',
-    'journey-title', 'journey-sub', 'journey-timeline',
-    'custody-consignor', 'custody-consignee', 'custody-operator',
-    'doc-heading', 'doc-status', 'doc-validated', 'doc-excursions', 'doc-door',
-    'fleet-summary', 'fleet-grid', 'fleet-goto-label',
-    'diag-title', 'diag-sub', 'trace-card', 'diag-temp', 'diag-status', 'diag-range',
-    'spark-band', 'spark-setpoint', 'spark-line', 'spark-dot',
-    'diag-battery', 'bar-battery', 'diag-uplink', 'row-uplink', 'diag-compressor', 'row-compressor',
-    'diag-fuel', 'bar-fuel', 'diag-seal', 'diag-calibration', 'diag-firmware',
-    'alerts-summary', 'alert-list', 'alerts-empty',
-    'controls-title', 'seal-card', 'seal-serial', 'seal-status', 'seal-note', 'seal-signed',
-    'seal-hash', 'seal-excursions', 'btn-incident', 'btn-normalize', 'btn-sign', 'tools-hint',
-    'audit-log', 'log-count',
-    'certificate', 'cert-serial', 'cert-consignor', 'cert-consignee', 'cert-vehicle', 'cert-operator',
-    'cert-cargo', 'cert-setpoint', 'cert-duration', 'cert-minmax', 'cert-excursions', 'cert-door',
-    'cert-seal', 'cert-stamp-title', 'cert-stamp-meta', 'cert-stamp-tick', 'cert-hash', 'cert-qr',
-    'cert-qr-svg', 'cert-qr-pending', 'cert-verify-link', 'cert-signer'
-  ].forEach((id) => {
-    el[id] = byId(id);
+  all('[id]').forEach((node) => {
+    el[node.id] = node;
   });
   el.modal = byId('certificate-modal');
   el.viewport = byId('viewport');
@@ -2229,41 +2201,51 @@ function buildTimeline() {
     </li>`).join('');
 }
 
-function buildFleet() {
-  el['fleet-grid'].innerHTML = state.trucks.map((truck) => `
-    <button type="button" class="unit-card" data-truck="${truck.id}" aria-pressed="false">
-      <span class="unit-card__head">
-        <span class="unit-card__id" data-field="unit"></span>
-        <span class="chip" data-field="status"></span>
+function createUnitCard(truck) {
+  const card = document.createElement('button');
+  card.type = 'button';
+  card.className = 'unit-card';
+  card.dataset.truck = truck.id;
+  card.innerHTML = `
+    <span class="unit-card__head">
+      <span class="unit-card__id" data-field="unit"></span>
+      <span class="chip" data-field="status"></span>
+    </span>
+    <span class="unit-card__cargo" data-field="cargo"></span>
+    <span class="unit-card__metrics">
+      <span class="metric">
+        <span class="metric__label" data-label="Internal Temp"></span>
+        <span class="metric__value metric__value--temp" data-field="temp"></span>
       </span>
-      <span class="unit-card__cargo" data-field="cargo"></span>
-      <span class="unit-card__metrics">
-        <span class="metric">
-          <span class="metric__label">Internal Temp</span>
-          <span class="metric__value metric__value--temp" data-field="temp"></span>
-        </span>
-        <span class="metric">
-          <span class="metric__label">Chiller Power</span>
-          <span class="metric__value" data-field="chiller"></span>
-        </span>
-        <span class="metric">
-          <span class="metric__label">Uplink</span>
-          <span class="metric__value" data-field="uplink"></span>
-        </span>
-        <span class="metric">
-          <span class="metric__label">Hardware Health</span>
-          <span class="metric__value" data-field="health"></span>
-        </span>
+      <span class="metric">
+        <span class="metric__label" data-label="Chiller Power"></span>
+        <span class="metric__value" data-field="chiller"></span>
       </span>
-    </button>`).join('');
+      <span class="metric">
+        <span class="metric__label" data-label="Uplink"></span>
+        <span class="metric__value" data-field="uplink"></span>
+      </span>
+      <span class="metric">
+        <span class="metric__label" data-label="Hardware Health"></span>
+        <span class="metric__value" data-field="health"></span>
+      </span>
+    </span>`;
+  return card;
 }
 
-function buildUnitPickers() {
-  const markup = state.trucks.map((truck) => `
-    <button type="button" class="unit-picker__option" data-truck="${truck.id}" aria-pressed="false" dir="ltr">#${truck.id}</button>`).join('');
-  all('[data-unit-picker]').forEach((picker) => {
-    picker.innerHTML = markup;
-  });
+function createShipmentCard(truck) {
+  const card = document.createElement('button');
+  card.type = 'button';
+  card.className = 'shipment';
+  card.dataset.shipment = truck.id;
+  card.innerHTML = `
+    <span class="shipment__icon" aria-hidden="true"><svg class="icon" focusable="false"><use></use></svg></span>
+    <span class="shipment__body">
+      <span class="shipment__title" data-field="title"></span>
+      <span class="shipment__line" data-field="line"></span>
+    </span>
+    <span class="shipment__temp" data-field="temp"></span>`;
+  return card;
 }
 
 function createAlertCard(alert) {
@@ -2297,6 +2279,24 @@ function buildDock() {
       <span>${t(item.label)}</span>
       ${item.id === 'alerts' ? '<span class="dock-item__badge" data-dock-badge aria-hidden="true" hidden></span>' : ''}
     </button>`).join('');
+}
+
+/* Keeps a list of keyed cards in step with the data without rebuilding it,
+   so focus and scroll position survive every live update. */
+function syncCards(container, items, attribute, create) {
+  const wanted = new Set(items.map((item) => item.id));
+  all(`[data-${attribute}]`, container).forEach((node) => {
+    if (!wanted.has(node.dataset[attribute])) {
+      node.remove();
+    }
+  });
+  return items.map((item) => {
+    let node = container.querySelector(`[data-${attribute}="${item.id}"]`);
+    if (!node) {
+      node = create(item);
+    }
+    return node;
+  });
 }
 
 /* --------------------------------------------------------------------------
