@@ -1312,3 +1312,71 @@ button {
   color: var(--muted);
   overflow-wrap: anywhere;
 }
+
+/* 8. Glass dock & toast ---------------------------------------------------- */
+.glass-dock {
+  --dock-index: 0;
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 14px;
+  z-index: 20;
+  height: var(--dock-height);
+  padding: 6px;
+  border-radius: 26px;
+  background: rgba(255, 255, 255, 0.82);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: var(--shadow-float);
+}
+
+.glass-dock__pill {
+  position: absolute;
+  top: 6px;
+  bottom: 6px;
+  left: 6px;
+  width: calc((100% - 12px) / 3);
+  border-radius: 20px;
+  background: rgba(2, 132, 199, 0.11);
+  box-shadow: inset 0 0 0 1px rgba(2, 132, 199, 0.2), 0 1px 2px rgba(2, 132, 199, 0.12);
+  transform: translateX(calc(var(--dock-index) * 100%));
+  transition: transform 0.4s var(--ease-out);
+}
+
+.glass-dock__items {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  height: 100%;
+}
+
+.dock-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  border: 0;
+  border-radius: 20px;
+  background: none;
+  font-size: 10.5px;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.dock-item .icon {
+  width: 21px;
+  height: 21px;
+}
+
+.dock-item:hover {
+  color: var(--text);
+}
+
+.dock-item[aria-current="page"] {
+  color: var(--ice-strong);
+}
