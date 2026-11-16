@@ -1400,3 +1400,25 @@ function renderCertificate() {
   setText(el['cert-signer'], cert.status === 'valid' ? PERSONNEL.qaOfficer : 'Signature pending');
   renderVerificationBlock(`${cert.serial}|${cert.status}|${cert.hash}`);
 }
+
+function renderModal() {
+  const open = state.certificateModalOpen;
+  if (el.modal.hidden === open) {
+    el.modal.hidden = !open;
+  }
+  document.body.classList.toggle('is-modal-open', open);
+}
+
+function showToast(message, tone = 'info') {
+  const toast = el.toast;
+  toast.textContent = message;
+  toast.dataset.tone = tone;
+  toast.classList.add('is-visible');
+  window.clearTimeout(toastTimer);
+  toastTimer = window.setTimeout(hideToast, TOAST_MS);
+}
+
+function hideToast() {
+  window.clearTimeout(toastTimer);
+  el.toast.classList.remove('is-visible');
+}
