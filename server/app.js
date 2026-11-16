@@ -111,3 +111,278 @@ function guardWrite(req) {
     }
   }
 }
+
+async function createApp(config) {
+  const now = config.now;
+  const db = openDatabase(config.database);
+  const seeded = await seedUsers(db, seed.users);
+  const store = createStore(db, now);
+  const saved = store.load();
+  const engine = Engine.createEngine(seed, {
+    authoritative: true,
+    timeScale: config.timeScale,
+    now,
+    restore: saved || undefined
+  });
+  const auth = createAuth(db, config);
+  const streams = new Set();
+
+  /* The page loads this instead of the repository's data.js: map outlines only,
+     no accounts and no units. Its presence tells the page to use the API. */
+  const publicData = [
+    '/* Served by the Maatora server. Accounts and units come from the API. */',
+    `window.MAATORA_REMOTE = ${JSON.stringify({ demo: config.demo, version: VERSION })};`,
+    `window.MAATORA_SEED = ${JSON.stringify({ places: seed.places, geography: seed.geography })};`,
+    ''
+  ].join('\n');
+
+  const cookieName = (portal) => `maatora_${portal}`;
+  const cookie = (portal, value, maxAge) => [
+    `${cookieName(portal)}=${value}`,
+    'HttpOnly',
+    'SameSite=Strict',
+    'Path=/',
+    `Max-Age=${maxAge}`,
+    ...(config.secureCookies ? ['Secure'] : [])
+  ].join('; ');
+
+  const onExpire = (user) => {
+    engine.log('info', 'Sign-out on the {scope}: {name} (idle timeout).', { scope: SCOPES[user.portal], name: user.name });
+  };
+
+  function portalOf(value) {
+    if (!PORTALS.includes(value)) {
+      throw new HttpError(400, 'bad-portal');
+    }
+    return value;
+  }
+
+  function requireUser(req, portal, touch) {
+    const user = auth.sessionUser(readCookies(req)[cookieName(portal)], portal, { touch, onExpire });
+    if (!user) {
+      throw new HttpError(401, 'signed-out');
+    }
+    return user;
+  }
+
+  const viewFor = (user) => engine.snapshot(user, { accounts: auth.accounts() });
+
+  function persist() {
+    store.save(engine);
+  }
+
+  /* Sends every open page its own, role-scoped copy of the current state. */
+  function broadcast() {
+    streams.forEach((stream) => {
+      const user = auth.sessionUser(stream.token, stream.portal, { onExpire });
+      if (!user) {
+        stream.res.write('event: expired\ndata: {}\n\n');
+        stream.res.end();
+        streams.delete(stream);
+        return;
+      }
+      stream.res.write(`event: snapshot\ndata: ${JSON.stringify(viewFor(user))}\n\n`);
+    });
+  }
+
+  function serveStatic(req, res, pathname) {
+    if (req.method !== 'GET' && req.method !== 'HEAD') {
+      throw new HttpError(405, 'method');
+    }
+    let body = null;
+    let type = 'text/javascript; charset=utf-8';
+    if (pathname === '/data.js') {
+      body = Buffer.from(publicData, 'utf8');
+    } else if (STATIC_FILES[pathname]) {
+      body = fs.readFileSync(path.join(config.webRoot, STATIC_FILES[pathname][0]));
+      type = STATIC_FILES[pathname][1];
+    } else {
+      throw new HttpError(404, 'not-found');
+    }
+    res.writeHead(200, { 'Content-Type': type, 'Content-Length': body.length, 'Cache-Control': 'no-cache' });
+    res.end(req.method === 'HEAD' ? undefined : body);
+  }
+
+  async function login(req, res) {
+    guardWrite(req);
+    const body = await readBody(req);
+    const portal = portalOf(body.portal);
+    const identifier = typeof body.identifier === 'string' ? body.identifier : '';
+    const password = typeof body.password === 'string' ? body.password : '';
+    if (!identifier.trim() || !password || identifier.length > 120 || password.length > 200) {
+      throw new HttpError(400, 'missing');
+    }
+    const result = await auth.login({ portal, identifier, password, address: req.socket.remoteAddress || '' });
+    if (!result.ok) {
+      if (result.reason === 'invalid') {
+        engine.log('alert', 'Failed sign-in attempt on the {scope} ({attempt} of {max}).', {
+          scope: SCOPES[portal],
+          attempt: config.maxAttempts - result.attemptsLeft,
+          max: config.maxAttempts
+        });
+      } else if (result.justLocked) {
+        engine.log('alert', 'Sign-in locked on the {scope} for {seconds} seconds after {attempts} failed attempts.', {
+          scope: SCOPES[portal],
+          seconds: result.retryAfter,
+          attempts: config.maxAttempts
+        });
+      }
+      persist();
+      broadcast();
+      if (result.reason === 'locked') {
+        throw new HttpError(429, 'locked', { retryAfter: result.retryAfter });
+      }
+      throw new HttpError(401, 'invalid', { attemptsLeft: result.attemptsLeft });
+    }
+    engine.log('ok', 'Sign-in on the {scope}: {name}.', { scope: SCOPES[portal], name: result.user.name });
+    persist();
+    broadcast();
+    sendJson(res, 200, { user: engine.snapshot(result.user).user }, {
+      'Set-Cookie': cookie(portal, result.token, Math.floor(config.sessionMs / 1000))
+    });
+  }
+
+  async function logout(req, res) {
+    guardWrite(req);
+    const portal = portalOf((await readBody(req)).portal);
+    const token = readCookies(req)[cookieName(portal)];
+    const user = auth.sessionUser(token, portal);
+    auth.logout(token);
+    if (user) {
+      engine.log('info', 'Sign-out on the {scope}: {name}.', { scope: SCOPES[portal], name: user.name });
+      persist();
+      broadcast();
+    }
+    sendJson(res, 200, { ok: true }, { 'Set-Cookie': cookie(portal, '', 0) });
+  }
+
+  function stream(req, res, url) {
+    const portal = portalOf(url.searchParams.get('portal'));
+    const user = requireUser(req, portal, false);
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream; charset=utf-8',
+      'Cache-Control': 'no-store',
+      Connection: 'keep-alive',
+      'X-Accel-Buffering': 'no'
+    });
+    res.write(`retry: 3000\nevent: snapshot\ndata: ${JSON.stringify(viewFor(user))}\n\n`);
+    const entry = { res, portal, token: readCookies(req)[cookieName(portal)] };
+    streams.add(entry);
+    req.on('close', () => streams.delete(entry));
+  }
+
+  async function command(req, res, name) {
+    guardWrite(req);
+    const body = await readBody(req);
+    const user = requireUser(req, 'admin', true);
+    const result = engine.command(user, name, body);
+    if (!result.ok) {
+      throw new HttpError(result.error === Engine.ROLE_ERROR ? 403 : 409, 'refused', { message: result.error });
+    }
+    persist();
+    broadcast();
+    sendJson(res, 200, { ok: true });
+  }
+
+  async function api(req, res, url) {
+    const route = `${req.method} ${url.pathname}`;
+    if (route === 'GET /api/health') {
+      return sendJson(res, 200, { service: 'maatora', version: VERSION, demo: config.demo, time: now() });
+    }
+    if (route === 'GET /api/session') {
+      const cookies = readCookies(req);
+      const sessions = {};
+      PORTALS.forEach((portal) => {
+        const user = auth.sessionUser(cookies[cookieName(portal)], portal, { onExpire });
+        sessions[portal] = user ? engine.snapshot(user).user : null;
+      });
+      return sendJson(res, 200, sessions);
+    }
+    if (route === 'GET /api/demo-accounts') {
+      if (!config.demo) {
+        throw new HttpError(404, 'not-found');
+      }
+      const portal = portalOf(url.searchParams.get('portal'));
+      return sendJson(res, 200, seed.users.filter((user) => user.portal === portal).map((user) => ({
+        identifier: user.identifier,
+        password: user.password,
+        name: user.name,
+        title: user.title || ''
+      })));
+    }
+    if (route === 'POST /api/login') {
+      return login(req, res);
+    }
+    if (route === 'POST /api/logout') {
+      return logout(req, res);
+    }
+    if (route === 'POST /api/touch') {
+      guardWrite(req);
+      requireUser(req, portalOf((await readBody(req)).portal), true);
+      return sendJson(res, 200, { ok: true });
+    }
+    if (route === 'GET /api/snapshot') {
+      return sendJson(res, 200, viewFor(requireUser(req, portalOf(url.searchParams.get('portal')), true)));
+    }
+    if (route === 'GET /api/stream') {
+      return stream(req, res, url);
+    }
+    if (route === 'GET /api/public/verify') {
+      return sendJson(res, 200, engine.verify(String(url.searchParams.get('record') || '').slice(0, 300)));
+    }
+    const commandMatch = /^POST \/api\/commands\/([a-z-]{1,40})$/.exec(route);
+    if (commandMatch) {
+      return command(req, res, commandMatch[1]);
+    }
+    throw new HttpError(404, 'not-found');
+  }
+
+  async function handle(req, res) {
+    Object.entries(SECURITY_HEADERS).forEach(([name, value]) => res.setHeader(name, value));
+    try {
+      const url = new URL(req.url, 'http://maatora.invalid');
+      if (url.pathname.startsWith('/api/')) {
+        await api(req, res, url);
+      } else {
+        serveStatic(req, res, url.pathname);
+      }
+    } catch (error) {
+      if (res.headersSent) {
+        res.end();
+      } else if (error instanceof HttpError) {
+        sendJson(res, error.status, error.body);
+      } else {
+        console.error(error);
+        sendJson(res, 500, { error: 'server' });
+      }
+    }
+  }
+
+  if (!saved) {
+    persist();
+  }
+  const server = http.createServer(handle);
+  const timer = setInterval(() => {
+    engine.tick();
+    persist();
+    broadcast();
+  }, config.tickMs);
+  timer.unref();
+
+  function close() {
+    clearInterval(timer);
+    streams.forEach((entry) => entry.res.end());
+    streams.clear();
+    return new Promise((resolve) => {
+      server.close(() => {
+        db.close();
+        resolve();
+      });
+      server.closeAllConnections();
+    });
+  }
+
+  return { server, engine, db, auth, store, close, seeded, restored: Boolean(saved), tick: () => { engine.tick(); persist(); broadcast(); } };
+}
+
+module.exports = { createApp, VERSION };
