@@ -85,6 +85,68 @@
             </div>
           </div>
 
+          <!-- ================= CLIENT: OVERVIEW ================= -->
+          <section class="panel" data-role="client" data-panel="overview" aria-label="Shipment overview">
+
+            <div class="unit-picker unit-picker--consignments" data-consignment-picker role="group" aria-label="Select consignment" hidden></div>
+
+            <div class="banner banner--safe" id="client-banner">
+              <span class="pulse-dot" aria-hidden="true"></span>
+              <div class="banner__body">
+                <p class="banner__title" id="client-banner-title">REFRIGERATION GUARANTEED &bull; SAFE SPEC</p>
+                <p class="banner__note" id="client-banner-note"></p>
+              </div>
+            </div>
+
+            <article class="card cargo" id="cargo-card" aria-labelledby="cargo-consignment">
+              <header class="card__head">
+                <div>
+                  <p class="eyebrow">Consignment ID</p>
+                  <h1 class="mono-id" id="cargo-consignment">BATCH-REF-8841-X</h1>
+                </div>
+                <span class="chip chip--safe" id="cargo-state">Within Spec</span>
+              </header>
+
+              <p class="cargo__type" id="cargo-type"></p>
+
+              <div class="cargo__reading">
+                <p class="eyebrow">Current Temperature</p>
+                <p class="temp-display" id="cargo-temp" aria-live="polite"></p>
+                <p class="cargo__target" id="cargo-target"></p>
+              </div>
+
+              <div class="range-meter" id="cargo-meter" role="img" aria-label="Temperature against permitted range">
+                <div class="range-meter__track">
+                  <span class="range-meter__band"></span>
+                  <span class="range-meter__setpoint"></span>
+                  <span class="range-meter__marker"></span>
+                </div>
+                <div class="range-meter__scale" aria-hidden="true">
+                  <span class="range-meter__tick range-meter__tick--min" id="meter-min"></span>
+                  <span class="range-meter__tick range-meter__tick--max" id="meter-max"></span>
+                </div>
+              </div>
+
+              <p class="cargo__route">
+                <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-route"></use></svg>
+                <span id="cargo-corridor"></span>
+              </p>
+            </article>
+
+            <article class="card" aria-labelledby="route-heading">
+              <header class="card__head">
+                <h2 class="card__title" id="route-heading">Route &amp; Corridor Status</h2>
+                <span class="chip chip--ice" id="route-chip">In Transit</span>
+              </header>
+              <ol class="stepper" id="route-stepper"></ol>
+            </article>
+
+            <button type="button" class="btn btn--primary btn--block" data-action="open-certificate">
+              <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-shield-check"></use></svg>
+              <span>View Official Compliance Certificate</span>
+            </button>
+          </section>
+
         </main>
 
         <nav class="glass-dock" id="dock" aria-label="Section navigation">
