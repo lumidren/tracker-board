@@ -317,6 +317,62 @@
             </article>
           </section>
 
+          <!-- ================= ADMIN: CONTROLS ================= -->
+          <section class="panel" data-role="admin" data-panel="controls" aria-label="Simulation and compliance controls" hidden>
+            <header class="panel__head">
+              <p class="eyebrow">Simulation &amp; Testing Tools</p>
+              <h1 class="panel__title" id="controls-title"></h1>
+              <p class="panel__sub">Drill the excursion response, restore telemetry and sign the compliance seal.</p>
+            </header>
+
+            <div class="unit-picker" data-unit-picker role="group" aria-label="Select unit"></div>
+
+            <article class="card seal" id="seal-card" data-tone="safe" aria-labelledby="seal-heading">
+              <header class="card__head">
+                <div>
+                  <p class="eyebrow" id="seal-heading">Compliance Seal</p>
+                  <p class="mono-id" id="seal-serial"></p>
+                </div>
+                <span class="chip" id="seal-status"></span>
+              </header>
+              <p class="seal__note" id="seal-note"></p>
+              <dl class="facts">
+                <div class="facts__row"><dt>Signed</dt><dd id="seal-signed"></dd></div>
+                <div class="facts__row"><dt>Log Digest</dt><dd class="mono" id="seal-hash"></dd></div>
+                <div class="facts__row"><dt>Excursions Logged</dt><dd id="seal-excursions"></dd></div>
+              </dl>
+            </article>
+
+            <article class="card" aria-labelledby="tools-heading">
+              <header class="card__head">
+                <h2 class="card__title" id="tools-heading">Interactive Controls</h2>
+              </header>
+              <div class="tools">
+                <button type="button" class="btn btn--danger btn--block" id="btn-incident" data-action="trigger-incident">
+                  <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-alert"></use></svg>
+                  <span>Trigger Incident</span>
+                </button>
+                <button type="button" class="btn btn--outline btn--block" id="btn-normalize" data-action="normalize-sensor">
+                  <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-refresh"></use></svg>
+                  <span>Normalize Sensor</span>
+                </button>
+                <button type="button" class="btn btn--confirm btn--block" id="btn-sign" data-action="sign-certificate">
+                  <svg class="icon" aria-hidden="true" focusable="false"><use href="#i-pen"></use></svg>
+                  <span>Issue / Sign Certificate</span>
+                </button>
+              </div>
+              <p class="tools__hint" id="tools-hint"></p>
+            </article>
+
+            <article class="card" aria-labelledby="log-heading">
+              <header class="card__head">
+                <h2 class="card__title" id="log-heading">Tamper-Evident Audit Log</h2>
+                <span class="chip chip--neutral" id="log-count"></span>
+              </header>
+              <ol class="audit" id="audit-log" reversed></ol>
+            </article>
+          </section>
+
         </main>
 
         <nav class="glass-dock" id="dock" aria-label="Section navigation">
