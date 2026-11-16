@@ -3023,17 +3023,21 @@ function renderUnit() {
 }
 
 function renderAlerts() {
+  const snapshot = state.views.admin;
+  if (!snapshot) {
+    return;
+  }
+  const alerts = snapshot.alerts;
   const list = el['alert-list'];
   setText(
     el['alerts-summary'],
-    t('{open} unacknowledged • {total} recorded', { open: unacknowledgedAlerts().length, total: state.alerts.length })
+    t('{open} unacknowledged • {total} recorded', { open: openAlertCount(), total: alerts.length })
   );
-  el['alerts-empty'].hidden = state.alerts.length > 0;
+  el['alerts-empty'].hidden = alerts.length > 0;
 
-  state.alerts.forEach((alert) => {
-    let card = list.querySelector(`[data-alert="${alert.id}"]`);
-    if (!card) {
-      card = createAlertCard(alert);
+  syncCards(list, alerts, 'alert', createAlertCard).forEach((card, index) => {
+    const alert = alerts[index];
+    if (card.parentElement !== list) {
       list.prepend(card);
     }
     const field = (name) => card.querySelector(`[data-field="${name}"]`);
@@ -3059,13 +3063,13 @@ function renderAlerts() {
     setText(field('title'), t(kind.title));
     setChip(field('status'), t(statusLabel), statusChip);
     setText(field('started-label'), t('Started'));
-    setText(field('started'), formatDateTime(alert.startedAt));
+    setText(field('started'), formatDateTime(new Date(alert.startedAt)));
     setText(field('duration-label'), t('Duration'));
     setText(
       field('duration'),
       ended
         ? formatSpan(alert.endedAt - alert.startedAt)
-        : t('Ongoing ({span})', { span: formatSpan(Date.now() - alert.startedAt) })
+        : t('Ongoing ({span})', { span: formatSpan(snapshot.time - alert.startedAt) })
     );
     setText(field('detail-label'), t(kind.detailLabel));
     setText(
@@ -3078,52 +3082,85 @@ function renderAlerts() {
     setText(
       field('ack'),
       acknowledged
-        ? t('{name}, {time}', { name: alert.acknowledgedBy, time: formatDateTime(alert.acknowledgedAt) })
+        ? t('{name}, {time}', { name: alert.acknowledgedBy, time: formatDateTime(new Date(alert.acknowledgedAt)) })
         : t('Pending')
     );
 
     const button = card.querySelector('[data-action="acknowledge-alert"]');
-    button.hidden = acknowledged;
+    button.hidden = acknowledged || !can('acknowledge');
     setText(button, t('Acknowledge'));
   });
 }
 
 function renderControls() {
+  const snapshot = state.views.admin;
   const truck = activeTruck();
+  if (!snapshot || !truck) {
+    return;
+  }
+  const user = state.session.admin;
   const cert = truck.certificate;
   const certMeta = CERT_STATUS[cert.status];
-  const drillTruck = state.isExcursionActive ? getTruck(state.excursionTruckId) : null;
-  const blockReason = signBlockReason(truck);
-  const blockText = blockReason ? t(blockReason) : '';
+  const drillTruck = snapshot.drillTruckId ? getTruck(snapshot.drillTruckId, 'admin') : null;
+  const blockText = truck.signBlock ? t(truck.signBlock) : '';
 
   setText(el['controls-title'], t('Unit {id}', { id: `#${truck.id}` }));
+  setText(
+    el['controls-role'],
+    user.permissions.length === 0
+      ? t('Your role: {title}. You can view everything but cannot change anything.', { title: user.title })
+      : t('Your role: {title}. You can: {can}.', {
+        title: user.title,
+        can: user.permissions.map((permission) => t(PERMISSION_LABELS[permission])).join(state.lang === 'ar' ? '، ' : ', ')
+      })
+  );
+
   el['seal-card'].dataset.tone = certMeta.tone;
   setText(el['seal-serial'], ltr(cert.serial));
   setChip(el['seal-status'], t(certMeta.label), certMeta.chip);
   setText(el['seal-note'], t(certMeta.note));
-  setText(
-    el['seal-signed'],
-    cert.status === 'valid' && cert.signedAt ? formatDateTime(cert.signedAt) : t('Not signed')
-  );
+  const signed = cert.status === 'valid' && cert.signedAt;
+  setText(el['seal-signed'], signed ? formatDateTime(new Date(cert.signedAt)) : t('Not signed'));
+  setText(el['seal-signer'], signed ? t(cert.signedBy) : t('Signature pending'));
   setText(el['seal-hash'], hashLabel(cert));
   setText(el['seal-excursions'], excursionText(truck.log.excursions));
 
-  el['btn-incident'].disabled = state.isExcursionActive;
-  el['btn-normalize'].disabled = !state.isExcursionActive;
-  el['btn-sign'].disabled = Boolean(blockReason);
+  const delivered = truck.baseStatus === 'delivered';
+  el['btn-incident'].disabled = !can('drill') || Boolean(drillTruck) || delivered;
+  el['btn-normalize'].disabled = !can('drill') || !drillTruck;
+  el['btn-sign'].disabled = !can('sign') || Boolean(truck.signBlock);
 
   let hint = t('Trigger Incident simulates a compressor failure and a {delta} spike on Unit {id}.', {
     delta: `+${EXCURSION_DELTA_C.toFixed(1)}°C`,
     id: `#${truck.id}`
   });
-  if (drillTruck && drillTruck.id !== truck.id) {
+  if (!can('drill') && !can('sign')) {
+    hint = t('Your role does not allow this action.');
+  } else if (drillTruck && drillTruck.id !== truck.id) {
     hint = t('A drill is active on Unit {id}. Normalize Sensor will close it.', { id: `#${drillTruck.id}` });
   } else if (drillTruck) {
     hint = t('Drill active on this unit.');
-  } else if (!blockReason && cert.status === 'revalidate') {
+  } else if (delivered) {
+    hint = t('Drills are not available once a unit has delivered.');
+  } else if (!can('drill')) {
+    hint = t('Your role cannot run drills.');
+  } else if (!truck.signBlock && cert.status === 'revalidate') {
     hint = t('Telemetry is nominal. Issue / Sign Certificate to validate the log and restore the seal.');
   }
-  setText(el['tools-hint'], blockText && !hint.includes(blockText) ? `${hint} ${blockText}` : hint);
+  const notes = [hint];
+  if (can('sign') && blockText && !hint.includes(blockText)) {
+    notes.push(blockText);
+  } else if (!can('sign') && (can('drill'))) {
+    notes.push(t('Your role cannot sign certificates.'));
+  }
+  setText(el['tools-hint'], notes.join(' '));
+
+  /* Accounts, for roles allowed to see them. */
+  const accounts = snapshot.accounts;
+  el['accounts-card'].hidden = !accounts;
+  if (accounts) {
+    renderAccounts(accounts);
+  }
 }
 
 function hashLabel(cert) {
