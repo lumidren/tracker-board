@@ -147,6 +147,36 @@
             </button>
           </section>
 
+          <!-- ================= CLIENT: JOURNEY ================= -->
+          <section class="panel" data-role="client" data-panel="journey" aria-label="Journey detail" hidden>
+            <header class="panel__head">
+              <p class="eyebrow">Journey</p>
+              <h1 class="panel__title" id="journey-title"></h1>
+              <p class="panel__sub" id="journey-sub"></p>
+            </header>
+
+            <div class="unit-picker unit-picker--consignments" data-consignment-picker role="group" aria-label="Select consignment" hidden></div>
+
+            <article class="card" aria-labelledby="timeline-heading">
+              <header class="card__head">
+                <h2 class="card__title" id="timeline-heading">Corridor Milestones</h2>
+              </header>
+              <ol class="timeline" id="journey-timeline"></ol>
+            </article>
+
+            <article class="card" aria-labelledby="custody-heading">
+              <header class="card__head">
+                <h2 class="card__title" id="custody-heading">Chain of Custody</h2>
+              </header>
+              <dl class="facts">
+                <div class="facts__row"><dt>Consignor</dt><dd id="custody-consignor"></dd></div>
+                <div class="facts__row"><dt>Consignee</dt><dd id="custody-consignee"></dd></div>
+                <div class="facts__row"><dt>Transport Operator</dt><dd id="custody-operator"></dd></div>
+                <div class="facts__row"><dt>Quality Oversight</dt><dd>Lead Quality Assurance Auditor</dd></div>
+              </dl>
+            </article>
+          </section>
+
         </main>
 
         <nav class="glass-dock" id="dock" aria-label="Section navigation">
