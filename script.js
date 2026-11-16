@@ -1464,7 +1464,6 @@ function resetAuthForm() {
   el['auth-form'].reset();
   el['auth-password'].type = 'password';
   el['auth-toggle'].setAttribute('aria-pressed', 'false');
-  setText(el['auth-toggle'], 'Show');
 }
 
 function submitSignIn() {
@@ -1478,7 +1477,7 @@ function submitSignIn() {
   const identifier = el['auth-identifier'].value.trim().toLowerCase();
   const password = el['auth-password'].value;
   if (!identifier || !password) {
-    state.auth.error = `Enter your ${copy.identifierLabel.toLowerCase()} and password.`;
+    state.auth.error = { source: copy.missing };
     renderAuth();
     return;
   }
@@ -1493,15 +1492,22 @@ function submitSignIn() {
     if (attempt >= MAX_SIGN_IN_ATTEMPTS) {
       state.auth.attempts[role] = 0;
       state.auth.lockedUntil[role] = Date.now() + LOCKOUT_MS;
-      state.auth.error = '';
-      appendLog(
-        'alert',
-        `Sign-in locked on the ${copy.scope} for ${LOCKOUT_MS / 1000} seconds after ${MAX_SIGN_IN_ATTEMPTS} failed attempts.`
-      );
+      state.auth.error = null;
+      appendLog('alert', 'Sign-in locked on the {scope} for {seconds} seconds after {attempts} failed attempts.', {
+        scope: copy.scope,
+        seconds: LOCKOUT_MS / 1000,
+        attempts: MAX_SIGN_IN_ATTEMPTS
+      });
     } else {
       const left = MAX_SIGN_IN_ATTEMPTS - attempt;
-      state.auth.error = `Those details do not match an account. ${left} ${left === 1 ? 'attempt' : 'attempts'} left before a temporary lock.`;
-      appendLog('alert', `Failed sign-in attempt on the ${copy.scope} (${attempt} of ${MAX_SIGN_IN_ATTEMPTS}).`);
+      state.auth.error = left === 1
+        ? { source: 'Those details do not match an account. 1 attempt left before a temporary lock.' }
+        : { source: 'Those details do not match an account. {left} attempts left before a temporary lock.', params: { left } };
+      appendLog('alert', 'Failed sign-in attempt on the {scope} ({attempt} of {max}).', {
+        scope: copy.scope,
+        attempt,
+        max: MAX_SIGN_IN_ATTEMPTS
+      });
     }
     el['auth-password'].value = '';
     renderAuth();
@@ -1510,7 +1516,7 @@ function submitSignIn() {
   }
 
   state.auth.attempts[role] = 0;
-  state.auth.error = '';
+  state.auth.error = null;
   state.session[role] = account;
   if (role === 'client' && !account.trucks.includes(state.clientTruckId)) {
     state.clientTruckId = account.trucks[0];
@@ -1518,26 +1524,30 @@ function submitSignIn() {
   state.lastActivityAt = Date.now();
   resetAuthForm();
   persistSession();
-  appendLog('ok', `Sign-in on the ${copy.scope}: ${account.name}.`);
-  showToast(`Signed in as ${account.name}`, 'safe');
+  appendLog('ok', 'Sign-in on the {scope}: {name}.', { scope: copy.scope, name: account.name });
+  showToast(t('Signed in as {name}', { name: account.name }), 'safe');
   render();
   el.viewport.scrollTop = 0;
   el.viewport.focus();
 }
 
-function signOut(role = state.currentRole, reason = '') {
+function signOut(role = state.currentRole, idle = false) {
   const account = state.session[role];
   if (!account) {
     return;
   }
   state.session[role] = null;
   persistSession();
-  appendLog('info', `Sign-out on the ${AUTH_COPY[role].scope}: ${account.name}${reason ? ` (${reason})` : ''}.`);
+  appendLog(
+    'info',
+    idle ? 'Sign-out on the {scope}: {name} (idle timeout).' : 'Sign-out on the {scope}: {name}.',
+    { scope: AUTH_COPY[role].scope, name: account.name }
+  );
 
   if (role === state.currentRole) {
     state.certificateModalOpen = false;
     lastFocused = null;
-    state.auth.error = reason ? 'You were signed out after a period of inactivity.' : '';
+    state.auth.error = idle ? { source: 'You were signed out after a period of inactivity.' } : null;
     hideToast();
     resetAuthForm();
     render();
@@ -1549,7 +1559,7 @@ function fillDemoCredentials() {
   const account = DEMO_ACCOUNTS.find((item) => item.role === state.currentRole);
   el['auth-identifier'].value = account.identifier;
   el['auth-password'].value = account.password;
-  state.auth.error = '';
+  state.auth.error = null;
   renderAuth();
   el['auth-submit'].focus();
 }
@@ -1559,7 +1569,7 @@ function togglePasswordVisibility() {
   const reveal = input.type === 'password';
   input.type = reveal ? 'text' : 'password';
   el['auth-toggle'].setAttribute('aria-pressed', String(reveal));
-  setText(el['auth-toggle'], reveal ? 'Hide' : 'Show');
+  renderAuth();
 }
 
 function selectConsignment(truckId) {
