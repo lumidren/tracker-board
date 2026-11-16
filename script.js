@@ -2069,6 +2069,38 @@ function mapLabels(svg, k, placeIds) {
   }).join('');
 }
 
+/* The route split at the unit's position: the part driven and the part left. */
+function splitRoute(truck) {
+  const points = truck.routePoints;
+  let target = Engine.routeLength(points) * truck.progress;
+  const done = [points[0]];
+  let index = 1;
+  for (; index < points.length; index += 1) {
+    const leg = Engine.distanceKm(points[index - 1], points[index]);
+    if (target <= leg) {
+      break;
+    }
+    target -= leg;
+    done.push(points[index]);
+  }
+  done.push(truck.position);
+  return { done, rest: [truck.position, ...points.slice(index)] };
+}
+
+function routeMarkup(truck) {
+  const parts = splitRoute(truck);
+  return `<path class="map__route" d="${linePath(parts.rest)}"/><path class="map__route map__route--done" d="${linePath(parts.done)}"/>`;
+}
+
+function truckMarker(truck, k, selected) {
+  const [x, y] = project(truck.position);
+  return `<g class="map__truck" data-truck="${truck.id}" data-status="${truck.status}" data-selected="${selected}" tabindex="0" role="button" aria-label="${t('Unit {id}', { id: `#${truck.id}` })}">
+      <circle class="map__pulse" cx="${x}" cy="${y}" r="${round1(5 * k)}"/>
+      <circle class="map__truck-ring" cx="${x}" cy="${y}" r="${round1(8.5 * k)}"/>
+      <circle class="map__truck-dot" cx="${x}" cy="${y}" r="${round1(5 * k)}"/>
+    </g>`;
+}
+
 /* --------------------------------------------------------------------------
    One-time DOM construction
    -------------------------------------------------------------------------- */
