@@ -300,6 +300,34 @@
     function sampleTemperature(truck) {
       return round1(truck.tempBaseline + (truck.status === 'excursion' ? EXCURSION_DELTA_C : 0) + jitter(0.5));
     }
+
+    function issue(truck, signedAt, signedBy) {
+      const cert = truck.certificate;
+      cert.status = 'valid';
+      cert.signedAt = signedAt;
+      cert.signedBy = signedBy;
+      cert.record = {
+        transitMinutes: truck.log.transitMinutes,
+        min: truck.log.min,
+        max: truck.log.max,
+        excursions: truck.log.excursions,
+        doorOpenings: truck.log.doorOpenings
+      };
+      cert.hash = sha256(certificatePayload(truck, { ...cert.record, signedAt }));
+      state.registry.forEach((entry) => {
+        if (entry.truckId === truck.id && entry.status !== 'superseded') {
+          entry.status = 'superseded';
+        }
+      });
+      state.registry.push({
+        serial: cert.serial,
+        truckId: truck.id,
+        signedAt,
+        signedBy,
+        digest: cert.hash,
+        status: 'current'
+      });
+    }
     return {};
   }
 
