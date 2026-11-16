@@ -2763,7 +2763,7 @@ function handleClick(event) {
   if (actionButton && !actionButton.disabled) {
     const action = ACTIONS[actionButton.dataset.action];
     if (action) {
-      action();
+      action(actionButton);
     }
   }
 }
@@ -2780,7 +2780,7 @@ function handleKeydown(event) {
   if (event.key !== 'Tab') {
     return;
   }
-  const focusable = all('button:not([disabled])', el.modal);
+  const focusable = all('button:not([disabled]), a[href]', el.modal).filter((node) => !node.hidden);
   if (focusable.length === 0) {
     return;
   }
