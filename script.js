@@ -840,12 +840,7 @@ const can = (permission) => Boolean(state.session.admin && state.session.admin.p
 const openAlertCount = () => (state.views.admin ? state.views.admin.alerts.filter((alert) => !alert.acknowledgedAt).length : 0);
 
 /* Fills {placeholders} in an English source string. */
-function fmt(source, params) {
-  if (!params) {
-    return source;
-  }
-  return source.replace(/\{(\w+)\}/g, (match, key) => (key in params ? String(params[key]) : match));
-}
+const fmt = Engine.fill;
 
 /* Translates a source string. In Arabic every inserted value is wrapped in a
    first-strong isolate so identifiers and readings keep their own direction. */
@@ -869,12 +864,7 @@ function t(source, params) {
 /* Keeps a standalone identifier or reading left-to-right inside Arabic text. */
 const ltr = (text) => (state.lang === 'ar' ? `⁦${text}⁩` : String(text));
 
-function plainTemp(value) {
-  const rounded = round1(value);
-  const sign = rounded > 0 ? '+' : '';
-  return `${sign}${rounded.toFixed(1)}°C`;
-}
-
+const plainTemp = Engine.plainTemp;
 const formatTemp = (value) => ltr(plainTemp(value));
 
 function formatClock(date, withSeconds = false) {
@@ -906,6 +896,14 @@ function formatSpan(milliseconds) {
   return t('{m}m {s}s', { m: Math.floor(seconds / 60), s: pad2(seconds % 60) });
 }
 
+/* "about 42 minutes" or "about 2 h 15 min": how a wait is said to a client. */
+function formatEta(minutes) {
+  if (minutes < 60) {
+    return t('about {n} minutes', { n: minutes });
+  }
+  return t('about {h} h {m} min', { h: Math.floor(minutes / 60), m: pad2(minutes % 60) });
+}
+
 function shortHash(hash) {
   return hash ? `${hash.slice(0, 6)}...${hash.slice(-5)}` : '';
 }
@@ -924,6 +922,12 @@ function setChip(node, label, modifiers) {
   const className = `chip ${modifiers}`.trim();
   if (node.className !== className) {
     node.className = className;
+  }
+}
+
+function setAttribute(node, name, value) {
+  if (node.getAttribute(name) !== value) {
+    node.setAttribute(name, value);
   }
 }
 
@@ -982,7 +986,6 @@ function applyLanguage() {
 
   buildDock();
   render();
-  renderAuditLog();
 
   /* Reading layout applies the mirrored styles while transitions are still
      off; only then are transitions allowed again. */
@@ -1007,139 +1010,6 @@ function restoreLanguage() {
     }
   } catch (error) {
     state.lang = 'en';
-  }
-}
-
-/* --------------------------------------------------------------------------
-   SHA-256
-   -------------------------------------------------------------------------- */
-/* Used where the Web Crypto API is unavailable, for example when the page is
-   served over plain HTTP to a phone on the local network. */
-function sha256Fallback(bytes) {
-  const rotr = (value, shift) => (value >>> shift) | (value << (32 - shift));
-  const fraction = (value) => Math.floor((value - Math.floor(value)) * 4294967296) >>> 0;
-  const primes = [];
-  for (let candidate = 2; primes.length < 64; candidate += 1) {
-    if (primes.every((prime) => candidate % prime !== 0)) {
-      primes.push(candidate);
-    }
-  }
-  const k = primes.map((prime) => fraction(Math.cbrt(prime)));
-  const hash = primes.slice(0, 8).map((prime) => fraction(Math.sqrt(prime)));
-
-  const padded = new Uint8Array(((bytes.length + 9 + 63) >> 6) << 6);
-  padded.set(bytes);
-  padded[bytes.length] = 0x80;
-  const view = new DataView(padded.buffer);
-  view.setUint32(padded.length - 8, Math.floor(bytes.length / 536870912));
-  view.setUint32(padded.length - 4, (bytes.length << 3) >>> 0);
-
-  const w = new Uint32Array(64);
-  for (let offset = 0; offset < padded.length; offset += 64) {
-    for (let i = 0; i < 16; i += 1) {
-      w[i] = view.getUint32(offset + i * 4);
-    }
-    for (let i = 16; i < 64; i += 1) {
-      const s0 = rotr(w[i - 15], 7) ^ rotr(w[i - 15], 18) ^ (w[i - 15] >>> 3);
-      const s1 = rotr(w[i - 2], 17) ^ rotr(w[i - 2], 19) ^ (w[i - 2] >>> 10);
-      w[i] = w[i - 16] + s0 + w[i - 7] + s1;
-    }
-    let [a, b, c, d, e, f, g, h] = hash;
-    for (let i = 0; i < 64; i += 1) {
-      const s1 = rotr(e, 6) ^ rotr(e, 11) ^ rotr(e, 25);
-      const choice = (e & f) ^ (~e & g);
-      const temp1 = (h + s1 + choice + k[i] + w[i]) >>> 0;
-      const s0 = rotr(a, 2) ^ rotr(a, 13) ^ rotr(a, 22);
-      const majority = (a & b) ^ (a & c) ^ (b & c);
-      const temp2 = (s0 + majority) >>> 0;
-      h = g;
-      g = f;
-      f = e;
-      e = (d + temp1) >>> 0;
-      d = c;
-      c = b;
-      b = a;
-      a = (temp1 + temp2) >>> 0;
-    }
-    [a, b, c, d, e, f, g, h].forEach((value, index) => {
-      hash[index] = (hash[index] + value) >>> 0;
-    });
-  }
-  return hash.map((value) => value.toString(16).padStart(8, '0')).join('');
-}
-
-async function sha256Hex(text) {
-  const bytes = new TextEncoder().encode(text);
-  if (window.crypto && window.crypto.subtle) {
-    try {
-      const buffer = await window.crypto.subtle.digest('SHA-256', bytes);
-      return Array.from(new Uint8Array(buffer), (byte) => byte.toString(16).padStart(2, '0')).join('');
-    } catch (error) {
-      /* Fall through to the script implementation. */
-    }
-  }
-  return sha256Fallback(bytes);
-}
-
-/* --------------------------------------------------------------------------
-   Audit log (hash-chained entries)
-   -------------------------------------------------------------------------- */
-/* Entries keep their English source and values, so the log can be shown in
-   either language while the chain is always hashed over the English text. */
-function appendLog(kind, source, params) {
-  const entry = {
-    seq: state.auditLog.length + 1,
-    time: new Date(),
-    kind,
-    source,
-    params,
-    digest: ''
-  };
-  state.auditLog.push(entry);
-  renderAuditLog();
-
-  logChain = logChain.then(async (previous) => {
-    entry.digest = await sha256Hex(`${previous}|${entry.seq}|${entry.time.toISOString()}|${fmt(source, params)}`);
-    renderAuditLog();
-    return entry.digest;
-  });
-}
-
-/* --------------------------------------------------------------------------
-   Certificate digest
-   -------------------------------------------------------------------------- */
-/* The canonical record that is hashed when a certificate is signed and hashed
-   again by the verification page. */
-function certificatePayload(truck, record) {
-  return [
-    truck.certificate.serial,
-    truck.id,
-    truck.consignmentId,
-    truck.tempTarget,
-    truck.tempMin,
-    truck.tempMax,
-    record.transitMinutes,
-    record.min,
-    record.max,
-    record.excursions,
-    record.doorOpenings,
-    truck.sealId,
-    new Date(record.signedAt).toISOString()
-  ].join('|');
-}
-
-async function refreshCertificateHash(truck) {
-  const cert = truck.certificate;
-  if (cert.status !== 'valid' || !cert.signedAt) {
-    cert.hash = '';
-    return;
-  }
-  const signedAt = cert.signedAt;
-  const hash = await sha256Hex(certificatePayload(truck, { ...truck.log, signedAt: signedAt.getTime() }));
-  if (cert.status === 'valid' && cert.signedAt === signedAt) {
-    cert.hash = hash;
-    renderCertificate();
-    renderControls();
   }
 }
 
