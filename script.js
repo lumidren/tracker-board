@@ -983,6 +983,41 @@ async function refreshCertificateHash(truck) {
 }
 
 /* --------------------------------------------------------------------------
+   QR code (byte mode, error correction level M, versions 1 to 15)
+   -------------------------------------------------------------------------- */
+const QR_ECC_PER_BLOCK = [0, 10, 16, 26, 18, 24, 16, 18, 22, 22, 26, 30, 22, 22, 24, 24];
+const QR_BLOCK_COUNT = [0, 1, 1, 1, 2, 2, 4, 4, 4, 5, 5, 5, 8, 9, 9, 10];
+const QR_MAX_VERSION = QR_BLOCK_COUNT.length - 1;
+
+const QR_MASKS = [
+  (x, y) => (x + y) % 2 === 0,
+  (x, y) => y % 2 === 0,
+  (x) => x % 3 === 0,
+  (x, y) => (x + y) % 3 === 0,
+  (x, y) => (Math.floor(x / 3) + Math.floor(y / 2)) % 2 === 0,
+  (x, y) => ((x * y) % 2) + ((x * y) % 3) === 0,
+  (x, y) => (((x * y) % 2) + ((x * y) % 3)) % 2 === 0,
+  (x, y) => (((x + y) % 2) + ((x * y) % 3)) % 2 === 0
+];
+
+/* Modules left for data and error correction once function patterns are placed. */
+function qrRawModules(version) {
+  let result = (16 * version + 128) * version + 64;
+  if (version >= 2) {
+    const alignCount = Math.floor(version / 7) + 2;
+    result -= (25 * alignCount - 10) * alignCount - 55;
+    if (version >= 7) {
+      result -= 36;
+    }
+  }
+  return result;
+}
+
+function qrDataCodewords(version) {
+  return Math.floor(qrRawModules(version) / 8) - QR_ECC_PER_BLOCK[version] * QR_BLOCK_COUNT[version];
+}
+
+/* --------------------------------------------------------------------------
    Actions
    -------------------------------------------------------------------------- */
 /* --- Authentication (simulated, browser only) --- */
