@@ -831,3 +831,48 @@ function buildTimeline() {
       <p class="timeline__time"></p>
     </li>`).join('');
 }
+
+function buildFleet() {
+  el['fleet-grid'].innerHTML = state.trucks.map((truck) => `
+    <button type="button" class="unit-card" data-truck="${truck.id}" aria-pressed="false">
+      <span class="unit-card__head">
+        <span class="unit-card__id">Unit #${truck.id}</span>
+        <span class="chip" data-field="status"></span>
+      </span>
+      <span class="unit-card__cargo" data-field="cargo"></span>
+      <span class="unit-card__metrics">
+        <span class="metric">
+          <span class="metric__label">Internal Temp</span>
+          <span class="metric__value metric__value--temp" data-field="temp"></span>
+        </span>
+        <span class="metric">
+          <span class="metric__label">Chiller Power</span>
+          <span class="metric__value" data-field="chiller"></span>
+        </span>
+        <span class="metric">
+          <span class="metric__label">Uplink</span>
+          <span class="metric__value" data-field="uplink"></span>
+        </span>
+        <span class="metric">
+          <span class="metric__label">Hardware Health</span>
+          <span class="metric__value" data-field="health"></span>
+        </span>
+      </span>
+    </button>`).join('');
+}
+
+function buildUnitPickers() {
+  const markup = state.trucks.map((truck) => `
+    <button type="button" class="unit-picker__option" data-truck="${truck.id}" aria-pressed="false">#${truck.id}</button>`).join('');
+  all('[data-unit-picker]').forEach((picker) => {
+    picker.innerHTML = markup;
+  });
+}
+
+function buildDock() {
+  el['dock-items'].innerHTML = DOCK_ITEMS[state.currentRole].map((item) => `
+    <button type="button" class="dock-item" data-panel-target="${item.id}">
+      ${iconMarkup(item.icon)}
+      <span>${item.label}</span>
+    </button>`).join('');
+}
