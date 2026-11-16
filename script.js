@@ -2073,14 +2073,21 @@ function renderAuth() {
   const role = state.currentRole;
   const copy = AUTH_COPY[role];
   const locked = lockSecondsLeft(role);
+  const error = state.auth.error;
 
-  setText(el['auth-title'], copy.title);
-  setText(el['auth-sub'], copy.sub);
-  setText(el['auth-identifier-label'], copy.identifierLabel);
+  setText(el['auth-title'], t(copy.title));
+  setText(el['auth-sub'], t(copy.sub));
+  setText(el['auth-identifier-label'], t(copy.identifierLabel));
   el['auth-identifier'].setAttribute('inputmode', copy.inputMode);
-  setText(el['auth-demo-note'], copy.demoNote);
+  setText(el['auth-demo-note'], t(copy.demoNote));
+  setText(el['auth-toggle'], t(el['auth-password'].type === 'password' ? 'Show' : 'Hide'));
 
-  const message = locked > 0 ? `Too many failed attempts. Try again in ${locked} seconds.` : state.auth.error;
+  let message = '';
+  if (locked > 0) {
+    message = t('Too many failed attempts. Try again in {seconds} seconds.', { seconds: locked });
+  } else if (error) {
+    message = t(error.source, error.params);
+  }
   el['auth-error'].hidden = !message;
   setText(el['auth-error'], message);
   el['auth-submit'].disabled = locked > 0;
