@@ -134,5 +134,108 @@
     'market-damietta': { name: 'Damietta Wholesale Market Depot #06', terminal: 'Regional Receiving Terminal #06' },
     'market-luxor': { name: 'Luxor Fresh Produce Terminal #09', terminal: 'Regional Receiving Terminal #09' }
   };
+
+  /* Control room permissions: drill (run and close incident drills), acknowledge
+     (acknowledge alerts), sign (issue certificates), accounts (see the account list).
+     Client access: owner (shipments the organisation sent) or receiver (shipments
+     addressed to it). */
+  const users = [
+    {
+      id: 'admin-qa',
+      portal: 'admin',
+      identifier: 'QA-0104',
+      password: 'Auditor-Demo-2026',
+      name: 'Lead Quality Assurance Auditor',
+      title: 'Quality Assurance',
+      permissions: ['drill', 'acknowledge', 'sign']
+    },
+    {
+      id: 'admin-dispatch',
+      portal: 'admin',
+      identifier: 'DSP-0211',
+      password: 'Dispatch-Demo-2026',
+      name: 'Fleet Dispatch Controller',
+      title: 'Dispatch',
+      permissions: ['drill', 'acknowledge']
+    },
+    {
+      id: 'admin-regulator',
+      portal: 'admin',
+      identifier: 'REG-0007',
+      password: 'Regulator-Demo-2026',
+      name: 'Cold-Chain Regulatory Officer',
+      title: 'Regulatory Affairs (Read Only)',
+      permissions: []
+    },
+    {
+      id: 'admin-platform',
+      portal: 'admin',
+      identifier: 'ADM-0001',
+      password: 'Platform-Demo-2026',
+      name: 'Platform Administrator',
+      title: 'Administration',
+      permissions: ['drill', 'acknowledge', 'sign', 'accounts']
+    },
+    {
+      id: 'client-biopharma',
+      portal: 'client',
+      identifier: 'consignor@maatora.test',
+      password: 'ColdChain-Demo-2026',
+      name: 'National Logistics & Biopharma Consignor S.A.E.',
+      title: 'Consignor',
+      org: 'biopharma',
+      access: 'owner'
+    },
+    {
+      id: 'client-provisions',
+      portal: 'client',
+      identifier: 'provisions@maatora.test',
+      password: 'FrozenDock-Demo-2026',
+      name: 'National Cold-Chain Provisions Consignor S.A.E.',
+      title: 'Consignor',
+      org: 'provisions',
+      access: 'owner'
+    },
+    {
+      id: 'client-dairy',
+      portal: 'client',
+      identifier: 'dairy@maatora.test',
+      password: 'Dairy-Demo-2026',
+      name: 'Delta Dairy Cooperative S.A.E.',
+      title: 'Consignor',
+      org: 'dairy',
+      access: 'owner'
+    },
+    {
+      id: 'client-depot-north',
+      portal: 'client',
+      identifier: 'depot.north@maatora.test',
+      password: 'DepotNorth-Demo-2026',
+      name: 'Northern Regional Medical Depot #04',
+      title: 'Receiving Depot',
+      org: 'depot-north',
+      access: 'receiver'
+    },
+    {
+      id: 'client-depot-delta',
+      portal: 'client',
+      identifier: 'depot.delta@maatora.test',
+      password: 'DepotDelta-Demo-2026',
+      name: 'Delta Regional Clinical Depot #02',
+      title: 'Receiving Depot',
+      org: 'depot-delta',
+      access: 'receiver'
+    },
+    {
+      id: 'client-pharmacy',
+      portal: 'client',
+      identifier: 'pharmacy@maatora.test',
+      password: 'Pharmacy-Demo-2026',
+      name: 'Upper Egypt Pharmacy Network Depot #11',
+      title: 'Receiving Depot',
+      org: 'pharmacy-upper',
+      access: 'receiver'
+    }
+  ];
   return {};
 });
