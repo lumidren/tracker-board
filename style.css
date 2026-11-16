@@ -315,3 +315,57 @@ button {
     opacity: 0;
   }
 }
+
+/* Role switcher */
+.role-switch {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  padding: 4px;
+  border-radius: 14px;
+  background: var(--canvas);
+  border: 1px solid var(--border);
+}
+
+.role-switch__thumb {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 4px;
+  width: calc(50% - 4px);
+  border-radius: 10px;
+  background: var(--surface);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08), 0 0 0 1px rgba(2, 132, 199, 0.28);
+  transition: transform 0.34s var(--ease-out);
+}
+
+.role-switch[data-role="admin"] .role-switch__thumb {
+  transform: translateX(100%);
+}
+
+.role-switch__option {
+  position: relative;
+  z-index: 1;
+  height: 38px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.role-switch__option[aria-pressed="true"] {
+  color: var(--ice-strong);
+}
+
+.role-switch__option:hover {
+  color: var(--text);
+}
+
+.role-switch__option[aria-pressed="true"]:hover {
+  color: var(--ice-strong);
+}
