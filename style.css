@@ -531,7 +531,7 @@ button {
 .facts dd {
   font-size: 12.5px;
   font-weight: 600;
-  text-align: right;
+  text-align: end;
   overflow-wrap: anywhere;
 }
 
@@ -962,7 +962,7 @@ button {
   border: 1px solid var(--border);
   background: var(--surface);
   box-shadow: var(--shadow-card);
-  text-align: left;
+  text-align: start;
   cursor: pointer;
   transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
@@ -1415,7 +1415,7 @@ button {
   padding: 11px 14px;
   border-radius: 14px;
   border: 1px solid var(--border);
-  border-left: 4px solid var(--ice);
+  border-inline-start: 4px solid var(--ice);
   background: var(--surface);
   box-shadow: var(--shadow-float);
   font-size: 12.5px;
@@ -1433,11 +1433,11 @@ button {
 }
 
 .toast[data-tone="alert"] {
-  border-left-color: var(--alert);
+  border-inline-start-color: var(--alert);
 }
 
 .toast[data-tone="safe"] {
-  border-left-color: var(--safe);
+  border-inline-start-color: var(--safe);
 }
 
 /* 9. Buttons --------------------------------------------------------------- */
@@ -1988,7 +1988,7 @@ button {
   place-items: center;
   width: 52px;
   height: 52px;
-  margin-left: 4px;
+  margin-inline-start: 4px;
   border-radius: 16px;
   border: 1px solid var(--ice-line);
   background: var(--ice-soft);
