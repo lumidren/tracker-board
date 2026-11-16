@@ -1,32 +1,37 @@
 /* ==========================================================================
    Maatora | Cold-Chain Monitoring
-   Single state object, role-based views, incident simulation, alert history,
-   English and Arabic interfaces, and the printable compliance certificate
-   with a scannable verification code. No dependencies.
+   The interface only. It draws whatever view of the system its backend hands
+   it and sends commands back. Two backends exist: the Maatora server (accounts,
+   database, live updates) and an in-page demo that runs the same engine with
+   test data when no server is present.
    ========================================================================== */
 'use strict';
 
 /* --------------------------------------------------------------------------
    Constants
    -------------------------------------------------------------------------- */
-const EXCURSION_DELTA_C = 9;
+const Engine = window.MaatoraEngine;
+/* Set by the server's own data.js. Absent when the page is opened as plain files. */
+const REMOTE = window.MAATORA_REMOTE || null;
+const SEED = window.MAATORA_SEED || { places: {}, geography: null };
+
+const EXCURSION_DELTA_C = Engine.EXCURSION_DELTA_C;
 const LIVE_TICK_MS = 4000;
-const ETA_TICK_MS = 60000;
-const HISTORY_POINTS = 32;
 const AUDIT_LOG_VISIBLE = 12;
 const TOAST_MS = 3200;
 const MAX_SIGN_IN_ATTEMPTS = 5;
 const LOCKOUT_MS = 30000;
 const IDLE_LIMIT_MS = { client: 30 * 60000, admin: 10 * 60000 };
+const TOUCH_EVERY_MS = 60000;
 const SESSION_KEY = 'maatora.session';
 const LANG_KEY = 'maatora.lang';
 const VERIFY_PREFIX = '#verify=';
-const VERIFY_DIGEST_LENGTH = 32;
 /* Address of the hosted site, for example 'https://example.org/maatora/'. When set, every
    QR code points there, so anyone can verify a certificate from any phone. */
 const PUBLIC_VERIFY_URL = '';
 /* Used inside the phone app, whose own page address means nothing to another device. */
 const APP_VERIFY_LINK = 'maatora://verify/';
+const PORTALS = ['client', 'admin'];
 
 const ROUTE_STEPS = [
   'Origin Departure',
@@ -53,36 +58,6 @@ const DOCK_ITEMS = {
     { id: 'controls', label: 'Controls', icon: 'i-sliders' }
   ]
 };
-
-/* Demonstration accounts. Sign-in is simulated in the browser: these values
-   ship with the page and are not a security boundary. A production build must
-   authenticate against a server and never deliver credentials to the client. */
-const DEMO_ACCOUNTS = [
-  {
-    id: 'client-biopharma',
-    role: 'client',
-    identifier: 'consignor@maatora.test',
-    password: 'ColdChain-Demo-2026',
-    name: 'National Logistics & Biopharma Consignor S.A.E.',
-    trucks: ['TRK-104', 'TRK-208']
-  },
-  {
-    id: 'client-provisions',
-    role: 'client',
-    identifier: 'provisions@maatora.test',
-    password: 'FrozenDock-Demo-2026',
-    name: 'National Cold-Chain Provisions Consignor S.A.E.',
-    trucks: ['TRK-315']
-  },
-  {
-    id: 'admin-qa',
-    role: 'admin',
-    identifier: 'QA-0104',
-    password: 'Dispatch-Demo-2026',
-    name: 'Lead Quality Assurance Auditor',
-    trucks: []
-  }
-];
 
 const AUTH_COPY = {
   client: {
@@ -1623,65 +1598,6 @@ function hardwareChecks(truck) {
   };
 }
 
-function healthSummary(truck) {
-  const levels = Object.values(hardwareChecks(truck));
-  const faults = levels.filter((item) => item === 'fault').length;
-  const warnings = levels.filter((item) => item === 'warn').length;
-  if (faults > 0) {
-    const label = faults === 1 ? t('1 Fault') : t('{count} Faults', { count: faults });
-    return { label, tone: 'alert', chip: 'chip--alert chip--flash' };
-  }
-  if (warnings > 0) {
-    return { label: t('{count} Attention', { count: warnings }), tone: 'ice', chip: 'chip--ice' };
-  }
-  return {
-    label: t('{ok} / {total} Nominal', { ok: levels.length, total: levels.length }),
-    tone: 'safe',
-    chip: 'chip--safe'
-  };
-}
-
-/* --- Alert history --- */
-const unacknowledgedAlerts = (truckId) => state.alerts.filter(
-  (alert) => !alert.acknowledgedAt && (!truckId || alert.truckId === truckId)
-);
-
-function openAlert(truck) {
-  state.alerts.push({
-    id: `ALT-${String(state.alerts.length + 1).padStart(4, '0')}`,
-    truckId: truck.id,
-    kind: 'excursion',
-    startedAt: new Date(),
-    endedAt: null,
-    peak: truck.tempCurrent,
-    limit: truck.tempMax,
-    acknowledgedAt: null,
-    acknowledgedBy: null
-  });
-}
-
-function activeAlert(truckId) {
-  return state.alerts.find((alert) => alert.truckId === truckId && alert.kind === 'excursion' && !alert.endedAt);
-}
-
-function acknowledgeAlert(button) {
-  const alert = state.alerts.find((item) => item.id === button.dataset.alertId);
-  const account = state.session.admin;
-  if (!alert || alert.acknowledgedAt || !account) {
-    return;
-  }
-  alert.acknowledgedAt = new Date();
-  alert.acknowledgedBy = account.name;
-  appendLog('ok', 'Alert {alert} on Unit {id} acknowledged by {name}.', {
-    alert: alert.id,
-    id: `#${alert.truckId}`,
-    name: account.name
-  });
-  showToast(t('Alert {id} acknowledged', { id: alert.id }), 'safe');
-  render();
-  el.viewport.focus();
-}
-
 function setRole(role) {
   if (role !== 'client' && role !== 'admin') {
     return;
@@ -1831,6 +1747,24 @@ function signCertificate() {
   refreshCertificateHash(truck);
 }
 
+function acknowledgeAlert(button) {
+  const alert = state.alerts.find((item) => item.id === button.dataset.alertId);
+  const account = state.session.admin;
+  if (!alert || alert.acknowledgedAt || !account) {
+    return;
+  }
+  alert.acknowledgedAt = new Date();
+  alert.acknowledgedBy = account.name;
+  appendLog('ok', 'Alert {alert} on Unit {id} acknowledged by {name}.', {
+    alert: alert.id,
+    id: `#${alert.truckId}`,
+    name: account.name
+  });
+  showToast(t('Alert {id} acknowledged', { id: alert.id }), 'safe');
+  render();
+  el.viewport.focus();
+}
+
 function openCertificate() {
   if (state.certificateModalOpen || !isAuthed() || state.verification) {
     return;
@@ -1976,17 +1910,6 @@ function buildUnitPickers() {
   });
 }
 
-function buildDock() {
-  const items = DOCK_ITEMS[state.currentRole];
-  el.dock.style.setProperty('--dock-count', String(items.length));
-  el['dock-items'].innerHTML = items.map((item) => `
-    <button type="button" class="dock-item" data-panel-target="${item.id}">
-      ${iconMarkup(item.icon)}
-      <span>${t(item.label)}</span>
-      ${item.id === 'alerts' ? '<span class="dock-item__badge" data-dock-badge aria-hidden="true" hidden></span>' : ''}
-    </button>`).join('');
-}
-
 function createAlertCard(alert) {
   const card = document.createElement('article');
   card.className = 'card alert-card';
@@ -2007,6 +1930,17 @@ function createAlertCard(alert) {
     </dl>
     <button type="button" class="btn btn--outline btn--block btn--small" data-action="acknowledge-alert" data-alert-id="${alert.id}"></button>`;
   return card;
+}
+
+function buildDock() {
+  const items = DOCK_ITEMS[state.currentRole];
+  el.dock.style.setProperty('--dock-count', String(items.length));
+  el['dock-items'].innerHTML = items.map((item) => `
+    <button type="button" class="dock-item" data-panel-target="${item.id}">
+      ${iconMarkup(item.icon)}
+      <span>${t(item.label)}</span>
+      ${item.id === 'alerts' ? '<span class="dock-item__badge" data-dock-badge aria-hidden="true" hidden></span>' : ''}
+    </button>`).join('');
 }
 
 /* --------------------------------------------------------------------------
@@ -2324,6 +2258,47 @@ function chillerState(truck) {
     return { label: 'Pre-Cooling', tone: 'ice' };
   }
   return { label: 'ON', tone: 'safe' };
+}
+
+function healthSummary(truck) {
+  const levels = Object.values(hardwareChecks(truck));
+  const faults = levels.filter((item) => item === 'fault').length;
+  const warnings = levels.filter((item) => item === 'warn').length;
+  if (faults > 0) {
+    const label = faults === 1 ? t('1 Fault') : t('{count} Faults', { count: faults });
+    return { label, tone: 'alert', chip: 'chip--alert chip--flash' };
+  }
+  if (warnings > 0) {
+    return { label: t('{count} Attention', { count: warnings }), tone: 'ice', chip: 'chip--ice' };
+  }
+  return {
+    label: t('{ok} / {total} Nominal', { ok: levels.length, total: levels.length }),
+    tone: 'safe',
+    chip: 'chip--safe'
+  };
+}
+
+/* --- Alert history --- */
+const unacknowledgedAlerts = (truckId) => state.alerts.filter(
+  (alert) => !alert.acknowledgedAt && (!truckId || alert.truckId === truckId)
+);
+
+function openAlert(truck) {
+  state.alerts.push({
+    id: `ALT-${String(state.alerts.length + 1).padStart(4, '0')}`,
+    truckId: truck.id,
+    kind: 'excursion',
+    startedAt: new Date(),
+    endedAt: null,
+    peak: truck.tempCurrent,
+    limit: truck.tempMax,
+    acknowledgedAt: null,
+    acknowledgedBy: null
+  });
+}
+
+function activeAlert(truckId) {
+  return state.alerts.find((alert) => alert.truckId === truckId && alert.kind === 'excursion' && !alert.endedAt);
 }
 
 function renderFleet() {
