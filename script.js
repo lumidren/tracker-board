@@ -2375,49 +2375,63 @@ function renderDiagnostics() {
   const meta = UNIT_STATUS[truck.status];
   const inExcursion = truck.status === 'excursion';
 
-  setText(el['diag-title'], `Unit #${truck.id}`);
-  setText(el['diag-sub'], `${truck.vehicleClass} • ${truck.cargoShort}`);
+  setText(el['diag-title'], t('Unit {id}', { id: `#${truck.id}` }));
+  setText(el['diag-sub'], `${t(truck.vehicleClass)} • ${t(truck.cargoShort)}`);
   el['trace-card'].dataset.tone = isInSpec(truck) ? 'safe' : 'alert';
   setText(el['diag-temp'], formatTemp(truck.tempCurrent));
-  setChip(el['diag-status'], meta.label, meta.chip);
+  setChip(el['diag-status'], t(meta.label), meta.chip);
   setText(
     el['diag-range'],
-    `Setpoint ${formatTemp(truck.tempTarget)} • Permitted ${formatTemp(truck.tempMin)} to ${formatTemp(truck.tempMax)} • 60 s sampling`
+    t('Setpoint {target} • Permitted {min} to {max} • 60 s sampling', {
+      target: plainTemp(truck.tempTarget),
+      min: plainTemp(truck.tempMin),
+      max: plainTemp(truck.tempMax)
+    })
   );
   renderSparkline(truck);
-
-  setText(el['diag-battery'], `${truck.sensorBattery}% (Li-SOCl2 Cell, 3.6V)`);
-  el['bar-battery'].parentElement.style.setProperty('--fill', `${truck.sensorBattery}%`);
-
-  setText(
-    el['diag-uplink'],
-    `4G LTE / Satellite Failover (Ping: ${truck.uplinkPing}ms • ${truck.uplinkSignal} dBm)`
-  );
 
   const health = healthSummary(truck);
   setChip(el['health-chip'], health.label, health.chip);
   Object.entries(hardwareChecks(truck)).forEach(([key, level]) => {
-    const meta = HEALTH_LEVELS[level];
+    const levelMeta = HEALTH_LEVELS[level];
     const stateNode = byId(`state-${key}`);
-    setText(stateNode, meta.label);
-    stateNode.dataset.tone = meta.tone;
+    setText(stateNode, t(levelMeta.label));
+    stateNode.dataset.tone = levelMeta.tone;
     byId(`row-${key}`).dataset.tone = level === 'fault' ? 'alert' : 'default';
   });
+
+  setText(el['diag-battery'], t('{percent} (Li-SOCl2 Cell, 3.6V)', { percent: `${truck.sensorBattery}%` }));
+  el['bar-battery'].parentElement.style.setProperty('--fill', `${truck.sensorBattery}%`);
+
+  setText(
+    el['diag-uplink'],
+    t('4G LTE / Satellite Failover (Ping: {ping} • {signal})', {
+      ping: `${truck.uplinkPing}ms`,
+      signal: `${truck.uplinkSignal} dBm`
+    })
+  );
 
   setText(
     el['diag-compressor'],
     inExcursion
-      ? '0 RPM (Compressor Fault, Inverter Trip)'
-      : `${truck.compressorRpm.toLocaleString('en-US')} RPM (Inverter Variable Frequency)`
+      ? t('0 RPM (Compressor Fault, Inverter Trip)')
+      : t('{rpm} RPM (Inverter Variable Frequency)', { rpm: truck.compressorRpm.toLocaleString('en-US') })
   );
 
-  setText(el['diag-fuel'], `${truck.fuelPercent}% Diesel Dedicated Auxiliary`);
+  setText(el['diag-fuel'], t('{percent} Diesel Dedicated Auxiliary', { percent: `${truck.fuelPercent}%` }));
   el['bar-fuel'].parentElement.style.setProperty('--fill', `${truck.fuelPercent}%`);
 
-  const sealState = truck.log.doorOpenings === 0 ? 'ENGAGED / ZERO BREACHES' : `ENGAGED / ${truck.log.doorOpenings} BREACHES`;
-  setText(el['diag-seal'], `Electronic Seal #${truck.sealId} [${sealState}]`);
-  setText(el['diag-calibration'], truck.calibration);
-  setText(el['diag-firmware'], truck.firmware);
+  setText(
+    el['diag-seal'],
+    truck.log.doorOpenings === 0
+      ? t('Electronic Seal {seal} [ENGAGED / ZERO BREACHES]', { seal: `#${truck.sealId}` })
+      : t('Electronic Seal {seal} [ENGAGED / {count} BREACHES]', { seal: `#${truck.sealId}`, count: truck.log.doorOpenings })
+  );
+  setText(
+    el['diag-calibration'],
+    t('±0.1°C Reference Probe, Verified {days} Days Ago', { days: truck.calibrationDays })
+  );
+  setText(el['diag-firmware'], t('{version} (Signed Build)', { version: truck.firmware }));
 }
 
 function renderControls() {
