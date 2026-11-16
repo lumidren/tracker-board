@@ -804,8 +804,50 @@
       }
       return result;
     }
-    return {};
+
+    const accounts = () => seed.users.map((user) => ({
+      id: user.id,
+      portal: user.portal,
+      identifier: user.identifier,
+      name: user.name,
+      title: user.title || '',
+      permissions: (user.permissions || []).slice(),
+      access: user.access || null
+    }));
+
+    const exportState = () => JSON.parse(JSON.stringify(state));
+
+    function importState(saved) {
+      Object.keys(state).forEach((key) => {
+        if (saved && key in saved) {
+          state[key] = JSON.parse(JSON.stringify(saved[key]));
+        }
+      });
+      state.lastTickAt = now();
+    }
+
+    if (settings.restore) {
+      importState(settings.restore);
+    } else {
+      seedState();
+    }
+
+    return { state, tick, command, log, snapshot, verify, accounts, exportState, importState, visibleTo };
   }
 
-  return {};
+  return {
+    createEngine,
+    sha256,
+    distanceKm,
+    routeLength,
+    pointAt,
+    fill,
+    plainTemp,
+    hardwareChecks,
+    parseVerificationRecord,
+    EXCURSION_DELTA_C,
+    DIGEST_LENGTH,
+    ROLE_ERROR,
+    CLIENT_FIELDS
+  };
 });
