@@ -2499,6 +2499,70 @@ function renderLiveChip() {
   setText(el['live-chip-text'], `${t(alertInView ? 'Alert' : 'Live')} • ${ltr(formatClock(new Date(), true))}`);
 }
 
+/* The everyday-words state of a shipment: safe, alert, pending or done. */
+function shipmentState(truck) {
+  if (truck.status === 'excursion' || !isInSpec(truck)) {
+    return SHIPMENT_STATES.alert;
+  }
+  if (truck.baseStatus === 'standby') {
+    return SHIPMENT_STATES.pending;
+  }
+  return truck.baseStatus === 'delivered' ? SHIPMENT_STATES.done : SHIPMENT_STATES.safe;
+}
+
+function shipmentLine(truck) {
+  const kind = shipmentState(truck);
+  if (kind === SHIPMENT_STATES.alert) {
+    return t('Temperature problem • our team is on it');
+  }
+  if (kind === SHIPMENT_STATES.pending) {
+    return t('Getting ready to leave');
+  }
+  if (kind === SHIPMENT_STATES.done) {
+    return t('Delivered at {time}', { time: formatClock(new Date(truck.arrivedAt)) });
+  }
+  return t('On the road • arrives in {eta}', { eta: formatEta(truck.eta) });
+}
+
+const shipmentName = (truck) => t('{cargo} to {city}', { cargo: truck.cargoShort, city: truck.destinationCity });
+
+function renderShipments() {
+  const trucks = trucksOf('client');
+  const problems = trucks.filter((truck) => shipmentState(truck) === SHIPMENT_STATES.alert).length;
+
+  let title = t('No shipments yet');
+  let sub = t('Shipments addressed to your organisation will appear here.');
+  if (problems === 1) {
+    title = t('One shipment needs attention');
+  } else if (problems > 1) {
+    title = t('{count} shipments need attention', { count: problems });
+  } else if (trucks.length === 1) {
+    title = t('Your shipment is safe');
+  } else if (trucks.length > 1) {
+    title = t('All {count} shipments are safe', { count: trucks.length });
+  }
+  if (trucks.length > 0) {
+    sub = t('Tap a shipment to see its details.');
+  }
+  setText(el['shipments-title'], title);
+  setText(el['shipments-sub'], sub);
+
+  const list = el['shipment-list'];
+  syncCards(list, trucks, 'shipment', createShipmentCard).forEach((card, index) => {
+    const truck = trucks[index];
+    const kind = shipmentState(truck);
+    if (card.parentElement !== list) {
+      list.append(card);
+    }
+    card.dataset.tone = kind.tone;
+    card.setAttribute('aria-pressed', String(truck.id === state.clientTruckId));
+    setAttribute(card.querySelector('use'), 'href', `#${kind.icon}`);
+    setText(card.querySelector('[data-field="title"]'), shipmentName(truck));
+    setText(card.querySelector('[data-field="line"]'), shipmentLine(truck));
+    setText(card.querySelector('[data-field="temp"]'), formatTemp(truck.tempCurrent));
+  });
+}
+
 function renderClient() {
   const truck = clientTruck();
   renderConsignmentPickers();
