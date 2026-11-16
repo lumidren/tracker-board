@@ -2803,6 +2803,50 @@ button {
   color: var(--muted);
 }
 
+.accounts {
+  display: grid;
+}
+
+.accounts__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-top: 1px solid var(--border);
+}
+
+.accounts__row:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.accounts__row:last-child {
+  padding-bottom: 0;
+}
+
+.accounts__name {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.accounts__meta {
+  margin-top: 1px;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+.accounts__state {
+  flex: none;
+  font-size: 11px;
+  font-weight: 650;
+  color: var(--muted);
+}
+
+.accounts__state[data-active="true"] {
+  color: var(--safe-strong);
+}
+
 /* 12. Motion preferences --------------------------------------------------- */
 @media (prefers-reduced-motion: reduce) {
   *,
