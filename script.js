@@ -670,3 +670,34 @@ function triggerIncident() {
   showToast(`Excursion triggered on Unit #${truck.id}`, 'alert');
   render();
 }
+
+function normalizeSensor() {
+  if (!state.isExcursionActive) {
+    return;
+  }
+  const truck = getTruck(state.excursionTruckId);
+  const cert = truck.certificate;
+
+  truck.status = truck.baseStatus;
+  truck.tempCurrent = truck.tempBaseline;
+  truck.compressorRpm = truck.compressorNominalRpm;
+  truck.history.push(truck.tempCurrent);
+  truck.history = truck.history.slice(-HISTORY_POINTS);
+
+  truck.log.max = truck.log.maxBeforeDrill;
+  truck.log.excursions = Math.max(0, truck.log.excursions - 1);
+  delete truck.log.maxBeforeDrill;
+
+  cert.status = cert.statusBeforeDrill === 'not-issued' ? 'not-issued' : 'revalidate';
+  delete cert.statusBeforeDrill;
+
+  state.isExcursionActive = false;
+  state.excursionTruckId = null;
+
+  appendLog(
+    'ok',
+    `Sensor normalized on Unit #${truck.id}. Telemetry back at baseline ${formatTemp(truck.tempCurrent)}. Drill closed and excluded from the compliance record.`
+  );
+  showToast(`Unit #${truck.id} returned to nominal range`, 'safe');
+  render();
+}
