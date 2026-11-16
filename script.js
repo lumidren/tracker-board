@@ -571,3 +571,35 @@ function selectConsignment(truckId) {
   persistSession();
   render();
 }
+
+/* --- Hardware health --- */
+function hardwareChecks(truck) {
+  const level = (fault, warn) => {
+    if (fault) {
+      return 'fault';
+    }
+    return warn ? 'warn' : 'ok';
+  };
+  return {
+    battery: level(truck.sensorBattery < 15, truck.sensorBattery < 35),
+    uplink: level(truck.uplinkSignal < -105, truck.uplinkSignal < -95 || truck.uplinkPing > 150),
+    compressor: level(truck.status === 'excursion' || truck.compressorRpm === 0, false),
+    fuel: level(truck.fuelPercent < 15, truck.fuelPercent < 30),
+    seal: level(truck.log.doorOpenings > 0, false),
+    calibration: 'ok',
+    firmware: 'ok'
+  };
+}
+
+function healthSummary(truck) {
+  const levels = Object.values(hardwareChecks(truck));
+  const faults = levels.filter((item) => item === 'fault').length;
+  const warnings = levels.filter((item) => item === 'warn').length;
+  if (faults > 0) {
+    return { label: `${faults} ${faults === 1 ? 'Fault' : 'Faults'}`, tone: 'alert', chip: 'chip--alert chip--flash' };
+  }
+  if (warnings > 0) {
+    return { label: `${warnings} Attention`, tone: 'ice', chip: 'chip--ice' };
+  }
+  return { label: `${levels.length} / ${levels.length} Nominal`, tone: 'safe', chip: 'chip--safe' };
+}
