@@ -1606,12 +1606,17 @@ function healthSummary(truck) {
   const faults = levels.filter((item) => item === 'fault').length;
   const warnings = levels.filter((item) => item === 'warn').length;
   if (faults > 0) {
-    return { label: `${faults} ${faults === 1 ? 'Fault' : 'Faults'}`, tone: 'alert', chip: 'chip--alert chip--flash' };
+    const label = faults === 1 ? t('1 Fault') : t('{count} Faults', { count: faults });
+    return { label, tone: 'alert', chip: 'chip--alert chip--flash' };
   }
   if (warnings > 0) {
-    return { label: `${warnings} Attention`, tone: 'ice', chip: 'chip--ice' };
+    return { label: t('{count} Attention', { count: warnings }), tone: 'ice', chip: 'chip--ice' };
   }
-  return { label: `${levels.length} / ${levels.length} Nominal`, tone: 'safe', chip: 'chip--safe' };
+  return {
+    label: t('{ok} / {total} Nominal', { ok: levels.length, total: levels.length }),
+    tone: 'safe',
+    chip: 'chip--safe'
+  };
 }
 
 function setRole(role) {
