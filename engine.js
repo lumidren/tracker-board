@@ -84,5 +84,42 @@
     }
     return hash.map((value) => value.toString(16).padStart(8, '0')).join('');
   }
+
+  /* ------------------------------------------------------------------------
+     Geography: points are [longitude, latitude]
+     ------------------------------------------------------------------------ */
+  function distanceKm(from, to) {
+    const rad = (degrees) => (degrees * Math.PI) / 180;
+    const dLat = rad(to[1] - from[1]);
+    const dLon = rad(to[0] - from[0]);
+    const a = Math.sin(dLat / 2) ** 2 + Math.cos(rad(from[1])) * Math.cos(rad(to[1])) * Math.sin(dLon / 2) ** 2;
+    return 2 * EARTH_RADIUS_KM * Math.asin(Math.sqrt(a));
+  }
+
+  function routeLength(points) {
+    let total = 0;
+    for (let i = 1; i < points.length; i += 1) {
+      total += distanceKm(points[i - 1], points[i]);
+    }
+    return total;
+  }
+
+  /* The point a given fraction of the way along a route. */
+  function pointAt(points, fraction) {
+    const target = routeLength(points) * clamp(fraction, 0, 1);
+    let walked = 0;
+    for (let i = 1; i < points.length; i += 1) {
+      const leg = distanceKm(points[i - 1], points[i]);
+      if (walked + leg >= target || i === points.length - 1) {
+        const share = leg === 0 ? 0 : clamp((target - walked) / leg, 0, 1);
+        return [
+          points[i - 1][0] + (points[i][0] - points[i - 1][0]) * share,
+          points[i - 1][1] + (points[i][1] - points[i - 1][1]) * share
+        ];
+      }
+      walked += leg;
+    }
+    return points[points.length - 1].slice();
+  }
   return {};
 });
