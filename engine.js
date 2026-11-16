@@ -535,6 +535,60 @@
       }
       return '';
     }
+
+    function triggerIncident(actor, truckId) {
+      const refusal = denied(actor, 'drill');
+      const truck = findTruck(truckId);
+      if (refusal) {
+        return fail(refusal);
+      }
+      if (!truck) {
+        return fail('Unknown unit.');
+      }
+      if (state.drillTruckId) {
+        return fail('A drill is already active. Normalize the sensor first.');
+      }
+      if (truck.baseStatus === 'delivered') {
+        return fail('This unit has already delivered its cargo.');
+      }
+      const cert = truck.certificate;
+      state.drillTruckId = truck.id;
+      truck.status = 'excursion';
+      truck.tempCurrent = round1(truck.tempBaseline + EXCURSION_DELTA_C);
+      truck.compressorRpm = 0;
+      truck.history.push(truck.tempCurrent);
+      truck.history = truck.history.slice(-HISTORY_POINTS);
+      truck.log.maxBeforeDrill = truck.log.max;
+      truck.log.max = Math.max(truck.log.max, truck.tempCurrent);
+      truck.log.excursions += 1;
+      cert.statusBeforeDrill = cert.status;
+      cert.status = 'hold';
+      cert.hash = '';
+      state.registry.forEach((entry) => {
+        if (entry.truckId === truck.id && entry.status === 'current') {
+          entry.status = 'suspended';
+        }
+      });
+
+      state.alertSeq += 1;
+      state.alerts.push({
+        id: `ALT-${String(state.alertSeq).padStart(4, '0')}`,
+        truckId: truck.id,
+        kind: 'excursion',
+        startedAt: now(),
+        endedAt: null,
+        peak: truck.tempCurrent,
+        limit: truck.tempMax,
+        acknowledgedAt: null,
+        acknowledgedBy: null
+      });
+      log(
+        'alert',
+        'Incident drill started by {name}: compressor failure on Unit {id}. Internal temperature {temp} ({delta} excursion). Compliance violation flagged.',
+        { name: actor.name, id: `#${truck.id}`, temp: plainTemp(truck.tempCurrent), delta: `+${EXCURSION_DELTA_C.toFixed(1)}°C` }
+      );
+      return done();
+    }
     return {};
   }
 
