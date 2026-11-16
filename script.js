@@ -849,16 +849,75 @@ function restoreLanguage() {
   }
 }
 
+/* --------------------------------------------------------------------------
+   SHA-256
+   -------------------------------------------------------------------------- */
+/* Used where the Web Crypto API is unavailable, for example when the page is
+   served over plain HTTP to a phone on the local network. */
+function sha256Fallback(bytes) {
+  const rotr = (value, shift) => (value >>> shift) | (value << (32 - shift));
+  const fraction = (value) => Math.floor((value - Math.floor(value)) * 4294967296) >>> 0;
+  const primes = [];
+  for (let candidate = 2; primes.length < 64; candidate += 1) {
+    if (primes.every((prime) => candidate % prime !== 0)) {
+      primes.push(candidate);
+    }
+  }
+  const k = primes.map((prime) => fraction(Math.cbrt(prime)));
+  const hash = primes.slice(0, 8).map((prime) => fraction(Math.sqrt(prime)));
+
+  const padded = new Uint8Array(((bytes.length + 9 + 63) >> 6) << 6);
+  padded.set(bytes);
+  padded[bytes.length] = 0x80;
+  const view = new DataView(padded.buffer);
+  view.setUint32(padded.length - 8, Math.floor(bytes.length / 536870912));
+  view.setUint32(padded.length - 4, (bytes.length << 3) >>> 0);
+
+  const w = new Uint32Array(64);
+  for (let offset = 0; offset < padded.length; offset += 64) {
+    for (let i = 0; i < 16; i += 1) {
+      w[i] = view.getUint32(offset + i * 4);
+    }
+    for (let i = 16; i < 64; i += 1) {
+      const s0 = rotr(w[i - 15], 7) ^ rotr(w[i - 15], 18) ^ (w[i - 15] >>> 3);
+      const s1 = rotr(w[i - 2], 17) ^ rotr(w[i - 2], 19) ^ (w[i - 2] >>> 10);
+      w[i] = w[i - 16] + s0 + w[i - 7] + s1;
+    }
+    let [a, b, c, d, e, f, g, h] = hash;
+    for (let i = 0; i < 64; i += 1) {
+      const s1 = rotr(e, 6) ^ rotr(e, 11) ^ rotr(e, 25);
+      const choice = (e & f) ^ (~e & g);
+      const temp1 = (h + s1 + choice + k[i] + w[i]) >>> 0;
+      const s0 = rotr(a, 2) ^ rotr(a, 13) ^ rotr(a, 22);
+      const majority = (a & b) ^ (a & c) ^ (b & c);
+      const temp2 = (s0 + majority) >>> 0;
+      h = g;
+      g = f;
+      f = e;
+      e = (d + temp1) >>> 0;
+      d = c;
+      c = b;
+      b = a;
+      a = (temp1 + temp2) >>> 0;
+    }
+    [a, b, c, d, e, f, g, h].forEach((value, index) => {
+      hash[index] = (hash[index] + value) >>> 0;
+    });
+  }
+  return hash.map((value) => value.toString(16).padStart(8, '0')).join('');
+}
+
 async function sha256Hex(text) {
-  if (!window.crypto || !window.crypto.subtle || typeof TextEncoder === 'undefined') {
-    return null;
+  const bytes = new TextEncoder().encode(text);
+  if (window.crypto && window.crypto.subtle) {
+    try {
+      const buffer = await window.crypto.subtle.digest('SHA-256', bytes);
+      return Array.from(new Uint8Array(buffer), (byte) => byte.toString(16).padStart(2, '0')).join('');
+    } catch (error) {
+      /* Fall through to the script implementation. */
+    }
   }
-  try {
-    const buffer = await window.crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
-    return Array.from(new Uint8Array(buffer), (byte) => byte.toString(16).padStart(2, '0')).join('');
-  } catch (error) {
-    return null;
-  }
+  return sha256Fallback(bytes);
 }
 
 /* --------------------------------------------------------------------------
