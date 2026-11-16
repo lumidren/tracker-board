@@ -73,3 +73,29 @@ const SCHEMA = `
   );
   CREATE INDEX IF NOT EXISTS telemetry_by_unit ON telemetry (truck_id, time);
 `;
+
+const TELEMETRY_EVERY_MS = 60000;
+const TELEMETRY_KEEP_MS = 24 * 3600000;
+const AUDIT_LOAD = 500;
+
+function openDatabase(filename) {
+  if (filename !== ':memory:') {
+    fs.mkdirSync(path.dirname(filename), { recursive: true });
+  }
+  const db = new DatabaseSync(filename);
+  db.exec('PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;');
+  db.exec(SCHEMA);
+  return db;
+}
+
+function transaction(db, work) {
+  db.exec('BEGIN');
+  try {
+    const result = work();
+    db.exec('COMMIT');
+    return result;
+  } catch (error) {
+    db.exec('ROLLBACK');
+    throw error;
+  }
+}
