@@ -197,9 +197,13 @@ const state = {
   auth: {
     attempts: { client: 0, admin: 0 },
     lockedUntil: { client: 0, admin: 0 },
-    error: ''
+    error: null
   },
   lastActivityAt: Date.now(),
+
+  lang: 'en',
+  alerts: [],
+  verification: null,
 
   trucks: [
     {
@@ -231,8 +235,8 @@ const state = {
       compressorRpm: 1850,
       compressorNominalRpm: 1850,
       fuelPercent: 88,
-      firmware: 'TLM-FW 4.2.1 (Signed Build)',
-      calibration: '±0.1°C Reference Probe, Verified 14 Days Ago',
+      firmware: 'TLM-FW 4.2.1',
+      calibrationDays: 14,
       status: 'en-route',
       baseStatus: 'en-route',
       history: [],
@@ -268,8 +272,8 @@ const state = {
       compressorRpm: 1420,
       compressorNominalRpm: 1420,
       fuelPercent: 74,
-      firmware: 'TLM-FW 4.2.1 (Signed Build)',
-      calibration: '±0.1°C Reference Probe, Verified 9 Days Ago',
+      firmware: 'TLM-FW 4.2.1',
+      calibrationDays: 9,
       status: 'en-route',
       baseStatus: 'en-route',
       history: [],
@@ -305,8 +309,8 @@ const state = {
       compressorRpm: 2100,
       compressorNominalRpm: 2100,
       fuelPercent: 97,
-      firmware: 'TLM-FW 4.2.1 (Signed Build)',
-      calibration: '±0.1°C Reference Probe, Verified 3 Days Ago',
+      firmware: 'TLM-FW 4.2.1',
+      calibrationDays: 3,
       status: 'standby',
       baseStatus: 'standby',
       history: [],
