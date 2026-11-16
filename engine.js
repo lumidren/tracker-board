@@ -188,5 +188,46 @@
       new Date(record.signedAt).toISOString()
     ].join('|');
   }
+
+  /* The text a QR code carries: unit, signing time, the audited figures, digest. */
+  function verificationRecord(truck) {
+    const cert = truck.certificate;
+    if (cert.status !== 'valid' || !cert.hash || !cert.signedAt || !cert.record) {
+      return '';
+    }
+    return [
+      truck.id,
+      cert.signedAt,
+      cert.record.transitMinutes,
+      cert.record.min,
+      cert.record.max,
+      cert.record.excursions,
+      cert.record.doorOpenings,
+      cert.hash.slice(0, DIGEST_LENGTH)
+    ].join('~');
+  }
+
+  function parseVerificationRecord(text) {
+    const parts = String(text || '').split('~');
+    if (parts.length !== 8) {
+      return null;
+    }
+    const numbers = parts.slice(1, 7).map(Number);
+    const digest = parts[7].toLowerCase();
+    if (numbers.some((value) => !Number.isFinite(value)) || !/^[0-9a-f]+$/.test(digest)
+      || digest.length !== DIGEST_LENGTH || numbers[0] <= 0 || numbers[0] > 8640000000000000) {
+      return null;
+    }
+    return {
+      truckId: parts[0],
+      digest,
+      signedAt: numbers[0],
+      transitMinutes: numbers[1],
+      min: numbers[2],
+      max: numbers[3],
+      excursions: numbers[4],
+      doorOpenings: numbers[5]
+    };
+  }
   return {};
 });
