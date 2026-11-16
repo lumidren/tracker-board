@@ -361,3 +361,25 @@ async function sha256Hex(text) {
     return null;
   }
 }
+
+/* --------------------------------------------------------------------------
+   Audit log (hash-chained entries)
+   -------------------------------------------------------------------------- */
+function appendLog(kind, message) {
+  const entry = {
+    seq: state.auditLog.length + 1,
+    time: new Date(),
+    kind,
+    message,
+    digest: ''
+  };
+  state.auditLog.push(entry);
+  renderAuditLog();
+
+  logChain = logChain.then(async (previous) => {
+    const digest = await sha256Hex(`${previous}|${entry.seq}|${entry.time.toISOString()}|${entry.message}`);
+    entry.digest = digest || '';
+    renderAuditLog();
+    return digest || previous;
+  });
+}
