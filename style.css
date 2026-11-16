@@ -2203,3 +2203,156 @@ button {
     gap: 16px;
   }
 }
+
+/* 14. Print (A4 certificate only) ------------------------------------------ */
+@page {
+  size: A4 portrait;
+  margin: 10mm;
+}
+
+@media print {
+  *,
+  *::before,
+  *::after {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    animation: none !important;
+    transition: none !important;
+  }
+
+  html,
+  body,
+  body.is-modal-open {
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+    background: #FFFFFF !important;
+  }
+
+  .stage,
+  .toast,
+  .modal__backdrop,
+  .modal__toolbar,
+  .modal__actions {
+    display: none !important;
+  }
+
+  .modal,
+  .modal[hidden] {
+    display: block !important;
+    position: static;
+    padding: 0;
+  }
+
+  /* Signed out: the certificate must not be printable. */
+  body[data-authed="false"] .modal,
+  body[data-authed="false"] .modal[hidden] {
+    display: none !important;
+  }
+
+  .modal__dialog {
+    display: block;
+    width: 100%;
+    max-height: none;
+    border: 0;
+    border-radius: 0;
+    background: #FFFFFF;
+    box-shadow: none;
+    overflow: visible;
+  }
+
+  .modal__scroll {
+    padding: 0;
+    overflow: visible;
+  }
+
+  .certificate {
+    max-width: none;
+    margin: 0;
+    padding: 2mm;
+    border: 0;
+    box-shadow: none;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .certificate__frame {
+    padding: 6mm 9mm 5mm;
+  }
+
+  .certificate__header {
+    padding-bottom: 12px;
+  }
+
+  .crest {
+    width: 54px;
+    height: 54px;
+    margin-bottom: 4px;
+  }
+
+  .certificate__section,
+  .certificate__signoff {
+    margin-top: 12px;
+  }
+
+  .signatures {
+    margin-top: 14px;
+  }
+
+  .certificate__footer {
+    margin-top: 10px;
+    padding-top: 7px;
+  }
+
+  .certificate__section,
+  .certificate__signoff,
+  .cert-table tr,
+  .signoff,
+  .signatures {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Keep the tabular A4 layout even when printing from a narrow viewport. */
+  .cert-table th,
+  .cert-table td {
+    display: table-cell;
+    width: auto;
+    padding: 4px 10px;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+
+  .cert-table th {
+    width: 38%;
+    border-right: 1px solid var(--border);
+    background: var(--canvas);
+    color: var(--text-soft);
+    font-weight: 600;
+  }
+
+  .cert-table td {
+    font-weight: 500;
+  }
+
+  .cert-table tr:last-child th,
+  .cert-table tr:last-child td {
+    border-bottom: 0;
+  }
+
+  .certificate__title {
+    font-size: 21px;
+  }
+
+  .signoff {
+    flex-direction: row;
+    align-items: stretch;
+  }
+
+  .signatures {
+    grid-template-columns: 1fr 1fr;
+    gap: 22px;
+  }
+}
