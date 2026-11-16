@@ -1668,7 +1668,7 @@ function setRole(role) {
     return;
   }
   state.currentRole = role;
-  state.auth.error = '';
+  state.auth.error = null;
   resetAuthForm();
   persistSession();
   hideToast();
@@ -1719,11 +1719,13 @@ function triggerIncident() {
   cert.status = 'hold';
   cert.hash = '';
 
+  openAlert(truck);
   appendLog(
     'alert',
-    `Incident drill: compressor failure on Unit #${truck.id}. Internal temperature ${formatTemp(truck.tempCurrent)} (+${EXCURSION_DELTA_C.toFixed(1)}°C excursion). Compliance violation flagged.`
+    'Incident drill: compressor failure on Unit {id}. Internal temperature {temp} ({delta} excursion). Compliance violation flagged.',
+    { id: `#${truck.id}`, temp: plainTemp(truck.tempCurrent), delta: `+${EXCURSION_DELTA_C.toFixed(1)}°C` }
   );
-  showToast(`Excursion triggered on Unit #${truck.id}`, 'alert');
+  showToast(t('Excursion triggered on Unit {id}', { id: `#${truck.id}` }), 'alert');
   render();
 }
 
@@ -1733,6 +1735,7 @@ function normalizeSensor() {
   }
   const truck = getTruck(state.excursionTruckId);
   const cert = truck.certificate;
+  const alert = activeAlert(truck.id);
 
   truck.status = truck.baseStatus;
   truck.tempCurrent = truck.tempBaseline;
@@ -1747,14 +1750,18 @@ function normalizeSensor() {
   cert.status = cert.statusBeforeDrill === 'not-issued' ? 'not-issued' : 'revalidate';
   delete cert.statusBeforeDrill;
 
+  if (alert) {
+    alert.endedAt = new Date();
+  }
   state.isExcursionActive = false;
   state.excursionTruckId = null;
 
   appendLog(
     'ok',
-    `Sensor normalized on Unit #${truck.id}. Telemetry back at baseline ${formatTemp(truck.tempCurrent)}. Drill closed and excluded from the compliance record.`
+    'Sensor normalized on Unit {id}. Telemetry back at baseline {temp}. Drill closed and excluded from the compliance record.',
+    { id: `#${truck.id}`, temp: plainTemp(truck.tempCurrent) }
   );
-  showToast(`Unit #${truck.id} returned to nominal range`, 'safe');
+  showToast(t('Unit {id} returned to nominal range', { id: `#${truck.id}` }), 'safe');
   render();
 }
 
