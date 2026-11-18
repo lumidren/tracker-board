@@ -182,8 +182,10 @@
       return warn ? 'warn' : 'ok';
     };
     return {
-      battery: level(truck.sensorBattery < 15, truck.sensorBattery < 35),
-      uplink: level(truck.uplinkSignal < -105, truck.uplinkSignal < -95 || truck.uplinkPing > 150),
+      battery: truck.live && typeof truck.backupVolts === 'number'
+        ? level(truck.backupVolts < 3.4, truck.backupVolts < 3.6)
+        : level(truck.sensorBattery < 15, truck.sensorBattery < 35),
+      uplink: level(Boolean(truck.silent) || truck.uplinkSignal < -105, truck.uplinkSignal < -95 || truck.uplinkPing > 150),
       compressor: level(truck.status === 'excursion' || truck.compressorRpm === 0, false),
       fuel: level(truck.fuelPercent < 15, truck.fuelPercent < 30),
       seal: level(truck.log.doorOpenings > 0, false),
