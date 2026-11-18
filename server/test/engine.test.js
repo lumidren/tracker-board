@@ -297,3 +297,22 @@ test('drills are refused on live units and clients gain no tracker fields', () =
     assert.equal(field in truck, false, `${field} leaked to a client`);
   });
 });
+
+test('a state saved before trackers existed still loads', () => {
+  const { engine } = freshEngine();
+  const old = engine.exportState();
+  old.trucks.forEach((truck) => {
+    ['live', 'fix', 'silent', 'doors', 'ignition', 'mainVolts', 'backupVolts', 'receivedAt', 'reportedAt'].forEach((field) => {
+      delete truck[field];
+    });
+  });
+  old.alerts.forEach((alert) => {
+    delete alert.drill;
+    delete alert.detail;
+  });
+  const restored = Engine.createEngine(seed, { restore: old });
+  const truck = restored.snapshot(auditor).trucks[0];
+  assert.deepEqual([truck.live, truck.doors, truck.mainVolts], [false, [], null]);
+  assert.equal(restored.state.alerts[0].drill, false);
+  assert.equal(restored.ingest('TRK-104', { doors: [false, true] }).ok, true);
+});

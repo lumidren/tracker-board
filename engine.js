@@ -1098,11 +1098,38 @@
 
     const exportState = () => JSON.parse(JSON.stringify(state));
 
+    /* A state saved by an earlier version lacks the fields added since. They get
+       their starting values here, so old databases keep working after an update. */
+    const TRACKER_DEFAULTS = {
+      live: false,
+      fix: false,
+      silent: false,
+      reportedAt: null,
+      receivedAt: null,
+      doors: [],
+      ignition: null,
+      mainVolts: null,
+      backupVolts: null,
+      outsideRun: 0,
+      insideRun: 0
+    };
+
     function importState(saved) {
       Object.keys(state).forEach((key) => {
         if (saved && key in saved) {
           state[key] = JSON.parse(JSON.stringify(saved[key]));
         }
+      });
+      state.trucks.forEach((truck) => {
+        Object.entries(TRACKER_DEFAULTS).forEach(([field, value]) => {
+          if (!(field in truck)) {
+            truck[field] = Array.isArray(value) ? [] : value;
+          }
+        });
+      });
+      state.alerts.forEach((alert) => {
+        alert.drill = Boolean(alert.drill);
+        alert.detail = alert.detail === undefined ? null : alert.detail;
       });
       state.lastTickAt = now();
     }
