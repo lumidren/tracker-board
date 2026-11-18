@@ -90,3 +90,11 @@ Two inputs for door switches (a magnetic reed switch that closes to ground when 
 - Both on pins that can wake the processor from sleep.
 
 Add a motion sensor (LIS3DH or similar, I2C) with its interrupt on a wake-capable pin. It detects the unit being moved or struck while the vehicle is parked, and lets the processor sleep until something happens.
+
+## Sensor connections
+
+- **RS-485 (kept).** Add an SM712 protection diode across A and B. Replace the 4.7 kΩ bias resistors with 680 Ω so the idle state is defined with the 120 Ω terminator fitted, and make the terminator a solder jumper. Put a 500 mA resettable fuse in the 5 V line that leaves on the RJ45.
+- **One-wire probe input (new).** 4.7 kΩ pull-up, 100 Ω in series, a protection diode. Takes inexpensive sealed temperature probes.
+- **I2C (new).** The motion sensor, plus a footprint for a board temperature and humidity sensor.
+
+For pharmaceutical customers the cargo temperature sensor needs a calibration record against a reference thermometer. That is a procedure and a document, not a component.
