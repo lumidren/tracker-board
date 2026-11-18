@@ -3427,8 +3427,10 @@ function renderCertificate() {
   const cert = truck.certificate;
   const certMeta = CERT_STATUS[cert.status];
   const figures = certificateFigures(truck);
+  /* Signed, but with a real excursion on record: it must not read as a clean pass. */
+  const deviation = cert.status === 'valid' && figures.excursions > 0;
 
-  el.certificate.dataset.tone = certMeta.tone;
+  el.certificate.dataset.tone = deviation ? 'alert' : certMeta.tone;
   setText(el['cert-serial'], ltr(cert.serial));
   setText(el['cert-consignor'], `${t(truck.consignor)} (${t(truck.consignorDept)})`);
   setText(el['cert-consignee'], `${t(truck.consignee)} (${t(truck.consigneeTerminal)})`);
@@ -3454,7 +3456,7 @@ function renderCertificate() {
   setText(el['cert-door'], t('{count} Unauthorized Openings', { count: figures.doorOpenings }));
   setText(el['cert-seal'], t('{seal} (Engaged)', { seal: `#${truck.sealId}` }));
 
-  setText(el['cert-stamp-title'], t(certMeta.stamp));
+  setText(el['cert-stamp-title'], t(deviation ? 'ISSUED WITH DEVIATION • EXCURSION ON RECORD' : certMeta.stamp));
   let stampMeta = t('Certificate not in force');
   if (cert.status === 'valid' && cert.signedAt) {
     stampMeta = t('Signed {time} by {name}', { time: formatDateTime(new Date(cert.signedAt)), name: cert.signedBy });
@@ -3466,9 +3468,9 @@ function renderCertificate() {
   setText(el['cert-stamp-meta'], stampMeta);
 
   let tick = 'M17 24h14';
-  if (cert.status === 'valid') {
+  if (cert.status === 'valid' && !deviation) {
     tick = 'M16.5 24.5l5 5 10-10.5';
-  } else if (cert.status === 'hold') {
+  } else if (cert.status === 'hold' || deviation) {
     tick = 'M24 15v11M24 31.5v.5';
   }
   el['cert-stamp-tick'].setAttribute('d', tick);
