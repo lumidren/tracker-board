@@ -525,6 +525,18 @@
       state.minuteCarry -= minutes * 60000;
 
       state.trucks.forEach((truck) => {
+        if (truck.live) {
+          if (!truck.silent && time - truck.receivedAt > SILENT_AFTER_MS) {
+            truck.silent = true;
+            raiseAlert(truck, 'silent', time);
+            log('alert', 'Unit {id} stopped reporting.', { id: `#${truck.id}` });
+          }
+          if (truck.baseStatus === 'en-route') {
+            truck.log.transitMinutes += minutes;
+          }
+          derive(truck);
+          return;
+        }
         truck.tempCurrent = sampleTemperature(truck);
         truck.history.push(truck.tempCurrent);
         truck.history = truck.history.slice(-HISTORY_POINTS);
