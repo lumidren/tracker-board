@@ -3273,7 +3273,7 @@ function renderControls() {
   setText(el['seal-excursions'], excursionText(truck.log.excursions));
 
   const delivered = truck.baseStatus === 'delivered';
-  el['btn-incident'].disabled = !can('drill') || Boolean(drillTruck) || delivered;
+  el['btn-incident'].disabled = !can('drill') || Boolean(drillTruck) || delivered || truck.live;
   el['btn-normalize'].disabled = !can('drill') || !drillTruck;
   el['btn-sign'].disabled = !can('sign') || Boolean(truck.signBlock);
 
@@ -3287,6 +3287,8 @@ function renderControls() {
     hint = t('A drill is active on Unit {id}. Normalize Sensor will close it.', { id: `#${drillTruck.id}` });
   } else if (drillTruck) {
     hint = t('Drill active on this unit.');
+  } else if (truck.live) {
+    hint = t('Drills are not available on a unit that is reporting from a real tracker.');
   } else if (delivered) {
     hint = t('Drills are not available once a unit has delivered.');
   } else if (!can('drill')) {
