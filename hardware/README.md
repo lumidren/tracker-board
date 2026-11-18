@@ -98,3 +98,32 @@ Add a motion sensor (LIS3DH or similar, I2C) with its interrupt on a wake-capabl
 - **I2C (new).** The motion sensor, plus a footprint for a board temperature and humidity sensor.
 
 For pharmaceutical customers the cargo temperature sensor needs a calibration record against a reference thermometer. That is a procedure and a document, not a component.
+
+## Processor and pin map
+
+ESP32-S3-WROOM-1 as in Rev A. If the unit goes in a metal enclosure, use the -1U variant with an external antenna.
+
+| GPIO | Use | New |
+| --- | --- | --- |
+| 0, EN | Boot and reset: buttons plus the existing automatic programming circuit | buttons |
+| 1, 2 | Door 1, door 2 (wake-capable) | yes |
+| 4 | Ignition sense (analog) | |
+| 5 | Main supply voltage (analog) | yes |
+| 6 | Battery voltage (analog) | yes |
+| 7 | Motion sensor interrupt (wake-capable) | yes |
+| 8, 9 | I2C data, clock | yes |
+| 10 | One-wire probe | yes |
+| 11 | Modem ring indicator (wake-capable) | yes |
+| 12, 13, 14, 21 | RS-485 transmit, receive, receiver enable, driver enable | |
+| 15 | Switched 5 V rail | |
+| 16, 17, 18 | GPS pulse, to GPS receive, from GPS transmit | |
+| 19, 20 | USB data | yes |
+| 38, 39, 40 | Modem power key, modem status, modem supply switch | yes |
+| 41 | Charger status | yes |
+| 42 | Status light | yes |
+| 43, 44 | Debug serial header | |
+| 47, 48 | To modem receive, from modem transmit | yes |
+
+GPIO 3, 45 and 46 set the processor's start-up mode and are left unconnected. GPIO 35 to 37 are left free so that a module with extra memory can be fitted. Analog inputs use GPIO 1 to 10 only, because the others stop working as analog inputs when Wi-Fi is on. *Verify the whole table against the module datasheet.*
+
+Voltage sensing: 1 MΩ over 47 kΩ for the main supply and for ignition (36 V reads as about 1.6 V), 220 kΩ over 220 kΩ for the battery, each with 100 nF at the pin.
