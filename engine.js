@@ -493,6 +493,8 @@
           endedAt: started + past.lastedSeconds * 1000,
           peak: null,
           limit: null,
+          drill: false,
+          detail: null,
           acknowledgedAt: started + past.lastedSeconds * 1000 + 150000,
           acknowledgedBy: past.acknowledgedBy
         });
@@ -627,6 +629,8 @@
         endedAt: null,
         peak: truck.tempCurrent,
         limit: truck.tempMax,
+        drill: true,
+        detail: null,
         acknowledgedAt: null,
         acknowledgedBy: null
       });
