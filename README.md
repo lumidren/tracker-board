@@ -6,7 +6,7 @@ It runs three ways from the same code:
 
 | Way | What you get |
 | --- | --- |
-| **With the server** | Real accounts, a database, role enforcement, live updates on every device |
+| **With the server** | Real accounts, a database, role enforcement, live updates on every device, and readings from real trackers |
 | **As plain files** | An offline demo: the same engine runs inside the page with test data |
 | **Android app** | The offline demo packaged as an installable app |
 
@@ -29,6 +29,26 @@ Open `http://localhost:4310`. `--demo` puts a list of test accounts on each sign
 ```bash
 cd server && node --test
 ```
+
+## Trackers
+
+A unit shows simulated readings until a tracker reports for it. From its first reading on, the unit shows what the tracker measures.
+
+```bash
+node server/devices.js add TRK-951 "Cab unit 1"
+node tools/device-sim.js --key DEV-XXXXXX.<secret> --scenario all
+```
+
+The first command registers a tracker and prints its key once. The second is a stand-in for the board: it sends batched readings, resends until acknowledged, and holds readings while offline. Its scenarios open a door in transit, warm the cargo past its limit, cut the vehicle supply and lose signal.
+
+From real readings the server detects, with no one pressing a button:
+
+- **Temperature excursions**, after two readings in a row out of range. Unlike a drill, a real excursion stays on the compliance record, and a certificate signed afterwards is stamped as issued with a deviation
+- **Doors opened in transit**, counted on the certificate
+- **The vehicle supply being cut**, with the tracker continuing on its backup battery
+- **A tracker going silent**
+
+The contract for the firmware is in [hardware/PROTOCOL.md](hardware/PROTOCOL.md), and the proposed board in [hardware/README.md](hardware/README.md).
 
 ## Client portal
 
@@ -74,7 +94,9 @@ Identifiers and demo passwords are in `data.js`.
 index.html   style.css   script.js      the interface: draws views, sends commands
 engine.js                               the rules, with no screen attached
 data.js                                 test dataset: 10 units, 10 routes, 10 accounts
-server/                                 accounts, sessions, database, API, live stream
+server/                                 accounts, sessions, trackers, database, API, live stream
+tools/device-sim.js                     a stand-in for the tracker board
+hardware/                               board design proposal and the firmware protocol
 android/                                native shell that bundles the web files
 ```
 
@@ -91,8 +113,9 @@ android/                                native shell that bundles the web files
 - Client responses are built from an allow-list of fields, so hardware data cannot leak by omission
 - Static files are an allow-list; the dataset sent to browsers has the accounts and units stripped out
 - A strict Content-Security-Policy and the usual hardening headers on every response
+- Each tracker has its own key, shown once and stored only as a hash; readings are range-checked and applied exactly once
 
-Twenty-three tests cover these, including a restart that must continue an active drill from the database.
+Forty-one tests cover these, including a restart that must continue an active drill from the database.
 
 ## Languages
 
@@ -108,7 +131,8 @@ Needs JDK 17 or 21 and the Android SDK (platform 35); produces `android/app/buil
 
 ## Limits of this build
 
-- **Telemetry is simulated.** The engine generates readings and moves units along their routes; no device is connected. Feeding it real sensor data is the next step.
+- **No real board has been connected yet.** The server accepts tracker readings and has been exercised with the simulator, but the hardware is still being designed. Units without a tracker show simulated readings.
+- **The default port is 4310.** Browsers refuse to connect to 4190, which this project used at first.
 - **The map is a schematic drawn from simplified outlines**, not a street map. It needs no internet and no map service, at the cost of detail.
 - **Demo accounts have published passwords.** They are test data. A real deployment needs its own accounts, HTTPS in front of the server (`--secure-cookies`), and the `--demo` flag left off.
 - **The offline demo and the Android app are not secure**, by design: everything runs in the page, including the accounts.
