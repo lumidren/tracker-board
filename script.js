@@ -188,6 +188,7 @@ const SHIPMENT_STATES = {
   alert: {
     tone: 'alert',
     icon: 'i-alert',
+    flagged: true,
     headline: 'There is a temperature problem',
     text: 'The temperature went outside the safe range. Our quality team has been alerted and is fixing it now.'
   },
@@ -202,6 +203,21 @@ const SHIPMENT_STATES = {
     icon: 'i-flag',
     headline: 'Delivered safely',
     text: 'Your shipment arrived and stayed at the right temperature for the whole trip.'
+  },
+  /* The temperature is fine now, but a real excursion earlier in the trip is on record. */
+  recovered: {
+    tone: 'pending',
+    icon: 'i-alert',
+    flagged: true,
+    headline: 'Back in the safe range',
+    text: 'The temperature is right now, but it left the safe range earlier in this trip. The certificate records it.'
+  },
+  doneFlagged: {
+    tone: 'pending',
+    icon: 'i-flag',
+    flagged: true,
+    headline: 'Delivered, with a temperature problem on the way',
+    text: 'Your shipment arrived, but the temperature left the safe range during the trip. The certificate records it.'
   }
 };
 
@@ -2562,7 +2578,11 @@ function shipmentState(truck) {
   if (truck.baseStatus === 'standby') {
     return SHIPMENT_STATES.pending;
   }
-  return truck.baseStatus === 'delivered' ? SHIPMENT_STATES.done : SHIPMENT_STATES.safe;
+  const hadExcursion = truck.log.excursions > 0;
+  if (truck.baseStatus === 'delivered') {
+    return hadExcursion ? SHIPMENT_STATES.doneFlagged : SHIPMENT_STATES.done;
+  }
+  return hadExcursion ? SHIPMENT_STATES.recovered : SHIPMENT_STATES.safe;
 }
 
 function shipmentLine(truck) {
@@ -2576,6 +2596,12 @@ function shipmentLine(truck) {
   if (kind === SHIPMENT_STATES.done) {
     return t('Delivered at {time}', { time: formatClock(new Date(truck.arrivedAt)) });
   }
+  if (kind === SHIPMENT_STATES.doneFlagged) {
+    return t('Delivered at {time} • had a temperature problem', { time: formatClock(new Date(truck.arrivedAt)) });
+  }
+  if (kind === SHIPMENT_STATES.recovered) {
+    return t('Back to normal • had a temperature problem earlier');
+  }
   return t('On the road • arrives in {eta}', { eta: formatEta(truck.eta) });
 }
 
@@ -2583,7 +2609,7 @@ const shipmentName = (truck) => t('{cargo} to {city}', { cargo: truck.cargoShort
 
 function renderShipments() {
   const trucks = trucksOf('client');
-  const problems = trucks.filter((truck) => shipmentState(truck) === SHIPMENT_STATES.alert).length;
+  const problems = trucks.filter((truck) => shipmentState(truck).flagged).length;
 
   let title = t('No shipments yet');
   let sub = t('Shipments addressed to your organisation will appear here.');
