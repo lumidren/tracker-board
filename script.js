@@ -2839,7 +2839,12 @@ function renderClient() {
     'not-issued': 'The certificate will be issued once your shipment is on its way.'
   };
   const figures = certificateFigures(truck);
-  setText(el['doc-plain'], t(docPlain[cert.status]));
+  setText(
+    el['doc-plain'],
+    t(cert.status === 'valid' && figures.excursions > 0
+      ? 'This certificate records that the temperature left the safe range during the trip.'
+      : docPlain[cert.status])
+  );
   setText(el['doc-heading'], ltr(cert.serial));
   setChip(el['doc-status'], t(certMeta.label), certMeta.chip);
   setText(
