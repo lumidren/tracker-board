@@ -76,3 +76,17 @@ From the A7670 hardware design guide:
 Add a P-MOSFET switch on the modem supply so firmware can cut power completely if the modem stops responding.
 
 If the team prefers to keep an external 4G stick on the USB socket instead: add 1000 µF next to the socket and expect the stick, not the board, to be the least reliable part.
+
+## GPS
+
+Keep the NEO-7M module and its pins. Fit an external active antenna; a GPS antenna inside a metal cab sees very little sky.
+
+## Door and tamper inputs
+
+Two inputs for door switches (a magnetic reed switch that closes to ground when the door is shut):
+
+- 10 kΩ pull-up to 3.3 V, 10 kΩ in series to the processor pin, 100 nF to ground at the pin.
+- A dual diode clamp (BAT54S) to 3.3 V and ground at the pin, and a small protection diode at the connector. With the series resistor this survives a wire being shorted to 24 V.
+- Both on pins that can wake the processor from sleep.
+
+Add a motion sensor (LIS3DH or similar, I2C) with its interrupt on a wake-capable pin. It detects the unit being moved or struck while the vehicle is parked, and lets the processor sleep until something happens.
