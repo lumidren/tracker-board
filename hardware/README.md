@@ -148,3 +148,19 @@ Temperature and humidity from the sensor bus, position and speed, ignition on or
 5. GPS fix outdoors with the real antenna and enclosure.
 6. RS-485 sensor on five metres of cable; door inputs with the real switches.
 7. A day in a real vehicle, including engine cranking, before showing a customer.
+
+## Decisions for the hardware team
+
+1. Do the first customers run 12 V or 24 V vehicles? Rev B covers both, at some cost.
+2. On-board modem, or an external 4G stick for the first prototype?
+3. Which SIM provider, and which bands?
+4. Battery runtime target after main power is cut.
+5. Which cargo sensors, and how they are calibrated.
+
+## Sources
+
+- MT2492 ratings: [LCSC listing](https://lcsc.com/product-detail/DC-DC-Converters_MT2492_C89358.html), [datasheet copy](https://hestore.hu/prod_getfile.php?id=15270)
+- LM2596HV ratings: [datasheet copy](https://www.framboise314.fr/wp-content/uploads/2018/07/LM2596HV.pdf)
+- A7670 supply, peak current, capacitance, 1.8 V logic and power key: [A7670 Series Hardware Design V1.00](https://www.elecrow.com/download/product/CRT01260S/A7670_Series_Hardware_Design_V1.00.pdf)
+- A7670E bands (third-party listing, verify): [everythingRF](https://everythingrf.com/products/cellular-modules/simcom/811-765-a7670e)
+- BQ24074 input range, output regulation, temperature pin and power path: [TI datasheet](https://www.ti.com/lit/gpn/bq24074)
