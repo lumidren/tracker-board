@@ -8,9 +8,27 @@ const seed = require('../data.js');
 const Engine = require('../engine.js');
 const { openDatabase, createStore } = require('./db.js');
 const { seedUsers, createAuth } = require('./auth.js');
+const { createDevices } = require('./devices.js');
 
 const VERSION = '1.0.0';
 const BODY_LIMIT = 16 * 1024;
+const DEVICE_BODY_LIMIT = 64 * 1024;
+const MAX_BATCH = 200;
+/* A tracker's clock may be a little ahead, or its readings days old after a long outage. */
+const CLOCK_AHEAD_SECONDS = 300;
+const OLDEST_READING_SECONDS = 7 * 86400;
+
+/* Accepted range for each numeric field a tracker may send. */
+const READING_RANGES = {
+  temp: [-90, 90],
+  hum: [0, 100],
+  lat: [-90, 90],
+  lon: [-180, 180],
+  speed: [0, 250],
+  main: [0, 60],
+  batt: [0, 5],
+  rssi: [-140, 0]
+};
 const PORTALS = ['client', 'admin'];
 const SCOPES = { client: 'client portal', admin: 'control room console' };
 
@@ -62,13 +80,37 @@ function readCookies(req) {
   return cookies;
 }
 
-function readBody(req) {
+/* Keeps only the fields a tracker is allowed to send, each within its range.
+   Returns null when the reading has no usable sequence number. */
+function cleanReading(raw, nowSeconds) {
+  if (!raw || typeof raw !== 'object' || !Number.isInteger(raw.seq) || raw.seq < 1) {
+    return null;
+  }
+  const inWindow = Number.isFinite(raw.at) && raw.at <= nowSeconds + CLOCK_AHEAD_SECONDS
+    && raw.at >= nowSeconds - OLDEST_READING_SECONDS;
+  const reading = { seq: raw.seq, at: inWindow ? raw.at : nowSeconds };
+  Object.entries(READING_RANGES).forEach(([field, [low, high]]) => {
+    const value = raw[field];
+    if (typeof value === 'number' && Number.isFinite(value) && value >= low && value <= high) {
+      reading[field] = value;
+    }
+  });
+  if (typeof raw.ign === 'boolean') {
+    reading.ign = raw.ign;
+  }
+  if (Array.isArray(raw.doors) && raw.doors.length <= 4 && raw.doors.every((door) => typeof door === 'boolean')) {
+    reading.doors = raw.doors;
+  }
+  return reading;
+}
+
+function readBody(req, limit = BODY_LIMIT) {
   return new Promise((resolve, reject) => {
     const chunks = [];
     let size = 0;
     req.on('data', (chunk) => {
       size += chunk.length;
-      if (size > BODY_LIMIT) {
+      if (size > limit) {
         reject(new HttpError(413, 'too-large'));
         req.destroy();
       } else {
@@ -125,6 +167,7 @@ async function createApp(config) {
     restore: saved || undefined
   });
   const auth = createAuth(db, config);
+  const devices = createDevices(db, now);
   const streams = new Set();
 
   /* The page loads this instead of the repository's data.js: map outlines only,
@@ -284,6 +327,52 @@ async function createApp(config) {
     sendJson(res, 200, { ok: true });
   }
 
+  /* A tracker's key is its only credential here. Browser cookies are ignored. */
+  function requireDevice(req) {
+    const device = devices.authenticate(req.headers.authorization);
+    if (!device) {
+      throw new HttpError(401, 'unknown-device');
+    }
+    return device;
+  }
+
+  /* Trackers send readings in batches and resend until acknowledged, so a
+     reading is applied once however many times it arrives. */
+  async function deviceReadings(req, res) {
+    const device = requireDevice(req);
+    if (!String(req.headers['content-type'] || '').startsWith('application/json')) {
+      throw new HttpError(415, 'json-only');
+    }
+    const batch = (await readBody(req, DEVICE_BODY_LIMIT)).readings;
+    if (!Array.isArray(batch) || batch.length === 0 || batch.length > MAX_BATCH) {
+      throw new HttpError(400, 'bad-batch');
+    }
+    const nowSeconds = Math.floor(now() / 1000);
+    const readings = batch.map((raw) => cleanReading(raw, nowSeconds));
+    const usable = readings.filter(Boolean).sort((a, b) => a.seq - b.seq);
+    let lastSeq = device.last_seq;
+    let accepted = 0;
+    usable.forEach((reading) => {
+      if (reading.seq > lastSeq) {
+        engine.ingest(device.truck_id, reading);
+        lastSeq = reading.seq;
+        accepted += 1;
+      }
+    });
+    devices.seen(device.id, lastSeq);
+    if (accepted > 0) {
+      persist();
+      broadcast();
+    }
+    sendJson(res, 200, {
+      ack: lastSeq,
+      accepted,
+      duplicates: usable.length - accepted,
+      rejected: readings.length - usable.length,
+      time: nowSeconds
+    });
+  }
+
   async function api(req, res, url) {
     const route = `${req.method} ${url.pathname}`;
     if (route === 'GET /api/health') {
@@ -326,6 +415,13 @@ async function createApp(config) {
     }
     if (route === 'GET /api/stream') {
       return stream(req, res, url);
+    }
+    if (route === 'POST /api/device/readings') {
+      return deviceReadings(req, res);
+    }
+    if (route === 'GET /api/device/state') {
+      const device = requireDevice(req);
+      return sendJson(res, 200, { unit: device.truck_id, lastSeq: device.last_seq, time: Math.floor(now() / 1000) });
     }
     if (route === 'GET /api/public/verify') {
       return sendJson(res, 200, engine.verify(String(url.searchParams.get('record') || '').slice(0, 300)));
@@ -382,7 +478,7 @@ async function createApp(config) {
     });
   }
 
-  return { server, engine, db, auth, store, close, seeded, restored: Boolean(saved), tick: () => { engine.tick(); persist(); broadcast(); } };
+  return { server, engine, db, auth, devices, store, close, seeded, restored: Boolean(saved), tick: () => { engine.tick(); persist(); broadcast(); } };
 }
 
 module.exports = { createApp, VERSION };
