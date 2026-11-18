@@ -134,3 +134,17 @@ Voltage sensing: 1 MΩ over 47 kΩ for the main supply and for ignition (36 V re
 - **Lights:** power (hardwired), modem network (from the modem), status (GPIO 42).
 - **Enclosure:** sealed, with the board conformally coated. A unit that moves between a cold cargo area and warm air collects condensation.
 - **Connectors:** locking automotive types for power, doors and sensors. Screw terminals work loose under vibration.
+
+## What firmware can then report
+
+Temperature and humidity from the sensor bus, position and speed, ignition on or off, each door opening and closing with its time, main power cut and restored, battery level, the unit being moved while parked, and modem signal strength. Readings are kept in flash while there is no signal and sent when it returns.
+
+## Bring-up test order
+
+1. Power section alone, no processor fitted: 9, 12, 24 and 36 V in; check 5 V, system rail and 3.3 V; reverse the input and confirm nothing gets hot.
+2. Pull the input while loaded and confirm the system rail holds on the battery.
+3. Fit the processor; program over USB-C; read all three voltage inputs against a multimeter.
+4. Modem: power-key sequence, SIM detected, network registration, then a data connection. Watch the supply on an oscilloscope during transmission; it must not dip more than 300 mV.
+5. GPS fix outdoors with the real antenna and enclosure.
+6. RS-485 sensor on five metres of cable; door inputs with the real switches.
+7. A day in a real vehicle, including engine cranking, before showing a customer.
