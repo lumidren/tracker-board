@@ -6,6 +6,8 @@ A proposed second revision of the vehicle unit, based on a review of the Rev A s
 
 ![Rev B block diagram](rev-b-blocks.svg)
 
+The same design as printable sheets, one section per page: [Maatora-Tracker-Rev-B-Schematics.pdf](Maatora-Tracker-Rev-B-Schematics.pdf). They are rebuilt with `build-schematics.py`.
+
 ## What Rev B changes, and why
 
 | Rev A | Problem | Rev B |
