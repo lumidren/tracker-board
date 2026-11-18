@@ -3113,6 +3113,22 @@ function renderUnit() {
   setText(el['load-minmax'], `${formatTemp(truck.log.min)} / ${formatTemp(truck.log.max)}`);
 }
 
+function alertDetail(alert) {
+  if (alert.kind === 'excursion') {
+    return t('{peak} against a {limit} limit', { peak: plainTemp(alert.peak), limit: plainTemp(alert.limit) });
+  }
+  if (alert.kind === 'door') {
+    return t('Door {door} opened while the unit was in transit', { door: alert.detail });
+  }
+  if (alert.kind === 'power') {
+    return t('The tracker ran on its backup battery');
+  }
+  if (alert.kind === 'silent') {
+    return t('No readings arrived from the tracker');
+  }
+  return t('Satellite failover engaged, no samples lost');
+}
+
 /* What the tracker fitted to a unit last said about itself. */
 function renderTracker(truck) {
   let label = 'Simulated';
@@ -3196,7 +3212,7 @@ function renderAlerts() {
     card.dataset.state = stateName;
 
     setText(field('ref'), t('{alert} • Unit {id}', { alert: alert.id, id: `#${alert.truckId}` }));
-    setText(field('title'), t(kind.title));
+    setText(field('title'), t(alert.kind === 'excursion' && alert.drill ? 'Temperature Excursion (Drill)' : kind.title));
     setChip(field('status'), t(statusLabel), statusChip);
     setText(field('started-label'), t('Started'));
     setText(field('started'), formatDateTime(new Date(alert.startedAt)));
@@ -3208,12 +3224,7 @@ function renderAlerts() {
         : t('Ongoing ({span})', { span: formatSpan(snapshot.time - alert.startedAt) })
     );
     setText(field('detail-label'), t(kind.detailLabel));
-    setText(
-      field('detail'),
-      alert.kind === 'excursion'
-        ? t('{peak} against a {limit} limit', { peak: plainTemp(alert.peak), limit: plainTemp(alert.limit) })
-        : t('Satellite failover engaged, no samples lost')
-    );
+    setText(field('detail'), alertDetail(alert));
     setText(field('ack-label'), t('Acknowledgement'));
     setText(
       field('ack'),
