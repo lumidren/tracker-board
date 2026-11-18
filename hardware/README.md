@@ -43,3 +43,16 @@ A step-down converter rated for 60 V input and at least 3 A output:
 Its catch diode and input capacitor must also be rated above the input maximum (the LM2596HV datasheet asks for a capacitor rating 1.25 times the maximum input).
 
 The switched rail from Rev A (`5V_Controlled`, P-MOSFET driven from GPIO15) is kept. Add 100 nF from the P-MOSFET gate to its source so the rail rises gently instead of dipping the 5 V supply.
+
+## Backup battery and system rail
+
+**Requirement:** when vehicle power disappears, the processor and the modem keep running long enough to report it, and keep reporting position and door events for hours.
+
+**Recommended arrangement:** one lithium-ion cell forms the system rail (3.4 to 4.2 V). A charger fed from the 5 V rail keeps it full. The modem and the 3.3 V regulator both draw from that rail, so the cell also supplies the modem's short current bursts.
+
+- **Cell:** one 18650 (about 2600 mAh) with a protection circuit and a 10 kΩ temperature sensor against the cell.
+- **Charger:** must stop charging when the cell is too cold or too hot. A lithium cell must not be charged below 0 °C or above about 45 °C, and a parked truck cab reaches both. The BQ24074 does this through its TS pin and its datasheet thresholds correspond to roughly 0 °C and 50 °C with a 10 kΩ sensor; it accepts 4.35 to 10.2 V in and charges at up to 1.5 A. Set the charge current to about 0.5 A.
+- **Caution with the BQ24074:** its system output regulates at 4.4 V, which is above the modem's 4.2 V maximum. The modem must therefore be connected to the battery pin, not to the system output. *The reviewing engineer should confirm the charge-termination behaviour with a load on the battery pin.*
+- **Battery placement:** in the cab with the unit, never in the refrigerated space.
+
+**Strong suggestion:** do not design this section from scratch. Published boards that combine an ESP32, an A7670 modem and an 18650 cell already solve the modem supply and charging together. Start from one of those schematics, or from the reference circuits in the modem's hardware design guide.
