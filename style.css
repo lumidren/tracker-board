@@ -540,6 +540,10 @@ button {
   font-weight: 500;
 }
 
+.facts dd[data-tone="alert"] {
+  color: var(--alert-strong);
+}
+
 /* 6. Client view ----------------------------------------------------------- */
 .banner {
   display: flex;
