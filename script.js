@@ -126,7 +126,10 @@ const CERT_STATUS = {
 
 const ALERT_KINDS = {
   excursion: { title: 'Temperature Excursion', detailLabel: 'Peak Reading' },
-  uplink: { title: 'Telemetry Uplink Dropout', detailLabel: 'Detail' }
+  uplink: { title: 'Telemetry Uplink Dropout', detailLabel: 'Detail' },
+  door: { title: 'Cargo Door Opened', detailLabel: 'Detail' },
+  power: { title: 'Main Power Cut', detailLabel: 'Detail' },
+  silent: { title: 'Tracker Stopped Reporting', detailLabel: 'Detail' }
 };
 
 const VERIFY_STATUS = {
