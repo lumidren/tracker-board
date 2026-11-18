@@ -912,8 +912,11 @@
         truck.speedKmh = 0;
         log('info', 'Unit {id} is now reporting from its tracker.', { id: `#${truck.id}` });
       }
+      /* Events are timed by the tracker's clock, so readings that were stored
+         while offline keep their real times when they finally arrive. */
+      const at = number(reading.at) ? reading.at * 1000 : time;
       truck.receivedAt = time;
-      truck.reportedAt = number(reading.at) ? reading.at * 1000 : time;
+      truck.reportedAt = at;
       if (truck.silent) {
         truck.silent = false;
         settleAlert(truck.id, 'silent', time);
@@ -936,16 +939,16 @@
         truck.backupVolts = Math.round(reading.batt * 100) / 100;
       }
       if (number(reading.lat) && number(reading.lon)) {
-        readPosition(truck, reading.lon, reading.lat, truck.speedKmh, time);
+        readPosition(truck, reading.lon, reading.lat, truck.speedKmh, at);
       }
       if (number(reading.temp)) {
-        readTemperature(truck, reading.temp, time);
+        readTemperature(truck, reading.temp, at);
       }
       if (Array.isArray(reading.doors)) {
-        readDoors(truck, reading.doors.slice(0, 4), time);
+        readDoors(truck, reading.doors.slice(0, 4), at);
       }
       if (number(reading.main)) {
-        readSupply(truck, reading.main, time);
+        readSupply(truck, reading.main, at);
       }
       derive(truck);
       return done();
