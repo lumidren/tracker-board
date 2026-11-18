@@ -320,7 +320,9 @@
     /* Position, distance left, arrival estimate and route stage from progress. */
     function derive(truck) {
       const remaining = truck.routeKm * (1 - truck.progress);
-      truck.position = pointAt(truck.routePoints, truck.progress).map((value) => Math.round(value * 1000) / 1000);
+      if (!truck.fix) {
+        truck.position = pointAt(truck.routePoints, truck.progress).map((value) => Math.round(value * 1000) / 1000);
+      }
       truck.remainingKm = Math.round(remaining);
       if (truck.baseStatus === 'en-route') {
         truck.eta = Math.max(1, Math.ceil((remaining / truck.cruiseKmh) * 60 - 1e-6));
@@ -440,6 +442,18 @@
         status: spec.baseStatus,
         baseStatus: spec.baseStatus,
         history: [],
+        /* Filled in once a real tracker reports for this unit. */
+        live: false,
+        fix: false,
+        silent: false,
+        reportedAt: null,
+        receivedAt: null,
+        doors: [],
+        ignition: null,
+        mainVolts: null,
+        backupVolts: null,
+        outsideRun: 0,
+        insideRun: 0,
         log: {
           transitMinutes,
           min: spec.log.min,
