@@ -56,3 +56,7 @@ The switched rail from Rev A (`5V_Controlled`, P-MOSFET driven from GPIO15) is k
 - **Battery placement:** in the cab with the unit, never in the refrigerated space.
 
 **Strong suggestion:** do not design this section from scratch. Published boards that combine an ESP32, an A7670 modem and an 18650 cell already solve the modem supply and charging together. Start from one of those schematics, or from the reference circuits in the modem's hardware design guide.
+
+## 3.3 V rail
+
+Keep the SY8089 circuit but feed it from the system rail instead of the 5 V rail, so the processor runs on battery. Change the inductor to 2.2 µH. *Verify how the converter behaves when the cell is nearly empty and its input approaches 3.3 V; if it does not pass the input through cleanly, use a 1 A low-dropout regulator instead.* Add 10 µF and 100 nF directly at the module's 3V3 pin.
