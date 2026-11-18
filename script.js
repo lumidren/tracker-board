@@ -3087,6 +3087,8 @@ function renderUnit() {
   );
   setText(el['diag-firmware'], t('{version} (Signed Build)', { version: truck.firmware }));
 
+  renderTracker(truck);
+
   /* Trip */
   const percent = `${Math.round(truck.progress * 100)}%`;
   setChip(el['trip-chip'], t('{percent} complete', { percent }), 'chip--ice');
@@ -3109,6 +3111,51 @@ function renderUnit() {
   setText(el['load-humidity'], ltr(`${truck.humidity}%`));
   setText(el['load-ambient'], formatTemp(truck.ambientTemp));
   setText(el['load-minmax'], `${formatTemp(truck.log.min)} / ${formatTemp(truck.log.max)}`);
+}
+
+/* What the tracker fitted to a unit last said about itself. */
+function renderTracker(truck) {
+  let label = 'Simulated';
+  let chip = 'chip--neutral';
+  if (truck.live && truck.silent) {
+    label = 'Not Reporting';
+    chip = 'chip--alert chip--flash';
+  } else if (truck.live) {
+    label = 'Live Tracker';
+    chip = 'chip--safe';
+  }
+  setChip(el['device-chip'], t(label), chip);
+
+  const missing = t(truck.live ? 'Not reported' : 'No tracker fitted');
+  setText(
+    el['device-report'],
+    truck.live ? t('{span} ago', { span: formatSpan(state.views.admin.time - truck.receivedAt) }) : missing
+  );
+
+  const openDoor = truck.doors.findIndex(Boolean);
+  let doors = missing;
+  if (truck.doors.length > 0) {
+    doors = openDoor === -1 ? t('All closed') : t('Door {door} open', { door: openDoor + 1 });
+  }
+  setText(el['device-doors'], doors);
+  el['device-doors'].dataset.tone = openDoor === -1 ? 'default' : 'alert';
+
+  const onBattery = truck.mainVolts !== null && truck.mainVolts < 6;
+  let power = missing;
+  if (onBattery) {
+    power = t('Backup battery (vehicle supply cut)');
+  } else if (truck.mainVolts !== null) {
+    power = t('Vehicle supply, {volts}', { volts: `${truck.mainVolts.toFixed(1)} V` });
+  }
+  setText(el['device-power'], power);
+  el['device-power'].dataset.tone = onBattery ? 'alert' : 'default';
+
+  setText(el['device-battery'], truck.backupVolts === null ? missing : ltr(`${truck.backupVolts.toFixed(2)} V`));
+  let ignition = missing;
+  if (truck.ignition !== null) {
+    ignition = t(truck.ignition ? 'On' : 'Off');
+  }
+  setText(el['device-ignition'], ignition);
 }
 
 function renderAlerts() {
