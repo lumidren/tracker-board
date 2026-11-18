@@ -60,3 +60,19 @@ The switched rail from Rev A (`5V_Controlled`, P-MOSFET driven from GPIO15) is k
 ## 3.3 V rail
 
 Keep the SY8089 circuit but feed it from the system rail instead of the 5 V rail, so the processor runs on battery. Change the inductor to 2.2 µH. *Verify how the converter behaves when the cell is nearly empty and its input approaches 3.3 V; if it does not pass the input through cleanly, use a 1 A low-dropout regulator instead.* Add 10 µF and 100 nF directly at the module's 3V3 pin.
+
+## Mobile modem
+
+An LTE Cat 1 module with 2G fallback. Example: SIMCom A7670E, whose commonly listed bands are LTE 1, 3, 5, 7, 8 and 20. *Check the exact variant against the bands your SIM provider uses before choosing.*
+
+From the A7670 hardware design guide:
+
+- **Supply:** 3.4 to 4.2 V, 3.8 V recommended. Peaks reach 2.8 A when transmitting on 2G. Place at least 300 µF close to the module if the supply can deliver that peak, 1000 µF if it cannot, plus 100 nF and small high-frequency capacitors at the pins.
+- **Logic level is 1.8 V.** The processor is 3.3 V, so the serial lines need level conversion: a dual-supply translator powered from the module's 1.8 V output, or the transistor circuit shown in the guide.
+- **Power key:** pulled up inside the module to its supply. Drive it through a transistor, never directly from a GPIO.
+- **SIM holder** with protection diodes on its lines, close to the module.
+- **Antenna:** 50 Ω trace to a U.FL or SMA connector, with a matching network footprint. This trace is the part most likely to be wrong on a first board; follow the guide's layout rules exactly.
+
+Add a P-MOSFET switch on the modem supply so firmware can cut power completely if the modem stops responding.
+
+If the team prefers to keep an external 4G stick on the USB socket instead: add 1000 µF next to the socket and expect the stick, not the board, to be the least reliable part.
