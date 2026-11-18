@@ -21,3 +21,14 @@ A proposed second revision of the vehicle unit, based on a review of the Rev A s
 | Nothing shows the unit's state | Installers cannot tell whether it works | Power, network and status lights |
 
 Everything else in Rev A is kept: the processor, the GPS module, the RS-485 transceiver and RJ45 pinout, ignition sensing, the switched 5 V rail and the automatic programming circuit.
+
+## Power input: 9 to 36 V
+
+Order of parts from the vehicle connector:
+
+1. **Fuse.** A 2 A blade fuse in the harness, close to where it taps the vehicle supply, plus a resettable fuse on the board rated for 60 V and about 1.1 A hold.
+2. **Spike suppressor.** Standoff voltage of 33 V so that it stays off on a 24 V system while charging (about 28.8 V). Minimum: a 1500 W part such as SMCJ33CA. Preferred: a load-dump rated part such as SM8S33A or SM8S36A. *Verify the clamp voltage is below the rating of every part after it.*
+3. **Reverse-polarity protection.** Either keep the Rev A P-MOSFET circuit with a 60 V transistor, a 12 V gate clamp and the 100 kΩ gate resistor, or replace it with a 60 V, 5 A Schottky diode (for example SS56). The diode is simpler and costs about 0.4 V.
+4. **Bulk capacitor.** 100 µF or more, rated 63 V.
+
+Everything connected to this node must be rated for at least 60 V. Vehicle transients are governed by ISO 7637-2 and ISO 16750-2; whether the suppressor survives an unsuppressed load dump on a 24 V system is a question for the reviewing engineer.
