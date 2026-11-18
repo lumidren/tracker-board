@@ -22,6 +22,13 @@
   const EARTH_RADIUS_KM = 6371;
   const GENESIS = 'MAATORA-AUDIT-GENESIS';
   const ROLE_ERROR = 'Your role does not allow this action.';
+  /* A real excursion starts, and ends, only after this many readings in a row agree. */
+  const CONFIRM_READINGS = 2;
+  /* A tracker that has been quiet this long is reported as silent. */
+  const SILENT_AFTER_MS = 5 * 60000;
+  /* Below this the tracker has lost the vehicle supply and is on its backup battery. */
+  const MAIN_SUPPLY_MIN_VOLTS = 6;
+  const ARRIVAL_PROGRESS = 0.985;
 
   const round1 = (value) => Math.round(value * 10) / 10;
   const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
