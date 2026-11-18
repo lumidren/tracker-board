@@ -2957,7 +2957,10 @@ function renderFleet() {
     all('[data-label]', card).forEach((label) => setText(label, t(label.dataset.label)));
     setText(card.querySelector('[data-field="unit"]'), t('Unit {id}', { id: `#${truck.id}` }));
     setChip(card.querySelector('[data-field="status"]'), t(meta.label), meta.chip);
-    setText(card.querySelector('[data-field="cargo"]'), `${t(truck.cargoShort)} • ${ltr(truck.consignmentId)}`);
+    setText(
+      card.querySelector('[data-field="cargo"]'),
+      `${t(truck.cargoShort)} • ${ltr(truck.consignmentId)}${truck.live ? ` • ${t('Live Tracker')}` : ''}`
+    );
     setText(tempNode, formatTemp(truck.tempCurrent));
     tempNode.dataset.tone = isInSpec(truck) ? 'default' : 'alert';
     setText(chillerNode, t(chiller.label));
