@@ -305,3 +305,117 @@ test('demo mode offers the test accounts for one portal at a time', async () => 
     await server.stop();
   }
 });
+
+/* --- Trackers --- */
+const reading = (seq, fields = {}) => ({ seq, at: 1_800_000_000, ...fields });
+
+test('a tracker needs its own key; cookies and bad keys are refused', async () => {
+  const server = await start();
+  try {
+    const device = server.app.devices.add('TRK-208', 'test unit');
+    const send = (key, body) => server.call('POST', '/api/device/readings', body, {
+      headers: key ? { Authorization: `Bearer ${key}` } : {}
+    });
+    const body = { readings: [reading(1, { temp: 3.4 })] };
+
+    await server.signIn('admin-qa');
+    assert.equal((await send(null, body)).status, 401, 'a signed-in person is not a tracker');
+    assert.equal((await send(`${device.id}.${'x'.repeat(43)}`, body)).status, 401);
+    assert.equal((await send('DEV-000000.' + device.key.split('.')[1], body)).status, 401);
+    assert.equal((await send(device.key, body)).status, 200);
+
+    const row = server.app.db.prepare('SELECT secret_hash FROM devices WHERE id = ?').get(device.id);
+    assert.match(row.secret_hash, /^[0-9a-f]{64}$/);
+    assert.equal(row.secret_hash.includes(device.key.split('.')[1]), false);
+
+    server.app.devices.revoke(device.id);
+    assert.equal((await send(device.key, { readings: [reading(2, { temp: 3.5 })] })).status, 401);
+  } finally {
+    await server.stop();
+  }
+});
+
+test('readings are applied once, in order, with bad fields dropped', async () => {
+  const server = await start();
+  try {
+    const device = server.app.devices.add('TRK-208');
+    const headers = { Authorization: `Bearer ${device.key}` };
+    const send = (readings) => server.call('POST', '/api/device/readings', { readings }, { headers });
+
+    const first = await send([reading(2, { temp: 3.8 }), reading(1, { temp: 3.5, hum: 61 }), { temp: 4 }]);
+    assert.deepEqual(
+      [first.status, first.data.ack, first.data.accepted, first.data.duplicates, first.data.rejected],
+      [200, 2, 2, 0, 1]
+    );
+    const again = await send([reading(1, { temp: 3.5 }), reading(2, { temp: 3.8 }), reading(3, { temp: 950, hum: 58 })]);
+    assert.deepEqual([again.data.ack, again.data.accepted, again.data.duplicates], [3, 1, 2]);
+
+    const truck = server.app.engine.state.trucks.find((item) => item.id === 'TRK-208');
+    assert.equal(truck.live, true);
+    assert.equal(truck.tempCurrent, 3.8, 'an out-of-range temperature is ignored, not applied');
+    assert.equal(truck.humidity, 58);
+
+    const state = await server.call('GET', '/api/device/state', undefined, { headers });
+    assert.deepEqual([state.data.unit, state.data.lastSeq], ['TRK-208', 3]);
+
+    assert.equal((await send([])).status, 400);
+    assert.equal((await send(Array.from({ length: 201 }, (_, index) => reading(index + 10)))).status, 400);
+  } finally {
+    await server.stop();
+  }
+});
+
+test('a real excursion from a tracker reaches the client without hardware data', async () => {
+  const server = await start();
+  try {
+    const device = server.app.devices.add('TRK-104');
+    const headers = { Authorization: `Bearer ${device.key}` };
+    await server.call('POST', '/api/device/readings', {
+      readings: [
+        reading(1, { temp: -15.2, doors: [false, false], main: 13.9, batt: 4.1, rssi: -82 }),
+        reading(2, { temp: -14.6, doors: [false, true], main: 0.2, batt: 4.0, rssi: -84 })
+      ]
+    }, { headers });
+
+    await server.signIn('client-depot-north');
+    const view = await server.call('GET', '/api/snapshot?portal=client');
+    const truck = view.data.trucks[0];
+    assert.equal(truck.status, 'excursion');
+    assert.equal(truck.certificate.status, 'hold');
+    assert.equal(truck.log.doorOpenings, 1);
+    assert.equal(/"(mainVolts|backupVolts|doors|live|silent|uplink\w*|sensorBattery)":/.test(view.text), false);
+
+    await server.signIn('admin-qa');
+    const admin = await server.call('GET', '/api/snapshot?portal=admin');
+    const kinds = admin.data.alerts.filter((alert) => alert.truckId === 'TRK-104').map((alert) => alert.kind).sort();
+    assert.deepEqual(kinds, ['door', 'excursion', 'power']);
+    assert.equal(admin.data.trucks.find((item) => item.id === 'TRK-104').mainVolts, 0.2);
+  } finally {
+    await server.stop();
+  }
+});
+
+test('tracker events and keys survive a restart', async () => {
+  const folder = fs.mkdtempSync(path.join(os.tmpdir(), 'maatora-test-'));
+  const database = path.join(folder, 'maatora.sqlite');
+  try {
+    const first = await start({ database });
+    const device = first.app.devices.add('TRK-104');
+    const headers = { Authorization: `Bearer ${device.key}` };
+    await first.call('POST', '/api/device/readings', {
+      readings: [reading(1, { doors: [false] }), reading(2, { doors: [true] })]
+    }, { headers });
+    await first.stop();
+
+    const second = await start({ database });
+    const alert = second.app.engine.state.alerts.at(-1);
+    assert.deepEqual([alert.kind, alert.detail, alert.drill], ['door', 1, false]);
+    const resend = await second.call('POST', '/api/device/readings', {
+      readings: [reading(2, { doors: [true] }), reading(3, { doors: [false] })]
+    }, { headers });
+    assert.deepEqual([resend.data.accepted, resend.data.duplicates, resend.data.ack], [1, 1, 3]);
+    await second.stop();
+  } finally {
+    fs.rmSync(folder, { recursive: true, force: true });
+  }
+});
