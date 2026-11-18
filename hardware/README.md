@@ -32,3 +32,14 @@ Order of parts from the vehicle connector:
 4. **Bulk capacitor.** 100 µF or more, rated 63 V.
 
 Everything connected to this node must be rated for at least 60 V. Vehicle transients are governed by ISO 7637-2 and ISO 16750-2; whether the suppressor survives an unsuppressed load dump on a 24 V system is a question for the reviewing engineer.
+
+## 5 V rail
+
+A step-down converter rated for 60 V input and at least 3 A output:
+
+- **LM2596HVS-5.0**: rated to 60 V input (63 V absolute maximum), 3 A, needs at least 8 V in. Large but simple and widely stocked.
+- Smaller alternatives: LMR16030 or TPS54360B. *Verify.*
+
+Its catch diode and input capacitor must also be rated above the input maximum (the LM2596HV datasheet asks for a capacitor rating 1.25 times the maximum input).
+
+The switched rail from Rev A (`5V_Controlled`, P-MOSFET driven from GPIO15) is kept. Add 100 nF from the P-MOSFET gate to its source so the rail rises gently instead of dipping the 5 V supply.
