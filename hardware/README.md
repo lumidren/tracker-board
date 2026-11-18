@@ -127,3 +127,10 @@ ESP32-S3-WROOM-1 as in Rev A. If the unit goes in a metal enclosure, use the -1U
 GPIO 3, 45 and 46 set the processor's start-up mode and are left unconnected. GPIO 35 to 37 are left free so that a module with extra memory can be fitted. Analog inputs use GPIO 1 to 10 only, because the others stop working as analog inputs when Wi-Fi is on. *Verify the whole table against the module datasheet.*
 
 Voltage sensing: 1 MΩ over 47 kΩ for the main supply and for ignition (36 V reads as about 1.6 V), 220 kΩ over 220 kΩ for the battery, each with 100 nF at the pin.
+
+## Programming, lights, enclosure
+
+- **USB-C** on GPIO 19 and 20 with a protection diode array and 5.1 kΩ on each CC line. Keep the serial header.
+- **Lights:** power (hardwired), modem network (from the modem), status (GPIO 42).
+- **Enclosure:** sealed, with the board conformally coated. A unit that moves between a cold cargo area and warm air collects condensation.
+- **Connectors:** locking automotive types for power, doors and sensors. Screw terminals work loose under vibration.
