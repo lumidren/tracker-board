@@ -178,3 +178,122 @@ test('state survives export and restore', () => {
   assert.equal(restored.state.audit.length, engine.state.audit.length);
   assert.equal(restored.command(auditor, 'normalize-sensor').ok, true);
 });
+
+/* --- Readings from a real tracker --- */
+const unit = (engine, id) => engine.state.trucks.find((item) => item.id === id);
+
+test('tracker readings replace simulated values and survive the tick', () => {
+  const { engine, advance } = freshEngine();
+  assert.equal(engine.ingest('TRK-999', { temp: 1 }).ok, false);
+  assert.equal(engine.ingest('TRK-208', { at: 1_800_000_000, temp: 3.6, hum: 55, rssi: -70, batt: 4.02, ign: true }).ok, true);
+  const truck = unit(engine, 'TRK-208');
+  assert.equal(truck.live, true);
+  assert.equal(truck.tempCurrent, 3.6);
+  advance(4000);
+  engine.tick();
+  assert.equal(truck.tempCurrent, 3.6);
+  assert.equal(truck.humidity, 55);
+  assert.equal(truck.backupVolts, 4.02);
+});
+
+test('a real excursion needs two readings, holds the certificate and stays on record', () => {
+  const { engine, advance } = freshEngine({ authoritative: true });
+  const truck = unit(engine, 'TRK-208');
+  const record = engine.snapshot(auditor).trucks.find((item) => item.id === 'TRK-208').certificate.verification;
+
+  engine.ingest('TRK-208', { temp: 9.4 });
+  assert.equal(truck.status, 'en-route', 'one stray reading must not raise an excursion');
+  advance(60000);
+  engine.ingest('TRK-208', { temp: 10.1 });
+  assert.equal(truck.status, 'excursion');
+  assert.equal(truck.certificate.status, 'hold');
+  assert.equal(truck.log.excursions, 1);
+  assert.equal(engine.verify(record).status, 'revoked');
+  const alert = engine.state.alerts.at(-1);
+  assert.deepEqual([alert.kind, alert.drill, alert.limit, alert.peak], ['excursion', false, 8, 10.1]);
+
+  advance(60000);
+  engine.ingest('TRK-208', { temp: 11.3 });
+  assert.equal(alert.peak, 11.3);
+  engine.ingest('TRK-208', { temp: 5 });
+  assert.equal(truck.status, 'excursion');
+  engine.ingest('TRK-208', { temp: 4.2 });
+  assert.equal(truck.status, 'en-route');
+  assert.equal(truck.certificate.status, 'revalidate');
+  assert.equal(truck.log.excursions, 1, 'a real excursion is not erased when the temperature recovers');
+  assert.equal(truck.log.max, 11.3);
+  assert.ok(alert.endedAt);
+
+  assert.equal(engine.command(auditor, 'sign-certificate', { truckId: 'TRK-208' }).ok, false);
+  engine.command(auditor, 'acknowledge-alert', { alertId: alert.id });
+  assert.equal(engine.command(auditor, 'sign-certificate', { truckId: 'TRK-208' }).ok, true);
+  assert.equal(truck.certificate.record.excursions, 1);
+});
+
+test('door openings in transit are counted; a power cut raises and clears', () => {
+  const { engine, advance } = freshEngine();
+  const moving = unit(engine, 'TRK-104');
+  const parked = unit(engine, 'TRK-315');
+
+  engine.ingest('TRK-104', { doors: [false, false], main: 13.8 });
+  engine.ingest('TRK-104', { doors: [false, true], main: 13.8 });
+  assert.equal(moving.log.doorOpenings, 1);
+  const door = engine.state.alerts.at(-1);
+  assert.deepEqual([door.kind, door.detail, door.endedAt], ['door', 2, null]);
+  advance(30000);
+  engine.ingest('TRK-104', { doors: [false, false], main: 13.8 });
+  assert.equal(door.endedAt - door.startedAt, 30000);
+
+  engine.ingest('TRK-315', { doors: [true] });
+  assert.equal(parked.log.doorOpenings, 0, 'loading at the dock is not an in-transit opening');
+  assert.equal(engine.state.alerts.filter((item) => item.truckId === 'TRK-315').length, 0);
+
+  engine.ingest('TRK-104', { main: 0.3, batt: 3.9 });
+  const power = engine.state.alerts.at(-1);
+  assert.deepEqual([power.kind, power.endedAt], ['power', null]);
+  engine.ingest('TRK-104', { main: 14.1 });
+  assert.ok(power.endedAt);
+});
+
+test('a quiet tracker is flagged silent and recovers', () => {
+  const { engine, advance } = freshEngine();
+  engine.ingest('TRK-509', { temp: -31 });
+  advance(4 * 60000);
+  engine.tick();
+  assert.equal(unit(engine, 'TRK-509').silent, false);
+  advance(2 * 60000);
+  engine.tick();
+  assert.equal(unit(engine, 'TRK-509').silent, true);
+  assert.equal(engine.snapshot(auditor).trucks.find((item) => item.id === 'TRK-509').health.checks.uplink, 'fault');
+  const alert = engine.state.alerts.at(-1);
+  assert.equal(alert.kind, 'silent');
+  engine.ingest('TRK-509', { temp: -31 });
+  assert.equal(unit(engine, 'TRK-509').silent, false);
+  assert.ok(alert.endedAt);
+});
+
+test('position reports move the unit along its route and deliver it', () => {
+  const { engine } = freshEngine();
+  const truck = unit(engine, 'TRK-315');
+  const [start, , middle, , end] = truck.routePoints;
+  assert.equal(truck.baseStatus, 'standby');
+  engine.ingest('TRK-315', { lon: start[0], lat: start[1], speed: 0 });
+  assert.equal(truck.baseStatus, 'standby');
+  engine.ingest('TRK-315', { lon: middle[0], lat: middle[1], speed: 62 });
+  assert.equal(truck.baseStatus, 'en-route');
+  assert.ok(truck.progress > 0.4 && truck.progress < 0.7);
+  assert.deepEqual(truck.position, [middle[0], middle[1]]);
+  engine.ingest('TRK-315', { lon: end[0], lat: end[1], speed: 10 });
+  assert.equal(truck.baseStatus, 'delivered');
+  assert.equal(truck.routeStep, 4);
+});
+
+test('drills are refused on live units and clients gain no tracker fields', () => {
+  const { engine } = freshEngine();
+  engine.ingest('TRK-104', { temp: -21, main: 13.9, batt: 4.1, doors: [false], rssi: -80 });
+  assert.equal(engine.command(auditor, 'trigger-incident', { truckId: 'TRK-104' }).ok, false);
+  const truck = engine.snapshot(consignor).trucks.find((item) => item.id === 'TRK-104');
+  ['live', 'silent', 'doors', 'ignition', 'mainVolts', 'backupVolts', 'receivedAt'].forEach((field) => {
+    assert.equal(field in truck, false, `${field} leaked to a client`);
+  });
+});
