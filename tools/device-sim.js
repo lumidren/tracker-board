@@ -11,7 +11,7 @@
 
    Options
      --key       the tracker key (required)
-     --server    server address                     default http://127.0.0.1:4190
+     --server    server address                     default http://127.0.0.1:4310
      --interval  seconds between readings           default 5
      --speed     how much faster than real time the unit drives   default 30
      --scenario  normal | door | warm | power-cut | offline | all   default normal */
@@ -26,7 +26,7 @@ function option(name, fallback) {
 }
 
 const key = option('key', '');
-const server = option('server', 'http://127.0.0.1:4190').replace(/\/$/, '');
+const server = option('server', 'http://127.0.0.1:4310').replace(/\/$/, '');
 const intervalSeconds = Number(option('interval', 5));
 const speedUp = Number(option('speed', 30));
 const scenario = option('scenario', 'normal');

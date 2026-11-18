@@ -20,7 +20,7 @@ No framework, no build step for the web app, and **no dependencies anywhere**: t
 node server/server.js --demo
 ```
 
-Open `http://localhost:4190`. `--demo` puts a list of test accounts on each sign-in page; leave it off and the accounts still exist but are not advertised. Add `--lan` to let phones on the same network connect; the server prints the address to use.
+Open `http://localhost:4310`. `--demo` puts a list of test accounts on each sign-in page; leave it off and the accounts still exist but are not advertised. Add `--lan` to let phones on the same network connect; the server prints the address to use.
 
 **Offline demo**: serve the folder with any static server, for example `python -m http.server 4180`.
 

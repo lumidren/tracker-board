@@ -3,7 +3,7 @@
 const path = require('node:path');
 
 /* Settings come from command-line flags first, then environment variables.
-     --port 4190          port to listen on
+     --port 4310          port to listen on
      --host 127.0.0.1     address to bind
      --lan                bind every interface, so phones on the same network can connect
      --demo               offer the test accounts on the sign-in pages
@@ -16,7 +16,8 @@ function readConfig(argv = process.argv.slice(2), env = process.env) {
     return index !== -1 && argv[index + 1] ? argv[index + 1] : fallback;
   };
   return {
-    port: Number(value('port', env.MAATORA_PORT || 4190)),
+    /* Not 4190: browsers and Node refuse that port as unsafe. */
+    port: Number(value('port', env.MAATORA_PORT || 4310)),
     host: flag('lan') ? '0.0.0.0' : value('host', env.MAATORA_HOST || '127.0.0.1'),
     demo: flag('demo') || env.MAATORA_DEMO === '1',
     database: value('database', env.MAATORA_DATABASE || path.join(__dirname, 'data', 'maatora.sqlite')),
