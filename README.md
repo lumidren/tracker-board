@@ -115,7 +115,7 @@ android/                                native shell that bundles the web files
 - A strict Content-Security-Policy and the usual hardening headers on every response
 - Each tracker has its own key, shown once and stored only as a hash; readings are range-checked and applied exactly once
 
-Forty-one tests cover these, including a restart that must continue an active drill from the database.
+Thirty-four tests cover these, including a restart that must continue an active drill from the database.
 
 ## Languages
 
