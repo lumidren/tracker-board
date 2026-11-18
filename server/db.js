@@ -46,7 +46,19 @@ const SCHEMA = `
     peak REAL,
     limit_value REAL,
     acknowledged_at INTEGER,
-    acknowledged_by TEXT
+    acknowledged_by TEXT,
+    drill INTEGER NOT NULL DEFAULT 0,
+    detail INTEGER
+  );
+  CREATE TABLE IF NOT EXISTS devices (
+    id TEXT PRIMARY KEY,
+    truck_id TEXT NOT NULL,
+    label TEXT NOT NULL DEFAULT '',
+    secret_hash TEXT NOT NULL,
+    created_at INTEGER NOT NULL,
+    last_seen_at INTEGER,
+    last_seq INTEGER NOT NULL DEFAULT 0,
+    revoked INTEGER NOT NULL DEFAULT 0
   );
   CREATE TABLE IF NOT EXISTS audit_log (
     seq INTEGER PRIMARY KEY,
@@ -85,7 +97,19 @@ function openDatabase(filename) {
   const db = new DatabaseSync(filename);
   db.exec('PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;');
   db.exec(SCHEMA);
+  migrate(db);
   return db;
+}
+
+/* Brings a database created by an earlier version up to the current schema. */
+function migrate(db) {
+  const columns = db.prepare('PRAGMA table_info(alerts)').all().map((column) => column.name);
+  if (!columns.includes('drill')) {
+    db.exec('ALTER TABLE alerts ADD COLUMN drill INTEGER NOT NULL DEFAULT 0');
+  }
+  if (!columns.includes('detail')) {
+    db.exec('ALTER TABLE alerts ADD COLUMN detail INTEGER');
+  }
 }
 
 function transaction(db, work) {
@@ -106,8 +130,8 @@ function createStore(db, now) {
   const statements = {
     unit: db.prepare(`INSERT INTO units (id, position, state, updated_at) VALUES (?, ?, ?, ?)
       ON CONFLICT (id) DO UPDATE SET position = excluded.position, state = excluded.state, updated_at = excluded.updated_at`),
-    alert: db.prepare(`INSERT INTO alerts (id, truck_id, kind, started_at, ended_at, peak, limit_value, acknowledged_at, acknowledged_by)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    alert: db.prepare(`INSERT INTO alerts (id, truck_id, kind, started_at, ended_at, peak, limit_value, acknowledged_at, acknowledged_by, drill, detail)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT (id) DO UPDATE SET ended_at = excluded.ended_at, peak = excluded.peak,
         acknowledged_at = excluded.acknowledged_at, acknowledged_by = excluded.acknowledged_by`),
     audit: db.prepare('INSERT OR IGNORE INTO audit_log (seq, time, kind, source, params, digest) VALUES (?, ?, ?, ?, ?, ?)'),
@@ -130,7 +154,8 @@ function createStore(db, now) {
       state.alerts.forEach((alert) => {
         statements.alert.run(
           alert.id, alert.truckId, alert.kind, alert.startedAt, alert.endedAt,
-          alert.peak, alert.limit, alert.acknowledgedAt, alert.acknowledgedBy
+          alert.peak, alert.limit, alert.acknowledgedAt, alert.acknowledgedBy,
+          alert.drill ? 1 : 0, alert.detail == null ? null : alert.detail
         );
       });
       state.audit.filter((entry) => entry.seq > savedAuditSeq).forEach((entry) => {
@@ -180,7 +205,9 @@ function createStore(db, now) {
         peak: row.peak,
         limit: row.limit_value,
         acknowledgedAt: row.acknowledged_at,
-        acknowledgedBy: row.acknowledged_by
+        acknowledgedBy: row.acknowledged_by,
+        drill: Boolean(row.drill),
+        detail: row.detail
       })),
       audit: audit.map((row) => ({
         seq: row.seq,
