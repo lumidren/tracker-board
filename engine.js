@@ -129,6 +129,33 @@
     return points[points.length - 1].slice();
   }
 
+  /* How far along a route (0 to 1) a reported position is, by its nearest point. */
+  function fractionNear(points, point) {
+    const squash = Math.cos((point[1] * Math.PI) / 180);
+    const flat = (item) => [item[0] * squash, item[1]];
+    const target = flat(point);
+    const total = routeLength(points);
+    let best = { distance: Infinity, travelled: 0 };
+    let walked = 0;
+    for (let i = 1; i < points.length; i += 1) {
+      const start = flat(points[i - 1]);
+      const end = flat(points[i]);
+      const dx = end[0] - start[0];
+      const dy = end[1] - start[1];
+      const span = dx * dx + dy * dy;
+      const share = span === 0 ? 0 : clamp(((target[0] - start[0]) * dx + (target[1] - start[1]) * dy) / span, 0, 1);
+      const gapX = start[0] + dx * share - target[0];
+      const gapY = start[1] + dy * share - target[1];
+      const leg = distanceKm(points[i - 1], points[i]);
+      const distance = gapX * gapX + gapY * gapY;
+      if (distance < best.distance) {
+        best = { distance, travelled: walked + leg * share };
+      }
+      walked += leg;
+    }
+    return total === 0 ? 0 : clamp(best.travelled / total, 0, 1);
+  }
+
   /* ------------------------------------------------------------------------
      Shared formatting and rules
      ------------------------------------------------------------------------ */
@@ -848,6 +875,7 @@
     distanceKm,
     routeLength,
     pointAt,
+    fractionNear,
     fill,
     plainTemp,
     hardwareChecks,
