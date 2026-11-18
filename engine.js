@@ -725,6 +725,215 @@
       return done();
     }
 
+    /* --- Readings from a real tracker --- */
+    function raiseAlert(truck, kind, time, extra) {
+      state.alertSeq += 1;
+      const alert = {
+        id: `ALT-${String(state.alertSeq).padStart(4, '0')}`,
+        truckId: truck.id,
+        kind,
+        startedAt: time,
+        endedAt: null,
+        peak: null,
+        limit: null,
+        drill: false,
+        detail: null,
+        acknowledgedAt: null,
+        acknowledgedBy: null,
+        ...extra
+      };
+      state.alerts.push(alert);
+      return alert;
+    }
+
+    function activeAlert(truckId, kind, detail) {
+      return state.alerts.find(
+        (alert) => alert.truckId === truckId && alert.kind === kind && !alert.endedAt
+          && (detail === undefined || alert.detail === detail)
+      );
+    }
+
+    function settleAlert(truckId, kind, time, detail) {
+      const alert = activeAlert(truckId, kind, detail);
+      if (alert) {
+        alert.endedAt = time;
+      }
+    }
+
+    function arrive(truck, time) {
+      truck.baseStatus = 'delivered';
+      truck.status = truck.status === 'excursion' ? 'excursion' : 'delivered';
+      truck.progress = 1;
+      truck.arrivedAt = time;
+      truck.speedKmh = 0;
+      log('ok', 'Unit {id} arrived at {place}.', { id: `#${truck.id}`, place: truck.destination });
+    }
+
+    /* A real excursion, unlike a drill, stays on the compliance record for good. */
+    function readTemperature(truck, value, time) {
+      truck.tempCurrent = round1(value);
+      truck.history.push(truck.tempCurrent);
+      truck.history = truck.history.slice(-HISTORY_POINTS);
+      if (truck.baseStatus === 'en-route') {
+        truck.log.min = Math.min(truck.log.min, truck.tempCurrent);
+        truck.log.max = Math.max(truck.log.max, truck.tempCurrent);
+      }
+      const inside = isInSpec(truck);
+      truck.outsideRun = inside ? 0 : truck.outsideRun + 1;
+      truck.insideRun = inside ? truck.insideRun + 1 : 0;
+      const tooWarm = truck.tempCurrent > truck.tempMax;
+      const id = `#${truck.id}`;
+
+      if (!inside && truck.status !== 'excursion' && truck.outsideRun >= CONFIRM_READINGS) {
+        const limit = tooWarm ? truck.tempMax : truck.tempMin;
+        truck.status = 'excursion';
+        truck.log.excursions += 1;
+        if (truck.certificate.status !== 'not-issued') {
+          truck.certificate.status = 'hold';
+          truck.certificate.hash = '';
+        }
+        state.registry.forEach((entry) => {
+          if (entry.truckId === truck.id && entry.status === 'current') {
+            entry.status = 'suspended';
+          }
+        });
+        raiseAlert(truck, 'excursion', time, { peak: truck.tempCurrent, limit });
+        log('alert', 'Temperature excursion on Unit {id}: {temp} against a {limit} limit. Compliance violation flagged.', {
+          id,
+          temp: plainTemp(truck.tempCurrent),
+          limit: plainTemp(limit)
+        });
+      } else if (!inside && truck.status === 'excursion') {
+        const alert = activeAlert(truck.id, 'excursion');
+        if (alert && !alert.drill) {
+          const worse = alert.limit === truck.tempMax ? truck.tempCurrent > alert.peak : truck.tempCurrent < alert.peak;
+          alert.peak = worse ? truck.tempCurrent : alert.peak;
+        }
+      } else if (inside && truck.status === 'excursion' && truck.insideRun >= CONFIRM_READINGS
+        && state.drillTruckId !== truck.id) {
+        truck.status = truck.baseStatus;
+        settleAlert(truck.id, 'excursion', time);
+        if (truck.certificate.status === 'hold') {
+          truck.certificate.status = 'revalidate';
+        }
+        log('ok', 'Temperature back in range on Unit {id} at {temp}. The excursion stays on the compliance record.', {
+          id,
+          temp: plainTemp(truck.tempCurrent)
+        });
+      }
+    }
+
+    function readPosition(truck, lon, lat, speed, time) {
+      truck.fix = true;
+      truck.position = [Math.round(lon * 1000) / 1000, Math.round(lat * 1000) / 1000];
+      const along = fractionNear(truck.routePoints, [lon, lat]);
+      if (truck.baseStatus === 'standby' && speed > 5 && along > 0.01) {
+        truck.baseStatus = 'en-route';
+        truck.status = truck.status === 'excursion' ? 'excursion' : 'en-route';
+        truck.departedAt = time;
+        log('info', 'Unit {id} departed from {place}.', { id: `#${truck.id}`, place: truck.origin });
+      }
+      if (truck.baseStatus !== 'en-route') {
+        return;
+      }
+      const wasBeforeHub = truck.progress < truck.hubAt;
+      truck.progress = Math.max(truck.progress, along);
+      if (wasBeforeHub && truck.progress >= truck.hubAt) {
+        truck.hubPassedAt = time;
+        log('info', 'Unit {id} cleared the regional inspection hub.', { id: `#${truck.id}` });
+      }
+      if (truck.progress >= ARRIVAL_PROGRESS) {
+        arrive(truck, time);
+      }
+    }
+
+    function readDoors(truck, doors, time) {
+      const id = `#${truck.id}`;
+      doors.forEach((open, index) => {
+        const door = index + 1;
+        const wasOpen = Boolean(truck.doors[index]);
+        if (open && !wasOpen) {
+          if (truck.baseStatus === 'en-route') {
+            truck.log.doorOpenings += 1;
+            raiseAlert(truck, 'door', time, { detail: door });
+            log('alert', 'Cargo door {door} opened in transit on Unit {id}.', { door, id });
+          } else {
+            log('info', 'Cargo door {door} opened on Unit {id}.', { door, id });
+          }
+        } else if (!open && wasOpen) {
+          settleAlert(truck.id, 'door', time, door);
+          log('info', 'Cargo door {door} closed on Unit {id}.', { door, id });
+        }
+      });
+      truck.doors = doors.map(Boolean);
+    }
+
+    function readSupply(truck, volts, time) {
+      const had = truck.mainVolts === null || truck.mainVolts >= MAIN_SUPPLY_MIN_VOLTS;
+      const has = volts >= MAIN_SUPPLY_MIN_VOLTS;
+      truck.mainVolts = round1(volts);
+      if (had && !has) {
+        raiseAlert(truck, 'power', time);
+        log('alert', 'Main power cut on Unit {id}. The tracker is running on its backup battery.', { id: `#${truck.id}` });
+      } else if (!had && has) {
+        settleAlert(truck.id, 'power', time);
+        log('ok', 'Main power restored on Unit {id}.', { id: `#${truck.id}` });
+      }
+    }
+
+    /* Applies one reading sent by the tracker fitted to a unit. From the first
+       reading on, the unit shows what the tracker measures, not simulated values. */
+    function ingest(truckId, reading) {
+      const truck = findTruck(truckId);
+      if (!truck || !reading || typeof reading !== 'object') {
+        return fail('Unknown unit.');
+      }
+      const time = now();
+      const number = (value) => typeof value === 'number' && Number.isFinite(value);
+      if (!truck.live) {
+        truck.live = true;
+        truck.speedKmh = 0;
+        log('info', 'Unit {id} is now reporting from its tracker.', { id: `#${truck.id}` });
+      }
+      truck.receivedAt = time;
+      truck.reportedAt = number(reading.at) ? reading.at * 1000 : time;
+      if (truck.silent) {
+        truck.silent = false;
+        settleAlert(truck.id, 'silent', time);
+        log('ok', 'Unit {id} is reporting again.', { id: `#${truck.id}` });
+      }
+
+      if (number(reading.hum)) {
+        truck.humidity = Math.round(reading.hum);
+      }
+      if (number(reading.speed)) {
+        truck.speedKmh = Math.round(reading.speed);
+      }
+      if (typeof reading.ign === 'boolean') {
+        truck.ignition = reading.ign;
+      }
+      if (number(reading.rssi)) {
+        truck.uplinkSignal = Math.round(reading.rssi);
+      }
+      if (number(reading.batt)) {
+        truck.backupVolts = Math.round(reading.batt * 100) / 100;
+      }
+      if (number(reading.lat) && number(reading.lon)) {
+        readPosition(truck, reading.lon, reading.lat, truck.speedKmh, time);
+      }
+      if (number(reading.temp)) {
+        readTemperature(truck, reading.temp, time);
+      }
+      if (Array.isArray(reading.doors)) {
+        readDoors(truck, reading.doors.slice(0, 4), time);
+      }
+      if (number(reading.main)) {
+        readSupply(truck, reading.main, time);
+      }
+      derive(truck);
+      return done();
+    }
+
     function command(actor, name, payload) {
       const input = payload || {};
       switch (name) {
@@ -884,7 +1093,7 @@
       seedState();
     }
 
-    return { state, tick, command, log, snapshot, verify, accounts, exportState, importState, visibleTo };
+    return { state, tick, command, ingest, log, snapshot, verify, accounts, exportState, importState, visibleTo };
   }
 
   return {
