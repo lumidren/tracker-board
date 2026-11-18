@@ -603,6 +603,9 @@
       if (truck.baseStatus === 'delivered') {
         return fail('This unit has already delivered its cargo.');
       }
+      if (truck.live) {
+        return fail('Drills are not available on a unit that is reporting from a real tracker.');
+      }
       const cert = truck.certificate;
       state.drillTruckId = truck.id;
       truck.status = 'excursion';
