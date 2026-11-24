@@ -67,7 +67,7 @@ Content-Type: application/json
 | --- | --- | --- | --- | --- |
 | `seq` | Reading number, rising by one each time, kept in flash | whole number | 1 and up | yes |
 | `at` | When the reading was taken | Unix seconds | not more than 5 minutes ahead, not older than 7 days | recommended |
-| `temp` | Cargo temperature. With several sensors, the warmest one (see [FIRMWARE.md](FIRMWARE.md)) | °C | -90 to 90 | |
+| `temp` | Cargo temperature. With several sensors, the warmest valid one (see [FIRMWARE.md](FIRMWARE.md)) | °C | -90 to 90 | |
 | `hum` | Cargo humidity | % | 0 to 100 | |
 | `doors` | Each door, `true` when open | up to four values | | |
 | `lat`, `lon` | Position | degrees | valid coordinates | |
@@ -92,16 +92,22 @@ Delete every stored reading numbered `ack` or lower. Keep the others and send th
 | 200 | Stored | Delete up to `ack` |
 | 400 | Empty batch, more than 200 readings, or not valid JSON | A firmware fault: log it, do not retry the same body forever |
 | 401 | Key unknown or revoked | Stop sending, show a fault light |
-| 413 | Body over 64 KB | Send fewer readings per batch |
+| no answer, connection closed | Also what a body over 64 KB gets: the server closes the connection instead of answering 413. 200 readings are about 31 KB, so this only happens if something is wrong | After repeated failures with the same batch, halve the batch |
 | 415 | Not sent as JSON | A firmware fault |
 | anything else, or no answer | Network or server trouble | Keep the readings, try again later with a growing delay |
 
 ## When to send
 
 - Take a reading every 60 seconds.
-- Upload every 5 minutes, up to 200 readings per request.
-- Upload **immediately** when a door changes, when the vehicle supply drops or returns, or when the temperature leaves its range.
-- Send at least one reading every few minutes even when nothing changes: after 5 minutes of silence the server reports the tracker as not reporting.
+- Upload at least every 4 minutes, up to 200 readings per request, on vehicle power and on the battery. After 5 minutes without an upload the server reports the tracker as not reporting and shows that to the customer, so a 5-minute interval would trip it on any delay.
+- Upload **immediately** when a door changes, when the vehicle supply drops or returns, when a temperature sensor goes missing or the cable supply faults, and, on the battery, when the truck starts moving. [FIRMWARE.md](FIRMWARE.md) lists the same triggers.
+- The tracker is not told the unit's temperature range (neither answer carries it), so it cannot upload early on an excursion. The server finds excursions from the readings; an early upload would need the range added to `GET /api/device/state`.
+
+## Gaps in this contract
+
+- **A missing sensor cannot be reported.** A reading without `temp` still counts as a fresh reading, so the control room keeps showing the last temperature as current. A field for "no cargo sensor" and an alert for it are needed on the server.
+- **One temperature per reading.** With several modules the tracker sends the warmest valid value. Sending every sensor needs a new field.
+- **The not-reporting limit is fixed at 5 minutes.** A longer limit for a tracker on its battery would let it sleep longer.
 
 ## What the server does with them
 
@@ -116,7 +122,7 @@ One reading a minute is 1,440 a day. Keep at least a week (about 10,000 readings
 
 ## Data use
 
-A reading is about 170 bytes of JSON. Uploading five at a time every five minutes, with a new secure connection each time, comes to roughly 60 MB a month. Reusing the secure session between uploads brings that to about 15 to 20 MB. Sending every reading on its own new connection would use around 280 MB, so batch.
+A reading is about 170 bytes of JSON. Uploading four at a time every four minutes, with a new secure connection each time, comes to roughly 75 MB a month. Reusing the secure session between uploads brings that to about 20 to 25 MB. Sending every reading on its own new connection would use around 280 MB, so batch.
 
 ## Security the firmware must provide
 
@@ -128,8 +134,16 @@ A reading is about 170 bytes of JSON. Uploading five at a time every five minute
 
 ```bash
 node server/server.js --demo
-node server/devices.js add TRK-951 "Simulator"
+node server/devices.js add TRK-733 "Simulator"
 node tools/device-sim.js --key DEV-XXXXXX.<secret> --scenario all
 ```
 
-Scenarios: `normal`, `door`, `warm`, `power-cut`, `offline`, `detour`, `stop`, `all`. Watch the unit in the control room while it runs. In `offline` the simulator holds readings and delivers them together when the signal returns.
+Scenarios: `normal`, `door`, `warm`, `power-cut`, `offline` and `all`. Watch the unit in the control room while it runs. In `offline` the simulator holds readings and delivers them together when the signal returns.
+
+Newer versions of the simulator also have `detour` and `stop`. For those:
+
+- start the server with `--stop-after 20`, or a stop is reported only after 5 minutes of standing still, longer than the scenario lasts;
+- use a unit with a long route such as TRK-733, or slow the simulator with `--speed 5`: a unit with a short route such as TRK-951 reaches its destination before the detour begins, and after arrival the server ignores positions for route and stop purposes;
+- a unit that has arrived stays delivered in the database, so start the server with `--database :memory:` (or a new file) before running again.
+
+The server above listens on this PC only. To reach it from a real board on the same Wi-Fi, add `--lan`. It speaks plain HTTP on port 4310.
