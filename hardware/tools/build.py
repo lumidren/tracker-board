@@ -157,7 +157,7 @@ def tracker():
                     [(10, 'VIN'), (11, 'VIN'), (1, 'VINA'), (12, 'EN'), (13, 'PS/SYNC'), (8, 'L1'), (9, 'L1')],
                     [(4, 'VOUT'), (5, 'VOUT'), (3, 'FB'), (14, 'PG'), (6, 'L2'), (7, 'L2'), (2, 'GND'), (15, 'PGND')])
     b.add(buckboost, 'TPS63020DSJ', {10: 'VSYS', 11: 'VSYS', 1: 'VINA_MODEM', 12: 'MODEM_PWR_EN', 13: 'GND', 8: 'BB_L1', 9: 'BB_L1',
-                                     4: 'V_MODEM', 5: 'V_MODEM', 3: 'FB_MODEM', 14: NC, 6: 'BB_L2', 7: 'BB_L2', 2: 'GND', 15: 'GND'},
+                                     4: 'V_MODEM', 5: 'V_MODEM', 3: 'FB_MODEM', 14: 'MODEM_PG', 6: 'BB_L2', 7: 'BB_L2', 2: 'GND', 15: 'GND'},
           mpn='TPS63020DSJR', desc='Buck-boost converter, 4 A switch, VSON-14 3x4 mm', price=2.20)
     b.C('10uF', 'VSYS', 'GND', footprint=C0805, price=0.05)
     b.C('10uF', 'VSYS', 'GND', footprint=C0805, price=0.05)
@@ -169,9 +169,16 @@ def tracker():
     b.C('22uF', 'V_MODEM', 'GND', footprint=C0805, price=0.06)
     b.C('22uF', 'V_MODEM', 'GND', footprint=C0805, price=0.06)
     b.R('100k', 'MODEM_PWR_EN', 'GND')
-    b.CP('1000uF/6.3V', 'V_MODEM', 'GND', desc='Polymer or low-ESR electrolytic, for transmit bursts', price=0.40)
-    b.C('100nF', 'V_MODEM', 'GND')
-    b.C('33pF', 'V_MODEM', 'GND', desc='Ceramic capacitor, C0G')
+    b.R('100k', '+3V3', 'MODEM_PG', desc='Pull-up for the open-drain power-good output: low while the converter is at its current limit')
+    b.CP('1000uF/6.3V', 'V_MODEM', 'GND', desc='Polymer or low-ESR electrolytic, the bulk capacitor SIMCom recommends. It covers the start of a burst, not all of it', price=0.40)
+    b.C('1uF', 'V_MODEM', 'GND', desc='Ceramic capacitor, X7R, at the modem supply pads')
+    b.C('100nF', 'V_MODEM', 'GND', desc='Ceramic capacitor, X7R, at the modem supply pads')
+    b.C('33pF', 'V_MODEM', 'GND', desc='Ceramic capacitor, C0G, at the modem supply pads')
+    b.C('10pF', 'V_MODEM', 'GND', desc='Ceramic capacitor, C0G, at the modem supply pads: works at the 1.8 to 2.6 GHz bands')
+    b.R('470R', 'V_MODEM', 'MODEM_BLEED', desc='Discharge: takes the 3.8 V rail below 0.1 V about 2 s after the supply is switched off')
+    b.add('NMOS', 'AO3400A', {1: 'MODEM_DISCHARGE', 3: 'MODEM_BLEED', 2: 'GND'}, footprint=SOT23, mpn='AO3400A',
+          desc='N-MOSFET 30 V 5 A. On only while the modem supply is off', price=0.05)
+    b.R('100k', 'MODEM_DISCHARGE', 'GND')
     b.D('DZ', 'SMF5.0A', 'V_MODEM', 'GND', footprint='Diode_SMD:D_SOD-123F', mpn='SMF5.0A', desc='TVS, 5 V stand-off', price=0.05)
     b.TP('V_MODEM', 'V_MODEM')
 
@@ -259,7 +266,7 @@ def tracker():
     b.TP('MODEM_RESET_N', 'RESET')
 
     # ---- 8 ------------------------------------------------------------------
-    b.section('8  Processor', 'ESP32-S3-WROOM-1. IO3, IO45 and IO46 set the start-up mode and stay unconnected. IO35 to IO37 stay free.')
+    b.section('8  Processor', 'ESP32-S3-WROOM-1-N8. IO3, IO45 and IO46 set the start-up mode and stay unconnected. IO35 to IO37 are usable on the N8 (no PSRAM).')
     esp = box('ESP32-S3-WROOM-1', 'U',
               [(2, '3V3'), (3, 'EN'), (27, 'IO0'), (39, 'IO1'), (38, 'IO2'), (15, 'IO3'), (4, 'IO4'), (5, 'IO5'), (6, 'IO6'), (7, 'IO7'),
                (12, 'IO8'), (17, 'IO9'), (18, 'IO10'), (19, 'IO11'), (20, 'IO12'), (21, 'IO13'), (22, 'IO14'), (8, 'IO15'), (9, 'IO16'),
@@ -271,7 +278,7 @@ def tracker():
     b.add(esp, 'ESP32-S3-WROOM-1-N8', {
         2: '+3V3', 3: 'EN', 27: 'BOOT', 39: 'DOOR1', 38: 'DOOR2', 15: NC, 4: 'IGN_SENSE', 5: 'VIN_SENSE', 6: 'BAT_SENSE', 7: 'ACC_INT',
         12: 'I2C_SDA', 17: 'I2C_SCL', 18: 'ONEWIRE', 19: 'MODEM_DTR_3V3', 20: 'RS485_TX', 21: 'RS485_RX', 22: 'RS485_RE', 8: '5V_SW_EN',
-        9: 'GPS_PPS', 10: 'GPS_RX', 11: 'GPS_TX', 13: 'USB_DM', 14: 'USB_DP', 23: 'RS485_DE', 28: NC, 29: NC, 30: NC,
+        9: 'GPS_PPS', 10: 'GPS_RX', 11: 'GPS_TX', 13: 'USB_DM', 14: 'USB_DP', 23: 'RS485_DE', 28: NC, 29: 'MODEM_PG', 30: 'MODEM_DISCHARGE',
         31: 'MODEM_PWRKEY', 32: 'MODEM_STATUS_3V3', 33: 'MODEM_PWR_EN', 34: 'CHG_STAT', 35: 'STATUS_LED', 26: NC, 16: NC,
         24: 'MODEM_RX_3V3', 25: 'MODEM_TX_3V3', 36: 'UART0_RX', 37: 'UART0_TX', 1: 'GND', 40: 'GND', 41: 'GND'},
           footprint='RF_Module:ESP32-S3-WROOM-1', mpn='ESP32-S3-WROOM-1-N8', desc='Wi-Fi and Bluetooth module, 8 MB flash', price=3.20)
@@ -501,7 +508,9 @@ TRACKER_PINS = {
     'USB_DP': 'Native USB D+',
     'MODEM_PWRKEY': 'High presses the modem power key',
     'MODEM_STATUS_3V3': 'High when the modem has started',
-    'MODEM_PWR_EN': 'High turns on the 3.8 V modem supply',
+    'MODEM_PWR_EN': 'High turns on the 3.8 V modem supply. Floats (supply off) during a processor reset unless held',
+    'MODEM_PG': 'Modem supply power good. Low while the converter is off or at its current limit',
+    'MODEM_DISCHARGE': 'High discharges the modem supply through 470 ohm. Use only while MODEM_PWR_EN is low',
     'CHG_STAT': 'Charger status. Low during the first charge after vehicle power returns, or while charging waits for the cell temperature. Toggling at about 2 Hz: charger timer fault. High: done, topping up, or no vehicle power',
     'STATUS_LED': 'Status light, high = on',
     'MODEM_RX_3V3': 'Serial to the modem (processor transmits)',
