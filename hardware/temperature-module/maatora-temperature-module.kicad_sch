@@ -887,7 +887,7 @@
     (uuid 0005c56a-fd65-56a9-8118-c8178cdd0c61)
     (property "Reference" "R5" (at 325.12 67.31 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property "Value" "120R" (at 325.12 69.85 0) (effects (font (size 1.27 1.27)) (justify left)))
-    (property "Footprint" "Resistor_SMD:R_0603_1608Metric" (at 322.58 68.58 0) (effects (font (size 1.27 1.27)) hide))
+    (property "Footprint" "Resistor_SMD:R_1206_3216Metric" (at 322.58 68.58 0) (effects (font (size 1.27 1.27)) hide))
     (property "Datasheet" "" (at 322.58 68.58 0) (effects (font (size 1.27 1.27)) hide))
     (property "MPN" "" (at 322.58 68.58 0) (effects (font (size 1.27 1.27)) hide))
     (pin "1" (uuid 1174df8d-36ea-5726-a0c9-1fdaee4b8a30))

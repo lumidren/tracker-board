@@ -86,8 +86,9 @@ J8,1,Header 1x5,Socket for the GNSS module,,Connector_PinHeader_2.54mm:PinHeader
 R49,1,470R,Limits the current into the module while its supply is switched off,,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.01
 U11,1,SP3485EN,"RS-485 transceiver, 3.3 V",SP3485EN-L/TR,Package_SO:SOIC-8_3.9x4.9mm_P1.27mm,yes,0.30,0.30
 J9,1,RJ45,"Sensor bus socket, shielded",,Connector_RJ:RJ45_Amphenol_RJHSE5380,yes,0.35,0.35
-R53 R54,2,390R,Bus bias: about 235 mV idle with both terminators fitted,,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.02
-R55,1,120R,Bus termination,,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.01
+R53,1,390R,"Bus bias from the switched cable supply: about 357 mV idle with both terminators, and no drain while the cable is off",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.01
+R54,1,390R,Bus bias: about 357 mV idle with both terminators fitted,,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.01
+R55,1,120R,"Bus termination, 1206, 0.25 W: survives a crossover cable that puts 5 V across it",,Resistor_SMD:R_1206_3216Metric,yes,0.01,0.01
 JP2,1,TERM,"Solder jumper, closed: termination on",,Jumper:SolderJumper-2_P1.3mm_Bridged_RoundedPad1.0x1.5mm,yes,0.00,0.00
 D15,1,SM712,RS-485 line protection,SM712,Package_TO_SOT_SMD:SOT-23,yes,0.15,0.15
 D16,1,SMAJ5.0A,TVS on the cable supply,SMAJ5.0A,Diode_SMD:D_SMA,yes,0.08,0.08

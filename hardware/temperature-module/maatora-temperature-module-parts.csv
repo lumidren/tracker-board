@@ -13,7 +13,7 @@ R2,1,33k,"Resistor, 1 %, 0603",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.01
 U2,1,SP3485EN,"RS-485 transceiver, 3.3 V",SP3485EN-L/TR,Package_SO:SOIC-8_3.9x4.9mm_P1.27mm,yes,0.30,0.30
 R3 R4 R6,3,10k,"Resistor, 1 %, 0603",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.03
 D3,1,SM712,RS-485 line protection,SM712,Package_TO_SOT_SMD:SOT-23,yes,0.15,0.15
-R5,1,120R,Bus termination,,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.01
+R5,1,120R,"Bus termination, 1206, 0.25 W: survives a crossover cable that puts 5 V across it",,Resistor_SMD:R_1206_3216Metric,yes,0.01,0.01
 JP1,1,END TERM,Jumper: fit on the last module of the cable,,Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical,yes,0.03,0.03
 U3,1,ATmega328P-AU,"8-bit microcontroller, TQFP-32",ATMEGA328P-AU,Package_QFP:TQFP-32_7x7mm_P0.8mm,yes,2.20,2.20
 J3,1,Header 2x3,Programming header,,Connector_PinHeader_2.54mm:PinHeader_2x03_P2.54mm_Vertical,yes,0.05,0.05

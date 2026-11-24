@@ -349,9 +349,10 @@ def tracker():
     b.R('10k', '+3V3', 'RS485_RX')
     b.R('10k', 'RS485_DE', 'GND')
     b.R('10k', 'RS485_RE', 'GND')
-    b.R('390R', '+3V3', 'RS485_A', desc='Bus bias: about 235 mV idle with both terminators fitted')
-    b.R('390R', 'RS485_B', 'GND', desc='Bus bias: about 235 mV idle with both terminators fitted')
-    b.R('120R', 'RS485_A', 'RS485_TERM', desc='Bus termination')
+    b.R('390R', '5V_SW', 'RS485_A', desc='Bus bias from the switched cable supply: about 357 mV idle with both terminators, and no drain while the cable is off')
+    b.R('390R', 'RS485_B', 'GND', desc='Bus bias: about 357 mV idle with both terminators fitted')
+    b.R('120R', 'RS485_A', 'RS485_TERM', footprint='Resistor_SMD:R_1206_3216Metric',
+        desc='Bus termination, 1206, 0.25 W: survives a crossover cable that puts 5 V across it')
     b.add('JPC', 'TERM', {1: 'RS485_TERM', 2: 'RS485_B'}, footprint='Jumper:SolderJumper-2_P1.3mm_Bridged_RoundedPad1.0x1.5mm',
           desc='Solder jumper, closed: termination on', price=0.0)
     b.add('SM712', 'SM712', {1: 'RS485_A', 2: 'RS485_B', 3: 'GND'}, footprint=SOT23, mpn='SM712', desc='RS-485 line protection', price=0.15)
@@ -436,7 +437,8 @@ def module():
     b.R('10k', 'RS485_DIR', 'GND')
     b.R('10k', '+3V3', 'MCU_RXD')
     b.add('SM712', 'SM712', {1: 'RS485_A', 2: 'RS485_B', 3: 'GND'}, footprint=SOT23, mpn='SM712', desc='RS-485 line protection', price=0.15)
-    b.R('120R', 'RS485_A', 'RS485_TERM', desc='Bus termination')
+    b.R('120R', 'RS485_A', 'RS485_TERM', footprint='Resistor_SMD:R_1206_3216Metric',
+        desc='Bus termination, 1206, 0.25 W: survives a crossover cable that puts 5 V across it')
     b.add('JPO', 'END TERM', {1: 'RS485_TERM', 2: 'RS485_B'}, footprint='Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical',
           desc='Jumper: fit on the last module of the cable', price=0.03)
 
