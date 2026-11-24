@@ -7,8 +7,8 @@ C1,1,220uF/63V,"Electrolytic, low impedance, 105 C, ripple rating 0.8 A or more 
 C2,1,100nF/100V,"Ceramic capacitor, X7R",,Capacitor_SMD:C_0805_2012Metric,yes,0.03,0.03
 R1,1,499k,"Resistor, 1 %, 1206. Two in series carry the ignition line pulses (about -600 V on 24 V trucks)",,Resistor_SMD:R_1206_3216Metric,yes,0.01,0.01
 R2,1,499k,"Resistor, 1 %, 1206",,Resistor_SMD:R_1206_3216Metric,yes,0.01,0.01
-R3 R5 R30 R32,4,47k,"Resistor, 1 %, 0603",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.04
-C3 C4 C6 C10 C14 C17 C28 C30 C31 C32 C39 C41 C43 C44 C46 C47 C48 C50,18,100nF,"Ceramic capacitor, X7R",,Capacitor_SMD:C_0603_1608Metric,yes,0.02,0.36
+R3 R5 R31 R34 R36,5,47k,"Resistor, 1 %, 0603",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.05
+C3 C4 C6 C10 C14 C17 C28 C30 C31 C32 C40 C42 C44 C45 C47 C48 C49 C51,18,100nF,"Ceramic capacitor, X7R",,Capacitor_SMD:C_0603_1608Metric,yes,0.02,0.36
 D3,1,BAV199,Dual low-leakage diode clamp. A BAT54S leaks enough in a hot cab to fake ignition on,BAV199,Package_TO_SOT_SMD:SOT-23,yes,0.05,0.05
 R4,1,1M,"Resistor, 1 %, 0603, 75 V working voltage or more",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.01
 U1,1,LM2596HVS-5.0,"Step-down converter, 60 V in, 5 V 3 A out. The common LM2596S-5.0 is a 40 V part and is not a substitute",H&M Semi LM2596HVS-5.0 (not the 40 V LM2596S-5.0),Package_TO_SOT_SMD:TO-263-5_TabPin3,yes,1.20,1.20
@@ -18,8 +18,8 @@ C5,1,470uF/16V,"Electrolytic, low ESR, 105 C. The value in the regulator datashe
 U2,1,BQ24074RGT,Li-ion charger with power path and cell temperature input,BQ24074RGTR,Package_DFN_QFN:VQFN-16-1EP_3x3mm_P0.5mm_EP1.6x1.6mm,yes,1.60,1.60
 J2,1,JST-PH 3,Protected 1S cell with 10 k NTC,JST B3B-PH-K,Connector_JST:JST_PH_B3B-PH-K_1x03_P2.00mm_Vertical,yes,0.10,0.10
 C7 C9,2,4.7uF,"Ceramic capacitor, X7R",,Capacitor_SMD:C_0805_2012Metric,yes,0.04,0.08
-C8 C15 C16 C29 C38 C42 C49,7,10uF,"Ceramic capacitor, X7R",,Capacitor_SMD:C_0805_2012Metric,yes,0.05,0.35
-R6 R13 R38 R39 R43 R44 R46 R47 R48 R52 R53 R54 R55,13,10k,"Resistor, 1 %, 0603",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.13
+C8 C15 C16 C29 C39 C43 C50,7,10uF,"Ceramic capacitor, X7R",,Capacitor_SMD:C_0805_2012Metric,yes,0.05,0.35
+R6 R13 R32 R42 R43 R47 R48 R50 R51 R52 R56 R57 R58 R59,14,10k,"Resistor, 1 %, 0603",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.14
 R7,1,1.5k,Input limit about 1.07 A (1610 / R),,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.01
 R8,1,1.78k,Charge current 0.5 A (890 / R),,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.01
 R9,1,68k,Charge safety timer about 9 h (6.8 h minimum). The 5 h default ends a full charge of the cell early,,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.01
@@ -54,47 +54,51 @@ R25,1,30k,"Resistor, 1 %, 0603",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.01
 U6,1,TPS2553DBV-1,"Current-limited switch, latch-off version. Disconnects the loads, which a step-up converter cannot do, and turns off on a short",TPS2553DBVR-1,Package_TO_SOT_SMD:SOT-23-6,yes,0.60,0.60
 R26,1,49.9k,Current limit 0.48 to 0.57 A (TI table),,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.01
 R27,1,10k,Pull-up for the open-drain fault output,,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.01
-U7,1,A7670E,"LTE Cat 1 module with 2G fallback, 88 pads, footprint from the hardware guide",SIMCom A7670E,,yes,11.00,11.00
-U8,1,TXS0104EPWR,"4-bit level translator, 1.8 V to 3.3 V",TXS0104EPWR,Package_SO:TSSOP-14_4.4x5mm_P0.65mm,yes,0.45,0.45
+U7,1,A7670E,"LTE Cat 1 module with 2G fallback, 88 pads, footprint from the hardware guide","SIMCom A7670E, 88-pad edition (Hardware Design V1.00 / V1.04). The -LASE and -FASE R2 modules have 124 pads",,yes,11.00,11.00
+U8,1,TXS0104EPWR,"4-bit level translator, 1.8 V to 3.3 V. Channel 4 is unused; its internal pull-ups hold it",TXS0104EPWR,Package_SO:TSSOP-14_4.4x5mm_P0.65mm,yes,0.45,0.45
 J3,1,Nano SIM,"Nano SIM holder, push-push, 6 contacts",,,yes,0.25,0.25
-D9,1,SMF05C,5-line ESD array for the SIM,SMF05C,Package_TO_SOT_SMD:SOT-363_SC-70-6,yes,0.08,0.08
+D9 D10 D11 D12,4,ESD9L5.0ST5G,"ESD diode, 5 V, 0.5 pF typical, one per SIM line. The modem allows about 50 pF of protection per line",onsemi ESD9L5.0ST5G,Diode_SMD:D_SOD-923,yes,0.04,0.16
 J4,1,U.FL,LTE antenna connector,Hirose U.FL-R-SMT-1,Connector_Coaxial:U.FL_Hirose_U.FL-R-SMT-1_Vertical,yes,0.10,0.10
-J5,1,Header 1x5,Modem USB for firmware updates,,Connector_PinHeader_2.54mm:PinHeader_1x05_P2.54mm_Vertical,no,0.05,0.00
-Q2 Q3,2,MMBT3904,NPN transistor,MMBT3904,Package_TO_SOT_SMD:SOT-23,yes,0.02,0.04
-R29 R31 R56 R58 R59,5,4.7k,"Resistor, 1 %, 0603",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.05
-R33 R40,2,1k,"Resistor, 1 %, 0603",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.02
-D10,1,blue,"Indicator LED, 0603: network",,LED_SMD:LED_0603_1608Metric,yes,0.03,0.03
-R34 R35 R36,3,22R,"Resistor, 1 %, 0603",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.03
-C33 C34 C35,3,33pF,"Ceramic capacitor, C0G",,Capacitor_SMD:C_0603_1608Metric,yes,0.02,0.06
-R37,1,0R,Series element of the antenna matching network,,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.01
-C36 C37,2,match,"Matching network, value from antenna tuning",,Capacitor_SMD:C_0603_1608Metric,no,0.02,0.00
+J5,1,Header 1x5,Modem USB for firmware updates. Never link BOOT to VBUS: the modem pins take 1.8 V,,Connector_PinHeader_2.54mm:PinHeader_1x05_P2.54mm_Vertical,no,0.05,0.00
+R29,1,10k,"Forced-download pull-up, used only through the BOOT 1V8 jumper",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.01
+JP1,1,BOOT 1V8,"Solder jumper, open. Close only to force a modem firmware download, then open it again",,Jumper:SolderJumper-2_P1.3mm_Open_RoundedPad1.0x1.5mm,yes,0.00,0.00
+Q2,1,MMBT3904,"NPN transistor: modem status to the processor, defined even when the modem is off",MMBT3904,Package_TO_SOT_SMD:SOT-23,yes,0.02,0.02
+R30 R33 R35 R60 R62 R63,6,4.7k,"Resistor, 1 %, 0603",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.06
+Q3 Q4,2,MMBT3904,NPN transistor,MMBT3904,Package_TO_SOT_SMD:SOT-23,yes,0.02,0.04
+R37 R44,2,1k,"Resistor, 1 %, 0603",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.02
+D13,1,blue,"Indicator LED, 0603: network",,LED_SMD:LED_0603_1608Metric,yes,0.03,0.03
+R38 R39 R40,3,22R,"Resistor, 1 %, 0603",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.03
+C33,1,33pF,"Ceramic capacitor, C0G, as in the modem guide",,Capacitor_SMD:C_0603_1608Metric,yes,0.02,0.02
+C34 C35 C36,3,22pF,"Ceramic capacitor, C0G. Not fitted, as in the modem guide",,Capacitor_SMD:C_0603_1608Metric,no,0.02,0.00
+R41,1,0R,Series element of the antenna matching network,,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.01
+C37 C38,2,match,"Matching network, value from antenna tuning",,Capacitor_SMD:C_0603_1608Metric,no,0.02,0.00
 U9,1,ESP32-S3-WROOM-1-N8,"Wi-Fi and Bluetooth module, 8 MB flash",ESP32-S3-WROOM-1-N8,RF_Module:ESP32-S3-WROOM-1,yes,3.20,3.20
-C40 C45,2,1uF,"Ceramic capacitor, X7R",,Capacitor_SMD:C_0603_1608Metric,yes,0.02,0.04
+C41 C46,2,1uF,"Ceramic capacitor, X7R",,Capacitor_SMD:C_0603_1608Metric,yes,0.02,0.04
 SW1,1,RESET,Push button,,Button_Switch_SMD:SW_SPST_TL3342,yes,0.05,0.05
 SW2,1,BOOT,Push button,,Button_Switch_SMD:SW_SPST_TL3342,yes,0.05,0.05
-D11,1,amber,"Indicator LED, 0603: status",,LED_SMD:LED_0603_1608Metric,yes,0.03,0.03
+D14,1,amber,"Indicator LED, 0603: status",,LED_SMD:LED_0603_1608Metric,yes,0.03,0.03
 J6,1,USB-C 16P,"USB-C receptacle, USB 2.0",HRO TYPE-C-31-M-12,Connector_USB:USB_C_Receptacle_HRO_TYPE-C-31-M-12,yes,0.20,0.20
 U10,1,USBLC6-2SC6,USB ESD protection,USBLC6-2SC6,Package_TO_SOT_SMD:SOT-23-6,yes,0.15,0.15
 J7,1,Header 1x6,"Serial programming and log header, as on Rev A",,Connector_PinHeader_2.54mm:PinHeader_1x06_P2.54mm_Vertical,yes,0.05,0.05
-R41 R42,2,5.1k,"Resistor, 1 %, 0603",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.02
-Q4 Q5,2,SS8050,"NPN transistor, automatic programming",SS8050,Package_TO_SOT_SMD:SOT-23,yes,0.02,0.04
+R45 R46,2,5.1k,"Resistor, 1 %, 0603",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.02
+Q5 Q6,2,SS8050,"NPN transistor, automatic programming",SS8050,Package_TO_SOT_SMD:SOT-23,yes,0.02,0.04
 J8,1,Header 1x5,Socket for the GNSS module,,Connector_PinHeader_2.54mm:PinHeader_1x05_P2.54mm_Vertical,yes,0.05,0.05
-R45,1,470R,Limits the current into the module while its supply is switched off,,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.01
+R49,1,470R,Limits the current into the module while its supply is switched off,,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.01
 U11,1,SP3485EN,"RS-485 transceiver, 3.3 V",SP3485EN-L/TR,Package_SO:SOIC-8_3.9x4.9mm_P1.27mm,yes,0.30,0.30
 J9,1,RJ45,"Sensor bus socket, shielded",,Connector_RJ:RJ45_Amphenol_RJHSE5380,yes,0.35,0.35
-R49 R50,2,390R,Bus bias: about 235 mV idle with both terminators fitted,,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.02
-R51,1,120R,Bus termination,,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.01
-JP1,1,TERM,"Solder jumper, closed: termination on",,Jumper:SolderJumper-2_P1.3mm_Bridged_RoundedPad1.0x1.5mm,yes,0.00,0.00
-D12,1,SM712,RS-485 line protection,SM712,Package_TO_SOT_SMD:SOT-23,yes,0.15,0.15
-D13,1,SMAJ5.0A,TVS on the cable supply,SMAJ5.0A,Diode_SMD:D_SMA,yes,0.08,0.08
+R53 R54,2,390R,Bus bias: about 235 mV idle with both terminators fitted,,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.02
+R55,1,120R,Bus termination,,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.01
+JP2,1,TERM,"Solder jumper, closed: termination on",,Jumper:SolderJumper-2_P1.3mm_Bridged_RoundedPad1.0x1.5mm,yes,0.00,0.00
+D15,1,SM712,RS-485 line protection,SM712,Package_TO_SOT_SMD:SOT-23,yes,0.15,0.15
+D16,1,SMAJ5.0A,TVS on the cable supply,SMAJ5.0A,Diode_SMD:D_SMA,yes,0.08,0.08
 J10,1,Micro-Fit 2x2,"Door switch connector, locking",Molex 43045-0412,Connector_Molex:Molex_Micro-Fit_3.0_43045-0412_2x02_P3.00mm_Vertical,yes,0.90,0.90
-D14 D15 D16,3,BAT54S,Dual Schottky clamp,BAT54S,Package_TO_SOT_SMD:SOT-23,yes,0.03,0.09
+D17 D18 D19,3,BAT54S,Dual Schottky clamp,BAT54S,Package_TO_SOT_SMD:SOT-23,yes,0.03,0.09
 J11,1,JST-XH 3,DS18B20 probe connector,JST B3B-XH-A,Connector_JST:JST_XH_B3B-XH-A_1x03_P2.50mm_Vertical,yes,0.08,0.08
 U12,1,LIS3DHTR,"3-axis accelerometer, I2C address 0x18",LIS3DHTR,Package_LGA:LGA-16_3x3mm_P0.5mm_LayoutBorder3x5y,yes,0.80,0.80
 U13,1,SHT40-AD1B,"Board temperature and humidity, I2C address 0x44",SHT40-AD1B,Sensor_Humidity:Sensirion_DFN-4_1.5x1.5mm_P0.8mm_SHT4x_NoCentralPad,yes,1.50,1.50
-R57,1,100R,"Resistor, 1 %, 0603",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.01
+R61,1,100R,"Resistor, 1 %, 0603",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.01
 
-"Total of fitted parts (estimate, small quantities)",,,,,,,,32.30
+"Total of fitted parts (estimate, small quantities)",,,,,,,,32.40
 
 Not on the schematic,Quantity,Item,Note,Part number,,,Unit price USD (estimate),Line total USD
 ,1,GNSS module NEO-7M with antenna connector,Plugs onto the GNSS header,u-blox NEO-7M module,,,4.00,4.00
@@ -105,4 +109,4 @@ Not on the schematic,Quantity,Item,Note,Part number,,,Unit price USD (estimate),
 ,1,Sealed enclosure with cable glands,IP65 or better,,,,5.00,5.00
 ,1,Vehicle harness with 2 A blade fuse,"Supply, ground and ignition",,,,3.00,3.00
 
-"Whole unit (estimate, small quantities)",,,,,,,,55.80
+"Whole unit (estimate, small quantities)",,,,,,,,55.90

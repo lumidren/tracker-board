@@ -224,25 +224,36 @@ def tracker():
     nets.update({55: 'V_MODEM', 56: 'V_MODEM', 57: 'V_MODEM', 15: 'VDD_1V8', 1: 'MODEM_PWRKEY_N', 16: 'MODEM_RESET_N',
                  66: 'MODEM_STATUS', 52: 'MODEM_NETLIGHT', 9: 'MODEM_TXD', 10: 'MODEM_RXD', 3: 'MODEM_DTR',
                  6: 'MODEM_USB_BOOT', 24: 'MODEM_VBUS', 27: 'MODEM_USB_DP', 28: 'MODEM_USB_DM',
-                 30: 'SIM_VDD', 31: 'SIM_DATA_M', 32: 'SIM_CLK_M', 33: 'SIM_RST_M', 60: 'RF_ANT'})
-    b.add(modem, 'A7670E', nets, mpn='SIMCom A7670E', desc='LTE Cat 1 module with 2G fallback, 88 pads, footprint from the hardware guide', price=11.00)
+                 30: 'SIM_VDD', 31: 'SIM_DATA_M', 32: 'SIM_CLK_M', 33: 'SIM_RST_M', 60: 'RF_ANT', 23: 'MODEM_LOG_TX'})
+    b.add(modem, 'A7670E', nets, mpn='SIMCom A7670E, 88-pad edition (Hardware Design V1.00 / V1.04). The -LASE and -FASE R2 modules have 124 pads',
+          desc='LTE Cat 1 module with 2G fallback, 88 pads, footprint from the hardware guide', price=11.00)
     shifter = box('TXS0104E', 'U', [(1, 'VCCA'), (2, 'A1'), (3, 'A2'), (4, 'A3'), (5, 'A4'), (8, 'OE'), (6, 'NC')],
                   [(14, 'VCCB'), (13, 'B1'), (12, 'B2'), (11, 'B3'), (10, 'B4'), (7, 'GND'), (9, 'NC')])
-    b.add(shifter, 'TXS0104EPWR', {1: 'VDD_1V8', 2: 'MODEM_TXD', 3: 'MODEM_RXD', 4: 'MODEM_DTR', 5: 'MODEM_STATUS', 8: 'VDD_1V8', 6: NC,
-                                   14: '+3V3', 13: 'MODEM_TX_3V3', 12: 'MODEM_RX_3V3', 11: 'MODEM_DTR_3V3', 10: 'MODEM_STATUS_3V3', 7: 'GND', 9: NC},
-          footprint='Package_SO:TSSOP-14_4.4x5mm_P0.65mm', mpn='TXS0104EPWR', desc='4-bit level translator, 1.8 V to 3.3 V', price=0.45)
+    b.add(shifter, 'TXS0104EPWR', {1: 'VDD_1V8', 2: 'MODEM_TXD', 3: 'MODEM_RXD', 4: 'MODEM_DTR', 5: NC, 8: 'VDD_1V8', 6: NC,
+                                   14: '+3V3', 13: 'MODEM_TX_3V3', 12: 'MODEM_RX_3V3', 11: 'MODEM_DTR_3V3', 10: NC, 7: 'GND', 9: NC},
+          footprint='Package_SO:TSSOP-14_4.4x5mm_P0.65mm', mpn='TXS0104EPWR',
+          desc='4-bit level translator, 1.8 V to 3.3 V. Channel 4 is unused; its internal pull-ups hold it', price=0.45)
     sim = box('SIM_Nano', 'J', [('C1', 'VCC'), ('C2', 'RST'), ('C3', 'CLK'), ('C5', 'GND'), ('C6', 'VPP'), ('C7', 'IO')], [])
     b.add(sim, 'Nano SIM', {'C1': 'SIM_VDD', 'C2': 'SIM_RST', 'C3': 'SIM_CLK', 'C5': 'GND', 'C6': NC, 'C7': 'SIM_DATA'},
           desc='Nano SIM holder, push-push, 6 contacts', price=0.25)
-    sim_esd = box('SMF05C', 'D', [(1, 'IO1'), (3, 'IO2'), (4, 'IO3')], [(5, 'IO4'), (6, 'IO5'), (2, 'GND')])
-    b.add(sim_esd, 'SMF05C', {1: 'SIM_VDD', 3: 'SIM_DATA', 4: 'SIM_CLK', 5: 'SIM_RST', 6: NC, 2: 'GND'},
-          footprint='Package_TO_SOT_SMD:SOT-363_SC-70-6', mpn='SMF05C', desc='5-line ESD array for the SIM', price=0.08)
+    for line in ('SIM_VDD', 'SIM_DATA', 'SIM_CLK', 'SIM_RST'):
+        b.D('DZ', 'ESD9L5.0ST5G', line, 'GND', footprint='Diode_SMD:D_SOD-923', mpn='onsemi ESD9L5.0ST5G',
+            desc='ESD diode, 5 V, 0.5 pF typical, one per SIM line. The modem allows about 50 pF of protection per line', price=0.04)
     antenna = box('Antenna_UFL', 'J', [(1, 'SIG'), (2, 'GND')], [])
     b.add(antenna, 'U.FL', {1: 'ANT_LTE', 2: 'GND'}, footprint='Connector_Coaxial:U.FL_Hirose_U.FL-R-SMT-1_Vertical',
           mpn='Hirose U.FL-R-SMT-1', desc='LTE antenna connector', price=0.10)
     service = box('Modem_Service_1x5', 'J', [(1, 'VBUS'), (2, 'D-'), (3, 'D+'), (4, 'GND'), (5, 'BOOT')], [])
     b.add(service, 'Header 1x5', {1: 'MODEM_VBUS', 2: 'MODEM_USB_DM', 3: 'MODEM_USB_DP', 4: 'GND', 5: 'MODEM_USB_BOOT'},
-          footprint='Connector_PinHeader_2.54mm:PinHeader_1x05_P2.54mm_Vertical', desc='Modem USB for firmware updates', price=0.05, dnp=True)
+          footprint='Connector_PinHeader_2.54mm:PinHeader_1x05_P2.54mm_Vertical',
+          desc='Modem USB for firmware updates. Never link BOOT to VBUS: the modem pins take 1.8 V', price=0.05, dnp=True)
+    b.R('10k', 'VDD_1V8', 'MODEM_BOOT_PU', desc='Forced-download pull-up, used only through the BOOT 1V8 jumper')
+    b.add('JPO', 'BOOT 1V8', {1: 'MODEM_BOOT_PU', 2: 'MODEM_USB_BOOT'}, footprint='Jumper:SolderJumper-2_P1.3mm_Open_RoundedPad1.0x1.5mm',
+          desc='Solder jumper, open. Close only to force a modem firmware download, then open it again', price=0.0)
+    b.add('NPN', 'MMBT3904', {1: 'Q_STAT_B', 3: 'MODEM_STATUS_N', 2: 'GND'}, footprint=SOT23, mpn='MMBT3904',
+          desc='NPN transistor: modem status to the processor, defined even when the modem is off', price=0.02)
+    b.R('4.7k', 'MODEM_STATUS', 'Q_STAT_B')
+    b.R('47k', 'Q_STAT_B', 'GND')
+    b.R('10k', '+3V3', 'MODEM_STATUS_N')
     b.add('NPN', 'MMBT3904', {1: 'Q_PWRKEY_B', 3: 'MODEM_PWRKEY_N', 2: 'GND'}, footprint=SOT23, mpn='MMBT3904', desc='NPN transistor', price=0.02)
     b.R('4.7k', 'MODEM_PWRKEY', 'Q_PWRKEY_B')
     b.R('47k', 'Q_PWRKEY_B', 'GND')
@@ -257,13 +268,16 @@ def tracker():
     b.R('22R', 'SIM_CLK_M', 'SIM_CLK')
     b.R('22R', 'SIM_RST_M', 'SIM_RST')
     b.C('100nF', 'SIM_VDD', 'GND')
-    b.C('33pF', 'SIM_DATA', 'GND', desc='Ceramic capacitor, C0G')
-    b.C('33pF', 'SIM_CLK', 'GND', desc='Ceramic capacitor, C0G')
-    b.C('33pF', 'SIM_RST', 'GND', desc='Ceramic capacitor, C0G')
+    b.C('33pF', 'SIM_VDD', 'GND', desc='Ceramic capacitor, C0G, as in the modem guide')
+    b.C('22pF', 'SIM_DATA', 'GND', dnp=True, desc='Ceramic capacitor, C0G. Not fitted, as in the modem guide')
+    b.C('22pF', 'SIM_CLK', 'GND', dnp=True, desc='Ceramic capacitor, C0G. Not fitted, as in the modem guide')
+    b.C('22pF', 'SIM_RST', 'GND', dnp=True, desc='Ceramic capacitor, C0G. Not fitted, as in the modem guide')
     b.R('0R', 'RF_ANT', 'ANT_LTE', desc='Series element of the antenna matching network')
     b.C('match', 'RF_ANT', 'GND', dnp=True, desc='Matching network, value from antenna tuning')
     b.C('match', 'ANT_LTE', 'GND', dnp=True, desc='Matching network, value from antenna tuning')
     b.TP('MODEM_RESET_N', 'RESET')
+    b.TP('VDD_1V8', 'VDD_1V8')
+    b.TP('MODEM_LOG_TX', 'LOG_TX')
 
     # ---- 8 ------------------------------------------------------------------
     b.section('8  Processor', 'ESP32-S3-WROOM-1-N8. IO3, IO45 and IO46 set the start-up mode and stay unconnected. IO35 to IO37 are usable on the N8 (no PSRAM).')
@@ -279,7 +293,7 @@ def tracker():
         2: '+3V3', 3: 'EN', 27: 'BOOT', 39: 'DOOR1', 38: 'DOOR2', 15: NC, 4: 'IGN_SENSE', 5: 'VIN_SENSE', 6: 'BAT_SENSE', 7: 'ACC_INT',
         12: 'I2C_SDA', 17: 'I2C_SCL', 18: 'ONEWIRE', 19: 'MODEM_DTR_3V3', 20: 'RS485_TX', 21: 'RS485_RX', 22: 'RS485_RE', 8: '5V_SW_EN',
         9: 'GPS_PPS', 10: 'GPS_RX', 11: 'GPS_TX', 13: 'USB_DM', 14: 'USB_DP', 23: 'RS485_DE', 28: 'CABLE_FAULT_N', 29: 'MODEM_PG', 30: 'MODEM_DISCHARGE',
-        31: 'MODEM_PWRKEY', 32: 'MODEM_STATUS_3V3', 33: 'MODEM_PWR_EN', 34: 'CHG_STAT', 35: 'STATUS_LED', 26: NC, 16: NC,
+        31: 'MODEM_PWRKEY', 32: 'MODEM_STATUS_N', 33: 'MODEM_PWR_EN', 34: 'CHG_STAT', 35: 'STATUS_LED', 26: NC, 16: NC,
         24: 'MODEM_RX_3V3', 25: 'MODEM_TX_3V3', 36: 'UART0_RX', 37: 'UART0_TX', 1: 'GND', 40: 'GND', 41: 'GND'},
           footprint='RF_Module:ESP32-S3-WROOM-1', mpn='ESP32-S3-WROOM-1-N8', desc='Wi-Fi and Bluetooth module, 8 MB flash', price=3.20)
     b.C('10uF', '+3V3', 'GND', footprint=C0805, price=0.05)
@@ -508,14 +522,14 @@ TRACKER_PINS = {
     'USB_DM': 'Native USB D-: programming and logs',
     'USB_DP': 'Native USB D+',
     'MODEM_PWRKEY': 'High presses the modem power key',
-    'MODEM_STATUS_3V3': 'High when the modem has started',
+    'MODEM_STATUS_N': 'Low when the modem has started. High when it is off, unpowered or starting',
     'MODEM_PWR_EN': 'High turns on the 3.8 V modem supply. Floats (supply off) during a processor reset unless held',
     'MODEM_PG': 'Modem supply power good. Low while the converter is off or at its current limit',
     'MODEM_DISCHARGE': 'High discharges the modem supply through 470 ohm. Use only while MODEM_PWR_EN is low',
     'CHG_STAT': 'Charger status. Low during the first charge after vehicle power returns, or while charging waits for the cell temperature. Toggling at about 2 Hz: charger timer fault. High: done, topping up, or no vehicle power',
     'STATUS_LED': 'Status light, high = on',
     'MODEM_RX_3V3': 'Serial to the modem (processor transmits)',
-    'MODEM_TX_3V3': 'Serial from the modem (processor receives)',
+    'MODEM_TX_3V3': 'Serial from the modem (processor receives). Floats while the modem is off: enable the internal pull-up',
     'UART0_RX': 'Serial header: receive',
     'UART0_TX': 'Serial header: transmit, start-up log',
     '+3V3': 'Supply',
