@@ -6,7 +6,7 @@ One cable runs from the tracker in the cab to the temperature modules in the car
 
 ## The cable
 
-Ordinary shielded network cable (Cat5e) with RJ45 plugs, wired straight through. It runs as one line: tracker, module, module, module. Each module has two sockets, in and out, and it does not matter which is used for which. Never split the cable into branches.
+Ordinary shielded network cable (Cat5e) with RJ45 plugs, wired straight through. **Straight-through cables only:** with the Rev A pinout a crossover cable ties the data lines to the supply, so nothing answers and the terminators run hot (they are 0.25 W parts so that they survive it). It runs as one line: tracker, module, module, module. Each module has two sockets, in and out, and it does not matter which is used for which. Never split the cable into branches.
 
 | Pin | Colour (T568B) | Rev A pinout, as built | Network-safe pinout, optional |
 | --- | --- | --- | --- |
@@ -24,8 +24,8 @@ A is the line that sits higher while nobody is talking. B is the lower one.
 
 **This is not a network cable in use, only in shape.** Never plug it into a computer, a router, a switch or a power-over-network injector.
 
-- With the Rev A pinout, 5 V and ground share a pair. A network socket has a transformer across each pair, so plugging in puts 5 V across that transformer. The tracker's 0.5 A fuse limits the current, but the other device can still be damaged.
-- The network-safe pinout gives both wires of a pair the same signal, so nothing flows if it is plugged into a network socket. It works with straight and crossover cables alike. It does **not** work with boards wired to the Rev A pinout. To switch, set `CABLE = 'network-safe'` in `tools/build.py`, rebuild, and change every board together.
+- With the Rev A pinout, 5 V and ground share a pair. A network socket has a transformer across each pair, so plugging in puts 5 V across that transformer. The tracker's 0.5 A current limit holds the current down, but the other device can still be damaged.
+- The network-safe pinout puts no supply voltage across any pair, which removes that 5 V across a transformer. The data pair still carries A and B, and a typical network socket joins its pairs through 75 Ω resistors, so a few tens of milliamps can still flow: it must still never be plugged into network equipment. It also works with the older crossover cables that swap only pins 1-2 with 3-6; an all-pairs (gigabit) crossover cable works with neither pinout. It does **not** work with boards wired to the Rev A pinout. To switch, set `CABLE = 'network-safe'` in `tools/build.py`, rebuild, and change every board together.
 - Neither pinout survives an injector that puts 24 V or 48 V on the cable.
 
 ## Electrical rules
@@ -34,14 +34,14 @@ A is the line that sits higher while nobody is talking. B is the lower one.
 | --- | --- |
 | Signalling | RS-485, half duplex, 3.3 V transceivers (SP3485) |
 | Terminators | 120 Ω at the tracker (solder jumper `TERM`, closed as built) and 120 Ω at the last module (the END TERM jumper). No other module has its jumper fitted |
-| Idle state | Set at the tracker only: 390 Ω from A to 3.3 V and 390 Ω from B to ground. With both terminators that gives about 235 mV between A and B |
-| Supply | 5 V from the tracker through a 0.5 A resettable fuse. Each module has its own 0.2 A fuse and a diode against a reversed supply |
+| Idle state | Set at the tracker only: 390 Ω from A to the cable's 5 V and 390 Ω from B to ground. With both terminators that gives about 357 mV between A and B, with the lines near 2.7 V and 2.3 V. With the cable supply off the idle state is undefined, so the tracker ignores the line then |
+| Supply | 5 V from the tracker through a current-limited switch: about 0.5 A, it turns off on a short and tells the processor. Each module has its own 0.2 A fuse and a diode against a reversed supply |
 | Modules on one cable | Up to 15, addresses 1 to 15 |
 | Module current | About 5 mA each, more for the few milliseconds it answers (estimate, not measured) |
 
 **A quick check with a multimeter, everything unpowered:** between A and B you should read 55 to 60 Ω when both terminators are in place, and 100 to 120 Ω when the END TERM jumper is missing. A reading near 40 Ω means a third terminator is fitted somewhere.
 
-**Length.** The data would run for hundreds of metres. The limit is the 5 V arriving at the far end. Network cable has roughly 0.09 Ω per metre of wire, and the cable uses two wires each way, so 30 m with 15 modules loses about a quarter of a volt. Every module reports the voltage it receives (register 4 below). Keep it above 4.2 V.
+**Length.** The data would run for hundreds of metres. The limit is the 5 V arriving at the far end. Network cable has roughly 0.09 Ω per metre of wire, and the cable uses two wires each way, so 30 m with 15 modules loses about a quarter of a volt. Every module reports its supply after its own fuse and input diode (register 4 below), which is about 0.3 V below the voltage on the cable pins (0.4 V in a freezer). Keep that reading above 4.2 V.
 
 ## Messages
 
@@ -69,7 +69,7 @@ All values are 16 bits, high byte first.
 | 1 | Relative humidity | % × 100 | `FFFF` means no valid reading |
 | 2 | Probe temperature | °C × 100, signed | `7FFF` means no probe, or a probe fault |
 | 3 | Status | bits | See the next table |
-| 4 | Cable supply at the module | millivolts | Measured after the module's input diode |
+| 4 | Supply at the module | millivolts | Measured after the module's fuse and input diode: about 0.3 V below the cable pins |
 | 5 | Age of the air reading | tenths of a second | Stops at 65535 |
 | 6 | Seconds since start, low half | | |
 | 7 | Seconds since start, high half | | |
@@ -85,7 +85,7 @@ Status bits in register 3:
 | 0 | The air sensor did not answer, or its checksum was wrong |
 | 1 | A probe is connected |
 | 2 | A probe was found earlier and now fails |
-| 3 | Cable supply below 4.0 V |
+| 3 | Supply at the module (register 4) below 4.0 V |
 | 4 | The module has restarted since this bit was last cleared |
 | 5 | The address switch was moved after start. The new address applies after a restart |
 
@@ -93,7 +93,7 @@ Status bits in register 3:
 
 | Register | Value | Scale | Notes |
 | --- | --- | --- | --- |
-| 0 | Air temperature correction | °C × 100, signed | Added to every reading. Limited to ±5.00. Kept when power is removed |
+| 0 | Air temperature correction | °C × 100, signed | Added to every reading. Limited to ±5.00. Kept when power is removed and when the firmware is updated |
 | 1 | Humidity correction | % × 100, signed | Limited to ±10.00 |
 | 2 | Probe temperature correction | °C × 100, signed | Limited to ±5.00 |
 | 3 | Clear the restart bit | write 1 | |
@@ -122,7 +122,7 @@ The module answers:
 | `10 1D` | 4125, so 41.25 % |
 | `7F FF` | No probe |
 | `00 00` | Status: nothing wrong |
-| `12 16` | 4630 mV on the cable |
+| `12 16` | 4630 mV at the module, after its input diode |
 | `00 01` | The reading is 0.1 s old |
 | `4F 9C` | Check |
 
@@ -135,6 +135,8 @@ The check bytes in these examples were calculated, and the same routine reproduc
 - At start, and every ten minutes after, it asks addresses 1 to 15 once each. The ones that answer are the modules it knows.
 - For every reading it asks each known module for registers 0 to 5.
 - A module that fails three readings in a row is treated as missing.
+- While the cable supply is off, the tracker ignores the receive line: the idle bias comes from that supply, so the line is undefined then.
+- If the cable switch reports a fault (`CABLE_FAULT_N` low), the tracker switches the rail off, waits, and tries once more; a second fault keeps it off and is reported.
 - [FIRMWARE.md](FIRMWARE.md) says which value is sent to the server when there are several modules.
 
 ## What the cable does not protect against
