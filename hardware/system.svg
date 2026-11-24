@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 520" role="img" aria-labelledby="title desc" font-family="Segoe UI, system-ui, Arial, sans-serif" font-size="13">
+  <title id="title">Maatora hardware: the tracker and its temperature modules</title>
+  <desc id="desc">The truck supplies power, an ignition line and door switches to the tracker in the cab. The tracker powers and reads a chain of temperature modules in the cargo space over one cable, and reports over the mobile network to the Maatora server, which feeds the app and the control room.</desc>
+
+  <defs>
+    <marker id="tip" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#111111"/>
+    </marker>
+  </defs>
+
+  <rect width="1000" height="520" fill="#FFFFFF"/>
+
+  <!-- Reporting path -->
+  <g fill="#FFFFFF" stroke="#111111" stroke-width="1.5">
+    <rect x="345" y="24" width="170" height="44"/>
+    <rect x="565" y="24" width="150" height="44"/>
+    <rect x="765" y="24" width="200" height="44"/>
+  </g>
+  <g fill="#111111" text-anchor="middle">
+    <text x="430" y="51">Mobile network</text>
+    <text x="640" y="51">Maatora server</text>
+    <text x="865" y="51">App and control room</text>
+  </g>
+  <g fill="none" stroke="#111111" stroke-width="1.5" marker-end="url(#tip)">
+    <path d="M430 130V70"/>
+    <path d="M515 46H563"/>
+    <path d="M715 46H763"/>
+  </g>
+  <text x="440" y="106" fill="#111111">LTE, with 2G as a fallback</text>
+
+  <!-- Truck -->
+  <text x="30" y="150" fill="#111111" font-weight="600" font-size="14">Truck</text>
+  <g fill="#FFFFFF" stroke="#111111" stroke-width="1.5">
+    <rect x="30" y="166" width="180" height="44"/>
+    <rect x="30" y="226" width="180" height="44"/>
+    <rect x="30" y="286" width="180" height="44"/>
+  </g>
+  <g fill="#111111" text-anchor="middle">
+    <text x="120" y="193">Battery, 12 or 24 V</text>
+    <text x="120" y="253">Ignition line</text>
+    <text x="120" y="313">Door switches</text>
+  </g>
+  <g fill="none" stroke="#111111" stroke-width="1.5" marker-end="url(#tip)">
+    <path d="M210 188H268"/>
+    <path d="M210 248H268"/>
+    <path d="M210 308H268"/>
+  </g>
+
+  <!-- Tracker -->
+  <rect x="270" y="132" width="320" height="330" fill="#FFFFFF" stroke="#111111" stroke-width="2.5"/>
+  <text x="290" y="162" fill="#111111" font-weight="600" font-size="14">Tracker, in the cab</text>
+  <path d="M290 174H570" stroke="#111111" stroke-width="1"/>
+  <g fill="#111111">
+    <text x="290" y="202">Input protection, 9 to 36 V</text>
+    <text x="290" y="232">Backup cell with charger</text>
+    <text x="290" y="262">Processor, ESP32-S3</text>
+    <text x="290" y="292">LTE modem with SIM</text>
+    <text x="290" y="322">GNSS receiver</text>
+    <text x="290" y="352">Motion sensor</text>
+    <text x="290" y="382">Sensor cable driver, RS-485</text>
+    <text x="290" y="412">USB-C and three lights</text>
+    <text x="290" y="442">Two door inputs, one probe input</text>
+  </g>
+
+  <!-- Cargo space -->
+  <text x="690" y="150" fill="#111111" font-weight="600" font-size="14">Cargo space</text>
+  <g fill="#FFFFFF" stroke="#111111" stroke-width="1.5">
+    <rect x="690" y="166" width="230" height="44"/>
+    <rect x="690" y="256" width="230" height="44"/>
+    <rect x="690" y="346" width="230" height="44"/>
+  </g>
+  <g fill="#111111" text-anchor="middle">
+    <text x="805" y="193">Temperature module 1</text>
+    <text x="805" y="283">Temperature module 2</text>
+    <text x="805" y="373">Last module, END TERM fitted</text>
+  </g>
+  <g fill="none" stroke="#111111" stroke-width="1.5" marker-start="url(#tip)" marker-end="url(#tip)">
+    <path d="M592 188H688"/>
+    <path d="M805 212V254"/>
+    <path d="M805 302V344"/>
+  </g>
+  <g fill="#111111">
+    <text x="600" y="232">One cable:</text>
+    <text x="600" y="250">data and 5 V</text>
+    <text x="690" y="416">Up to 15 modules on the cable.</text>
+    <text x="690" y="436">Each has its own address switch.</text>
+  </g>
+</svg>
