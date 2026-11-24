@@ -552,6 +552,140 @@ def balanced(text):
 
 
 # --------------------------------------------------------------------------
+# Reading the written KiCad files back, independently of the drawing list.
+# --------------------------------------------------------------------------
+class Quoted(str):
+    """A string that was quoted in the file, as opposed to a bare token."""
+
+
+def parse_sexpr(text):
+    """Parses KiCad S-expression text into nested lists of tokens."""
+    stack, current, i, n = [], [], 0, len(text)
+    while i < n:
+        char = text[i]
+        if char == '(':
+            stack.append(current)
+            current = []
+            i += 1
+        elif char == ')':
+            done = current
+            current = stack.pop()
+            current.append(done)
+            i += 1
+        elif char == '"':
+            j, chunk = i + 1, []
+            while text[j] != '"':
+                if text[j] == chr(92):
+                    j += 1
+                chunk.append(text[j])
+                j += 1
+            current.append(Quoted(''.join(chunk)))
+            i = j + 1
+        elif char.isspace():
+            i += 1
+        else:
+            j = i
+            while j < n and not text[j].isspace() and text[j] not in '()"':
+                j += 1
+            current.append(text[i:j])
+            i = j
+    assert not stack, 'unbalanced brackets'
+    return current
+
+
+def children(node, name):
+    return [item for item in node if isinstance(item, list) and item and item[0] == name]
+
+
+def child(node, name):
+    found = children(node, name)
+    return found[0] if found else None
+
+
+def check_written(schematic_text, library_text, board, library='maatora'):
+    """Checks the KiCad file as KiCad will read it: every library pin is placed at
+    (X + x, Y - y) for a symbol at (X, Y), and must meet exactly one wire whose far end
+    carries the right label, or carry a no-connect marker and nothing else."""
+    problems = []
+    top = parse_sexpr(schematic_text)[0]
+    lib_top = parse_sexpr(library_text)[0]
+    key = lambda x, y: (round(float(x), 3), round(float(y), 3))
+    # Symbols embedded in the schematic, and the library file beside it.
+    embedded = {}
+    for symbol in children(child(top, 'lib_symbols'), 'symbol'):
+        embedded[symbol[1]] = symbol
+    in_library = dict((library + ':' + symbol[1], symbol) for symbol in children(lib_top, 'symbol'))
+    for name, symbol in embedded.items():
+        other = in_library.get(name)
+        if other is None or other[2:] != symbol[2:]:
+            problems.append('symbol %s differs between the schematic and maatora.kicad_sym' % name)
+    pins_of = {}
+    for name, symbol in embedded.items():
+        pins = {}
+        for unit in children(symbol, 'symbol'):
+            for pin in children(unit, 'pin'):
+                at = child(pin, 'at')
+                pins[str(child(pin, 'number')[1])] = (float(at[1]), float(at[2]))
+        pins_of[name] = pins
+    # Wires, labels and no-connect markers.
+    ends = collections.defaultdict(list)
+    for wire in children(top, 'wire'):
+        points = children(child(wire, 'pts'), 'xy')
+        a, b = key(points[0][1], points[0][2]), key(points[1][1], points[1][2])
+        ends[a].append(b)
+        ends[b].append(a)
+    labels = collections.defaultdict(list)
+    for label in children(top, 'label'):
+        at = child(label, 'at')
+        labels[key(at[1], at[2])].append(str(label[1]))
+    no_connects = set(key(child(item, 'at')[1], child(item, 'at')[2]) for item in children(top, 'no_connect'))
+    # Every placed part, pin by pin.
+    want = dict((part.ref, part) for part in board.parts)
+    placed = set()
+    pin_points = set()
+    for symbol in children(top, 'symbol'):
+        lib_id = str(child(symbol, 'lib_id')[1])
+        at = child(symbol, 'at')
+        ref = [str(p[2]) for p in children(symbol, 'property') if p[1] == 'Reference'][0]
+        placed.add(ref)
+        if float(at[3]) != 0 or child(symbol, 'mirror') is not None:
+            problems.append('%s is rotated or mirrored, which this check does not handle' % ref)
+        project = child(child(symbol, 'instances'), 'project')
+        if str(project[1]) != board.key:
+            problems.append('%s names project %s, not %s' % (ref, project[1], board.key))
+        part = want.get(ref)
+        if part is None:
+            problems.append('%s is in the file but not in the description' % ref)
+            continue
+        X, Y = float(at[1]), float(at[2])
+        for number, (x, y) in pins_of.get(lib_id, {}).items():
+            point = key(X + x, Y - y)
+            pin_points.add(point)
+            net = part.nets.get(number)
+            wired = ends.get(point, [])
+            if not net or net == NC:
+                if wired or point not in no_connects:
+                    problems.append('%s.%s should be unconnected in the file' % (ref, number))
+                continue
+            if len(wired) != 1:
+                problems.append('%s.%s meets %d wires in the file' % (ref, number, len(wired)))
+                continue
+            names = labels.get(wired[0], [])
+            if names != [net]:
+                problems.append('%s.%s should be on %s but the file gives %s' % (ref, number, net, names))
+    for ref in want:
+        if ref not in placed:
+            problems.append('%s is missing from the file' % ref)
+    for point, others in ends.items():
+        if len(others) > 1:
+            problems.append('%d wires meet at %s in the file' % (len(others), point))
+    for point in labels:
+        if point in pin_points:
+            problems.append('a label sits on a pin at %s in the file' % (point,))
+    return problems
+
+
+# --------------------------------------------------------------------------
 # SVG, drawn from the same geometry with KiCad's default colours.
 # --------------------------------------------------------------------------
 STYLE = '''

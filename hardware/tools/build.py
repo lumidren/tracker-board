@@ -640,6 +640,8 @@ def build(board, folder, name, work, want_pdf):
     library = kit.kicad_library(board)
     if not kit.balanced(schematic) or not kit.balanced(library):
         problems.append('unbalanced brackets in the KiCad output')
+    else:
+        problems += kit.check_written(schematic, library, board)
     write(os.path.join(folder, name + '.kicad_sch'), schematic)
     write(os.path.join(folder, 'maatora.kicad_sym'), library)
     write(os.path.join(folder, name + '.kicad_pro'), PROJECT % name)
