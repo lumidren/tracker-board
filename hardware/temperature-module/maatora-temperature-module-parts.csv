@@ -1,0 +1,39 @@
+References,Quantity,Value,Description,Part number,Footprint,Fitted,Unit price USD (estimate),Line total USD
+J1,1,RJ45 IN,Sensor bus socket,,Connector_RJ:RJ45_Amphenol_RJHSE5380,yes,0.35,0.35
+J2,1,RJ45 OUT,Sensor bus socket,,Connector_RJ:RJ45_Amphenol_RJHSE5380,yes,0.35,0.35
+U1,1,MCP1702-3302E/CB,"3.3 V regulator, 250 mA, 13.2 V maximum input",MCP1702T-3302E/CB,Package_TO_SOT_SMD:SOT-23,yes,0.45,0.45
+F1,1,PPTC 0.2A,"Resettable fuse, 0.2 A hold",,Fuse:Fuse_1206_3216Metric,yes,0.08,0.08
+D1,1,SS14,"Schottky 40 V 1 A, reverse-polarity protection",SS14,Diode_SMD:D_SMA,yes,0.03,0.03
+D2,1,SMAJ5.0A,TVS on the cable supply,SMAJ5.0A,Diode_SMD:D_SMA,yes,0.08,0.08
+C1,1,10uF,"Ceramic capacitor, X7R",,Capacitor_SMD:C_0805_2012Metric,yes,0.05,0.05
+C2 C4 C5 C6 C10 C11 C12 C13 C14,9,100nF,"Ceramic capacitor, X7R",,Capacitor_SMD:C_0603_1608Metric,yes,0.02,0.18
+C3,1,1uF,"Ceramic capacitor, X7R",,Capacitor_SMD:C_0603_1608Metric,yes,0.02,0.02
+R1,1,100k,"Resistor, 1 %, 0603",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.01
+R2,1,33k,"Resistor, 1 %, 0603",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.01
+U2,1,SP3485EN,"RS-485 transceiver, 3.3 V",SP3485EN-L/TR,Package_SO:SOIC-8_3.9x4.9mm_P1.27mm,yes,0.30,0.30
+R3 R4 R6,3,10k,"Resistor, 1 %, 0603",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.03
+D3,1,SM712,RS-485 line protection,SM712,Package_TO_SOT_SMD:SOT-23,yes,0.15,0.15
+R5,1,120R,Bus termination,,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.01
+JP1,1,END TERM,Jumper: fit on the last module of the cable,,Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical,yes,0.03,0.03
+U3,1,ATmega328P-AU,"8-bit microcontroller, TQFP-32",ATMEGA328P-AU,Package_QFP:TQFP-32_7x7mm_P0.8mm,yes,2.20,2.20
+J3,1,Header 2x3,Programming header,,Connector_PinHeader_2.54mm:PinHeader_2x03_P2.54mm_Vertical,yes,0.05,0.05
+SW1,1,ADDRESS,4-way DIP switch: bus address 1 to 15,,,yes,0.30,0.30
+Y1,1,8MHz,"Crystal, low profile, 18 pF load, rated -40 to +85 C",,Crystal:Crystal_SMD_HC49-SD,yes,0.15,0.15
+C7 C8,2,22pF,"Ceramic capacitor, C0G",,Capacitor_SMD:C_0603_1608Metric,yes,0.02,0.04
+C9,1,10nF,"Ceramic capacitor, X7R",,Capacitor_SMD:C_0603_1608Metric,yes,0.02,0.02
+R7,1,1k,"Resistor, 1 %, 0603",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.01
+D4,1,green,"Indicator LED, 0603: blinks on every answer",,LED_SMD:LED_0603_1608Metric,yes,0.03,0.03
+U4,1,SHT45-AD1B,"Temperature and humidity, 0.1 C typical, I2C address 0x44",SHT45-AD1B,Sensor_Humidity:Sensirion_DFN-4_1.5x1.5mm_P0.8mm_SHT4x_NoCentralPad,yes,4.50,4.50
+J4,1,JST-XH 3,DS18B20 probe connector,JST B3B-XH-A,Connector_JST:JST_XH_B3B-XH-A_1x03_P2.50mm_Vertical,yes,0.08,0.08
+R8 R9 R10,3,4.7k,"Resistor, 1 %, 0603",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.03
+R11,1,100R,"Resistor, 1 %, 0603",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.01
+D5,1,BAT54S,Dual Schottky clamp,BAT54S,Package_TO_SOT_SMD:SOT-23,yes,0.03,0.03
+
+"Total of fitted parts (estimate, small quantities)",,,,,,,,9.58
+
+Not on the schematic,Quantity,Item,Note,Part number,,,Unit price USD (estimate),Line total USD
+,1,"Printed circuit board, 2 layers",About 60 x 45 mm,,,,0.80,0.80
+,1,Vented enclosure,"Lets air reach the sensor, keeps spray out",,,,1.50,1.50
+,1,"Cat5e patch cable, shielded",To the tracker or the previous module,,,,1.00,1.00
+
+"Whole unit (estimate, small quantities)",,,,,,,,12.88
