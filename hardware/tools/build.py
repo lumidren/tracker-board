@@ -66,7 +66,8 @@ def tracker():
               'Design for review. Not released for fabrication.')
 
     # ---- 1 ------------------------------------------------------------------
-    b.section('1  Vehicle input and protection', '9 to 36 V in. Every part on VIN_FUSED and VIN_PROT is rated 60 V or more.')
+    b.section('1  Vehicle input and protection',
+              '9 to 32 V in (the surge diode stays off up to 33 V). D2 is rated for the capacitor voltage plus a negative surge, so 100 V.')
     power = box('Vehicle_Power_2x2', 'J', [], [(1, 'VIN+'), (2, 'GND'), (3, 'IGN'), (4, 'GND')])
     b.add(power, 'Micro-Fit 2x2', {1: 'VIN_RAW', 2: 'GND', 3: 'IGN_RAW', 4: 'GND'},
           footprint='Connector_Molex:Molex_Micro-Fit_3.0_43045-0412_2x02_P3.00mm_Vertical', mpn='Molex 43045-0412',
@@ -74,14 +75,19 @@ def tracker():
     b.add('F', 'PPTC 1.6A/72V', {1: 'VIN_RAW', 2: 'VIN_FUSED'}, mpn='Littelfuse RXEF160 or Bourns MF-RX160/72',
           desc='Resettable fuse, 72 V, 1.6 A hold (about 1 A in a hot cab), radial 5.1 mm pitch. Not the 30 V MF-R160', price=0.35)
     b.D('DB', 'SMCJ33CA', 'VIN_FUSED', 'GND', footprint=SMC, mpn='SMCJ33CA', desc='TVS, bidirectional, 33 V stand-off, 1500 W', price=0.35)
-    b.D('DS', 'SS56', 'VIN_PROT', 'VIN_FUSED', footprint=SMC, mpn='SS56', desc='Schottky 60 V 5 A, reverse-polarity protection', price=0.12)
-    b.CP('100uF/63V', 'VIN_PROT', 'GND', footprint='Capacitor_THT:CP_Radial_D10.0mm_P5.00mm', desc='Electrolytic, low ESR, 105 C', price=0.30)
+    b.D('DS', 'SS510C', 'VIN_PROT', 'VIN_FUSED', footprint=SMC, mpn='SS510C (SMC / DO-214AB; the bare SS510 is often SMA)',
+        desc='Schottky 100 V 5 A, reverse-polarity protection. Sees the supply plus a negative surge clamped by D1', price=0.15)
+    b.CP('220uF/63V', 'VIN_PROT', 'GND', footprint='Capacitor_THT:CP_Radial_D10.0mm_P5.00mm',
+         desc='Electrolytic, low impedance, 105 C, ripple rating 0.8 A or more at 100 kHz', price=0.40)
     b.C('100nF/100V', 'VIN_PROT', 'GND', footprint=C0805, price=0.03)
-    b.R('1M', 'IGN_RAW', 'IGN_SENSE')
+    b.R('499k', 'IGN_RAW', 'IGN_MID', footprint='Resistor_SMD:R_1206_3216Metric',
+        desc='Resistor, 1 %, 1206. Two in series carry the ignition line pulses (about -600 V on 24 V trucks)')
+    b.R('499k', 'IGN_MID', 'IGN_SENSE', footprint='Resistor_SMD:R_1206_3216Metric', desc='Resistor, 1 %, 1206')
     b.R('47k', 'IGN_SENSE', 'GND')
     b.C('100nF', 'IGN_SENSE', 'GND')
-    b.add('BAT54S', 'BAT54S', {3: 'IGN_SENSE', 2: '+3V3', 1: 'GND'}, footprint=SOT23, mpn='BAT54S', desc='Dual Schottky clamp', price=0.03)
-    b.R('1M', 'VIN_PROT', 'VIN_SENSE')
+    b.add('BAT54S', 'BAV199', {3: 'IGN_SENSE', 2: '+3V3', 1: 'GND'}, footprint=SOT23, mpn='BAV199',
+          desc='Dual low-leakage diode clamp. A BAT54S leaks enough in a hot cab to fake ignition on', price=0.05)
+    b.R('1M', 'VIN_PROT', 'VIN_SENSE', desc='Resistor, 1 %, 0603, 75 V working voltage or more')
     b.R('47k', 'VIN_SENSE', 'GND')
     b.C('100nF', 'VIN_SENSE', 'GND')
 
@@ -89,10 +95,12 @@ def tracker():
     b.section('2  Vehicle supply down to 5 V', 'LM2596HV: 60 V input rating. This rail feeds the charger and nothing else.')
     buck = box('LM2596HVS-5.0', 'U', [(1, 'VIN'), (5, 'ON/OFF')], [(2, 'OUT'), (4, 'FB'), (3, 'GND')])
     b.add(buck, 'LM2596HVS-5.0', {1: 'VIN_PROT', 5: 'GND', 2: 'SW_5V', 4: '+5V', 3: 'GND'},
-          footprint='Package_TO_SOT_SMD:TO-263-5_TabPin3', mpn='LM2596HVS-5.0', desc='Step-down converter, 60 V in, 5 V 3 A out', price=1.20)
+          footprint='Package_TO_SOT_SMD:TO-263-5_TabPin3', mpn='H&M Semi LM2596HVS-5.0 (not the 40 V LM2596S-5.0)',
+          desc='Step-down converter, 60 V in, 5 V 3 A out. The common LM2596S-5.0 is a 40 V part and is not a substitute', price=1.20)
     b.add('L', '68uH/3A', {1: 'SW_5V', 2: '+5V'}, footprint='Inductor_SMD:L_12x12mm_H8mm', desc='Power inductor, shielded, 3 A saturation', price=0.35)
-    b.D('DS', 'SS510', 'SW_5V', 'GND', footprint=SMC, mpn='SS510', desc='Schottky 100 V 5 A, catch diode', price=0.15)
-    b.CP('220uF/16V', '+5V', 'GND', desc='Electrolytic, low ESR, 105 C', price=0.15)
+    b.D('DS', 'SS510C', 'SW_5V', 'GND', footprint=SMC, mpn='SS510C (SMC / DO-214AB)', desc='Schottky 100 V 5 A, catch diode', price=0.15)
+    b.CP('470uF/16V', '+5V', 'GND', footprint='Capacitor_THT:CP_Radial_D10.0mm_P5.00mm',
+         desc='Electrolytic, low ESR, 105 C. The value in the regulator datasheet reference circuit', price=0.20)
     b.C('100nF', '+5V', 'GND')
     b.TP('+5V', '+5V')
 
@@ -472,7 +480,7 @@ TRACKER_PINS = {
     'BOOT': 'Boot select. Pull-up, BOOT button and the automatic programming circuit',
     'DOOR1': 'Door 1 switch. Low when the door is shut. Can wake the processor',
     'DOOR2': 'Door 2 switch. Low when the door is shut. Can wake the processor',
-    'IGN_SENSE': 'Ignition line through 1 M / 47 k. Line voltage = pin voltage x 22.28',
+    'IGN_SENSE': 'Ignition line through 2 x 499 k / 47 k. Line voltage = pin voltage x 22.23',
     'VIN_SENSE': 'Vehicle supply through 1 M / 47 k. Supply voltage = pin voltage x 22.28',
     'BAT_SENSE': 'Backup cell through 220 k / 220 k. Cell voltage = pin voltage x 2',
     'ACC_INT': 'Motion sensor interrupt. Can wake the processor',
