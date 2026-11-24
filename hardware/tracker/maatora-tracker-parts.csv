@@ -8,7 +8,7 @@ C2,1,100nF/100V,"Ceramic capacitor, X7R",,Capacitor_SMD:C_0805_2012Metric,yes,0.
 R1,1,499k,"Resistor, 1 %, 1206. Two in series carry the ignition line pulses (about -600 V on 24 V trucks)",,Resistor_SMD:R_1206_3216Metric,yes,0.01,0.01
 R2,1,499k,"Resistor, 1 %, 1206",,Resistor_SMD:R_1206_3216Metric,yes,0.01,0.01
 R3 R5 R31 R34 R36,5,47k,"Resistor, 1 %, 0603",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.05
-C3 C4 C6 C10 C14 C17 C28 C30 C31 C32 C40 C42 C44 C45 C47 C48 C49 C50 C52,19,100nF,"Ceramic capacitor, X7R",,Capacitor_SMD:C_0603_1608Metric,yes,0.02,0.38
+C3 C4 C6 C10 C15 C18 C29 C31 C32 C33 C41 C43 C45 C46 C48 C49 C50 C51 C53,19,100nF,"Ceramic capacitor, X7R",,Capacitor_SMD:C_0603_1608Metric,yes,0.02,0.38
 D3,1,BAV199,Dual low-leakage diode clamp. A BAT54S leaks enough in a hot cab to fake ignition on,BAV199,Package_TO_SOT_SMD:SOT-23,yes,0.05,0.05
 R4,1,1M,"Resistor, 1 %, 0603, 75 V working voltage or more",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.01
 U1,1,LM2596HVS-5.0,"Step-down converter, 60 V in, 5 V 3 A out. The common LM2596S-5.0 is a 40 V part and is not a substitute",H&M Semi LM2596HVS-5.0 (not the 40 V LM2596S-5.0),Package_TO_SOT_SMD:TO-263-5_TabPin3,yes,1.20,1.20
@@ -18,7 +18,7 @@ C5,1,470uF/16V,"Electrolytic, low ESR, 105 C. The value in the regulator datashe
 U2,1,BQ24074RGT,Li-ion charger with power path and cell temperature input,BQ24074RGTR,Package_DFN_QFN:VQFN-16-1EP_3x3mm_P0.5mm_EP1.6x1.6mm,yes,1.60,1.60
 J2,1,JST-PH 3,Protected 1S cell with 10 k NTC,JST B3B-PH-K,Connector_JST:JST_PH_B3B-PH-K_1x03_P2.00mm_Vertical,yes,0.10,0.10
 C7 C9,2,4.7uF,"Ceramic capacitor, X7R",,Capacitor_SMD:C_0805_2012Metric,yes,0.04,0.08
-C8 C15 C16 C29 C39 C43 C51,7,10uF,"Ceramic capacitor, X7R",,Capacitor_SMD:C_0805_2012Metric,yes,0.05,0.35
+C8 C16 C17 C30 C40 C44 C52,7,10uF,"Ceramic capacitor, X7R",,Capacitor_SMD:C_0805_2012Metric,yes,0.05,0.35
 R6 R13 R32 R42 R43 R47 R48 R50 R51 R52 R56 R58,12,10k,"Resistor, 1 %, 0603",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.12
 R7,1,1.5k,Input limit about 1.07 A (1610 / R),,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.01
 R8,1,1.78k,Charge current 0.5 A (890 / R),,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.01
@@ -28,21 +28,22 @@ R11 R12,2,220k,"Resistor, 1 %, 0603",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.
 R14 R17,2,2.2k,"Resistor, 1 %, 0603",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.02
 D5,1,green,"Indicator LED, 0603: external power present",,LED_SMD:LED_0603_1608Metric,yes,0.03,0.03
 U3,1,TLV62569DBV,"Step-down converter, 2 A, 2.5 to 5.5 V in. SY8089A1AAC is a cheaper part sold with the same pinout: check its datasheet",TLV62569DBVR,Package_TO_SOT_SMD:SOT-23-5,yes,0.35,0.35
-C11 C12 C13 C18 C19 C20 C26 C27,8,22uF,"Ceramic capacitor, X7R",,Capacitor_SMD:C_0805_2012Metric,yes,0.06,0.48
+C11 C13 C14 C19 C20 C21 C27 C28,8,22uF,"Ceramic capacitor, X7R",,Capacitor_SMD:C_0805_2012Metric,yes,0.06,0.48
 L2,1,2.2uH/2A,"Power inductor, 2 A",,Inductor_SMD:L_Taiyo-Yuden_NR-40xx,yes,0.10,0.10
 R15,1,453k,Output 3.32 V: 0.6 V x (1 + 453k / 100k),,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.01
 R16 R20 R23 R28,4,100k,"Resistor, 1 %, 0603",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.04
+C12,1,6.8pF,"Feed-forward capacitor, C0G. Not fitted; fit if the rail rings on a load step (it carries about 65 uF, more than TI characterises)",,Capacitor_SMD:C_0603_1608Metric,no,0.02,0.00
 D6,1,green,"Indicator LED, 0603: board powered",,LED_SMD:LED_0603_1608Metric,yes,0.03,0.03
 U4,1,TPS63020DSJ,"Buck-boost converter, 4 A switch, VSON-14 3x4 mm",TPS63020DSJR,,yes,2.20,2.20
 L3,1,1.5uH/5A,"Power inductor, 5 A saturation, low DCR",,Inductor_SMD:L_Vishay_IHLP-2020,yes,0.35,0.35
 R18,1,1.2M,"Resistor, 1 %, 0603",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.01
 R19,1,180k,"Resistor, 1 %, 0603",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.01
 R21,1,100k,Pull-up for the open-drain power-good output: low while the converter is at its current limit,,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.01
-C21,1,1000uF/6.3V,"Polymer or low-ESR electrolytic, the bulk capacitor SIMCom recommends. It covers the start of a burst, not all of it",,Capacitor_THT:CP_Radial_D8.0mm_P3.50mm,yes,0.40,0.40
-C22,1,1uF,"Ceramic capacitor, X7R, at the modem supply pads",,Capacitor_SMD:C_0603_1608Metric,yes,0.02,0.02
-C23,1,100nF,"Ceramic capacitor, X7R, at the modem supply pads",,Capacitor_SMD:C_0603_1608Metric,yes,0.02,0.02
-C24,1,33pF,"Ceramic capacitor, C0G, at the modem supply pads",,Capacitor_SMD:C_0603_1608Metric,yes,0.02,0.02
-C25,1,10pF,"Ceramic capacitor, C0G, at the modem supply pads: works at the 1.8 to 2.6 GHz bands",,Capacitor_SMD:C_0603_1608Metric,yes,0.02,0.02
+C22,1,1000uF/6.3V,"Polymer or low-ESR electrolytic, the bulk capacitor SIMCom recommends. It covers the start of a burst, not all of it",,Capacitor_THT:CP_Radial_D8.0mm_P3.50mm,yes,0.40,0.40
+C23,1,1uF,"Ceramic capacitor, X7R, at the modem supply pads",,Capacitor_SMD:C_0603_1608Metric,yes,0.02,0.02
+C24,1,100nF,"Ceramic capacitor, X7R, at the modem supply pads",,Capacitor_SMD:C_0603_1608Metric,yes,0.02,0.02
+C25,1,33pF,"Ceramic capacitor, C0G, at the modem supply pads",,Capacitor_SMD:C_0603_1608Metric,yes,0.02,0.02
+C26,1,10pF,"Ceramic capacitor, C0G, at the modem supply pads: works at the 1.8 to 2.6 GHz bands",,Capacitor_SMD:C_0603_1608Metric,yes,0.02,0.02
 R22,1,470R,Discharge: takes the 3.8 V rail below 0.1 V about 2 s after the supply is switched off,,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.01
 Q1,1,AO3400A,N-MOSFET 30 V 5 A. On only while the modem supply is off,AO3400A,Package_TO_SOT_SMD:SOT-23,yes,0.05,0.05
 D7,1,SMF5.0A,"TVS, 5 V stand-off",SMF5.0A,Diode_SMD:D_SOD-123F,yes,0.05,0.05
@@ -68,12 +69,12 @@ Q3 Q4,2,MMBT3904,NPN transistor,MMBT3904,Package_TO_SOT_SMD:SOT-23,yes,0.02,0.04
 R37 R44,2,1k,"Resistor, 1 %, 0603",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.02
 D13,1,blue,"Indicator LED, 0603: network",,LED_SMD:LED_0603_1608Metric,yes,0.03,0.03
 R38 R39 R40,3,22R,"Resistor, 1 %, 0603",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.03
-C33,1,33pF,"Ceramic capacitor, C0G, as in the modem guide",,Capacitor_SMD:C_0603_1608Metric,yes,0.02,0.02
-C34 C35 C36,3,22pF,"Ceramic capacitor, C0G. Not fitted, as in the modem guide",,Capacitor_SMD:C_0603_1608Metric,no,0.02,0.00
+C34,1,33pF,"Ceramic capacitor, C0G, as in the modem guide",,Capacitor_SMD:C_0603_1608Metric,yes,0.02,0.02
+C35 C36 C37,3,22pF,"Ceramic capacitor, C0G. Not fitted, as in the modem guide",,Capacitor_SMD:C_0603_1608Metric,no,0.02,0.00
 R41,1,0R,Series element of the antenna matching network,,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.01
-C37 C38,2,match,"Matching network, value from antenna tuning",,Capacitor_SMD:C_0603_1608Metric,no,0.02,0.00
+C38 C39,2,match,"Matching network, value from antenna tuning",,Capacitor_SMD:C_0603_1608Metric,no,0.02,0.00
 U9,1,ESP32-S3-WROOM-1-N8,"Wi-Fi and Bluetooth module, 8 MB flash",ESP32-S3-WROOM-1-N8,RF_Module:ESP32-S3-WROOM-1,yes,3.20,3.20
-C41 C46,2,1uF,"Ceramic capacitor, X7R",,Capacitor_SMD:C_0603_1608Metric,yes,0.02,0.04
+C42 C47,2,1uF,"Ceramic capacitor, X7R",,Capacitor_SMD:C_0603_1608Metric,yes,0.02,0.04
 SW1,1,RESET,Push button,,Button_Switch_SMD:SW_SPST_TL3342,yes,0.05,0.05
 SW2,1,BOOT,Push button,,Button_Switch_SMD:SW_SPST_TL3342,yes,0.05,0.05
 D14,1,amber,"Indicator LED, 0603: status",,LED_SMD:LED_0603_1608Metric,yes,0.03,0.03

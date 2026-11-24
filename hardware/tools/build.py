@@ -143,6 +143,8 @@ def tracker():
     b.add('L', '2.2uH/2A', {1: 'SW_3V3', 2: '+3V3'}, footprint='Inductor_SMD:L_Taiyo-Yuden_NR-40xx', desc='Power inductor, 2 A', price=0.10)
     b.R('453k', '+3V3', 'FB_3V3', desc='Output 3.32 V: 0.6 V x (1 + 453k / 100k)')
     b.R('100k', 'FB_3V3', 'GND')
+    b.C('6.8pF', '+3V3', 'FB_3V3', dnp=True,
+        desc='Feed-forward capacitor, C0G. Not fitted; fit if the rail rings on a load step (it carries about 65 uF, more than TI characterises)')
     b.C('22uF', '+3V3', 'GND', footprint=C0805, price=0.06)
     b.C('22uF', '+3V3', 'GND', footprint=C0805, price=0.06)
     b.C('100nF', '+3V3', 'GND')
