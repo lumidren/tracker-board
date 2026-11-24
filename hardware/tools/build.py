@@ -109,7 +109,7 @@ def tracker():
     charger = box('BQ24074RGT', 'U',
                   [(13, 'IN'), (5, 'EN2'), (6, 'EN1'), (4, 'CE'), (12, 'ILIM'), (16, 'ISET'), (15, 'ITERM'), (14, 'TMR')],
                   [(10, 'OUT'), (11, 'OUT'), (2, 'BAT'), (3, 'BAT'), (1, 'TS'), (7, 'PGOOD'), (9, 'CHG'), (8, 'VSS'), (17, 'PAD')])
-    b.add(charger, 'BQ24074RGT', {13: '+5V', 5: 'CHG_EN2', 6: 'GND', 4: 'GND', 12: 'CHG_ILIM', 16: 'CHG_ISET', 15: NC, 14: NC,
+    b.add(charger, 'BQ24074RGT', {13: '+5V', 5: 'CHG_EN2', 6: 'GND', 4: 'GND', 12: 'CHG_ILIM', 16: 'CHG_ISET', 15: NC, 14: 'CHG_TMR',
                                   10: 'VSYS', 11: 'VSYS', 2: 'VBAT', 3: 'VBAT', 1: 'BAT_NTC', 7: 'CHG_PGOOD_N', 9: 'CHG_STAT', 8: 'GND', 17: 'GND'},
           footprint='Package_DFN_QFN:VQFN-16-1EP_3x3mm_P0.5mm_EP1.6x1.6mm', mpn='BQ24074RGTR',
           desc='Li-ion charger with power path and cell temperature input', price=1.60)
@@ -122,6 +122,7 @@ def tracker():
     b.R('10k', '+5V', 'CHG_EN2')
     b.R('1.5k', 'CHG_ILIM', 'GND', desc='Input limit about 1.07 A (1610 / R)')
     b.R('1.78k', 'CHG_ISET', 'GND', desc='Charge current 0.5 A (890 / R)')
+    b.R('68k', 'CHG_TMR', 'GND', desc='Charge safety timer about 9 h (6.8 h minimum). The 5 h default ends a full charge of the cell early')
     b.R('10k', 'BAT_NTC', 'GND', dnp=True, desc='Fit only when the pack has no NTC')
     b.R('220k', 'VBAT', 'BAT_SENSE')
     b.R('220k', 'BAT_SENSE', 'GND')
@@ -501,7 +502,7 @@ TRACKER_PINS = {
     'MODEM_PWRKEY': 'High presses the modem power key',
     'MODEM_STATUS_3V3': 'High when the modem has started',
     'MODEM_PWR_EN': 'High turns on the 3.8 V modem supply',
-    'CHG_STAT': 'Charger status. Low while the cell is charging',
+    'CHG_STAT': 'Charger status. Low during the first charge after vehicle power returns, or while charging waits for the cell temperature. Toggling at about 2 Hz: charger timer fault. High: done, topping up, or no vehicle power',
     'STATUS_LED': 'Status light, high = on',
     'MODEM_RX_3V3': 'Serial to the modem (processor transmits)',
     'MODEM_TX_3V3': 'Serial from the modem (processor receives)',

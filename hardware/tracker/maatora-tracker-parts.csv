@@ -7,7 +7,7 @@ C1,1,220uF/63V,"Electrolytic, low impedance, 105 C, ripple rating 0.8 A or more 
 C2,1,100nF/100V,"Ceramic capacitor, X7R",,Capacitor_SMD:C_0805_2012Metric,yes,0.03,0.03
 R1,1,499k,"Resistor, 1 %, 1206. Two in series carry the ignition line pulses (about -600 V on 24 V trucks)",,Resistor_SMD:R_1206_3216Metric,yes,0.01,0.01
 R2,1,499k,"Resistor, 1 %, 1206",,Resistor_SMD:R_1206_3216Metric,yes,0.01,0.01
-R3 R5 R26 R28,4,47k,"Resistor, 1 %, 0603",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.04
+R3 R5 R27 R29,4,47k,"Resistor, 1 %, 0603",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.04
 C3 C4 C6 C10 C14 C17 C22 C26 C27 C29 C30 C31 C38 C40 C42 C43 C45 C46 C47 C49,20,100nF,"Ceramic capacitor, X7R",,Capacitor_SMD:C_0603_1608Metric,yes,0.02,0.40
 D3,1,BAV199,Dual low-leakage diode clamp. A BAT54S leaks enough in a hot cab to fake ignition on,BAV199,Package_TO_SOT_SMD:SOT-23,yes,0.05,0.05
 R4,1,1M,"Resistor, 1 %, 0603, 75 V working voltage or more",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.01
@@ -19,33 +19,34 @@ U2,1,BQ24074RGT,Li-ion charger with power path and cell temperature input,BQ2407
 J2,1,JST-PH 3,Protected 1S cell with 10 k NTC,JST B3B-PH-K,Connector_JST:JST_PH_B3B-PH-K_1x03_P2.00mm_Vertical,yes,0.10,0.10
 C7 C9,2,4.7uF,"Ceramic capacitor, X7R",,Capacitor_SMD:C_0805_2012Metric,yes,0.04,0.08
 C8 C15 C16 C28 C37 C41 C48,7,10uF,"Ceramic capacitor, X7R",,Capacitor_SMD:C_0805_2012Metric,yes,0.05,0.35
-R6 R12 R34 R35 R39 R40 R42 R43 R44 R48 R49 R50 R51,13,10k,"Resistor, 1 %, 0603",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.13
+R6 R13 R35 R36 R40 R41 R43 R44 R45 R49 R50 R51 R52,13,10k,"Resistor, 1 %, 0603",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.13
 R7,1,1.5k,Input limit about 1.07 A (1610 / R),,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.01
 R8,1,1.78k,Charge current 0.5 A (890 / R),,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.01
-R9,1,10k,Fit only when the pack has no NTC,,Resistor_SMD:R_0603_1608Metric,no,0.01,0.00
-R10 R11,2,220k,"Resistor, 1 %, 0603",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.02
-R13 R16,2,2.2k,"Resistor, 1 %, 0603",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.02
+R9,1,68k,Charge safety timer about 9 h (6.8 h minimum). The 5 h default ends a full charge of the cell early,,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.01
+R10,1,10k,Fit only when the pack has no NTC,,Resistor_SMD:R_0603_1608Metric,no,0.01,0.00
+R11 R12,2,220k,"Resistor, 1 %, 0603",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.02
+R14 R17,2,2.2k,"Resistor, 1 %, 0603",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.02
 D5,1,green,"Indicator LED, 0603: external power present",,LED_SMD:LED_0603_1608Metric,yes,0.03,0.03
 U3,1,TLV62569DBV,"Step-down converter, 2 A, 2.5 to 5.5 V in. SY8089A1AAC is a cheaper part sold with the same pinout: check its datasheet",TLV62569DBVR,Package_TO_SOT_SMD:SOT-23-5,yes,0.35,0.35
 C11 C12 C13 C18 C19 C20 C24 C25,8,22uF,"Ceramic capacitor, X7R",,Capacitor_SMD:C_0805_2012Metric,yes,0.06,0.48
 L2,1,2.2uH/2A,"Power inductor, 2 A",,Inductor_SMD:L_Taiyo-Yuden_NR-40xx,yes,0.10,0.10
-R14,1,453k,Output 3.32 V: 0.6 V x (1 + 453k / 100k),,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.01
-R15 R19 R22 R24,4,100k,"Resistor, 1 %, 0603",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.04
+R15,1,453k,Output 3.32 V: 0.6 V x (1 + 453k / 100k),,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.01
+R16 R20 R23 R25,4,100k,"Resistor, 1 %, 0603",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.04
 D6,1,green,"Indicator LED, 0603: board powered",,LED_SMD:LED_0603_1608Metric,yes,0.03,0.03
 U4,1,TPS63020DSJ,"Buck-boost converter, 4 A switch, VSON-14 3x4 mm",TPS63020DSJR,,yes,2.20,2.20
 L3,1,1.5uH/5A,"Power inductor, 5 A saturation, low DCR",,Inductor_SMD:L_Vishay_IHLP-2020,yes,0.35,0.35
-R17,1,1.2M,"Resistor, 1 %, 0603",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.01
-R18,1,180k,"Resistor, 1 %, 0603",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.01
+R18,1,1.2M,"Resistor, 1 %, 0603",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.01
+R19,1,180k,"Resistor, 1 %, 0603",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.01
 C21,1,1000uF/6.3V,"Polymer or low-ESR electrolytic, for transmit bursts",,Capacitor_THT:CP_Radial_D8.0mm_P3.50mm,yes,0.40,0.40
 C23 C32 C33 C34,4,33pF,"Ceramic capacitor, C0G",,Capacitor_SMD:C_0603_1608Metric,yes,0.02,0.08
 D7,1,SMF5.0A,"TVS, 5 V stand-off",SMF5.0A,Diode_SMD:D_SOD-123F,yes,0.05,0.05
 U5,1,MT3608,"Step-up converter, 4 A switch, 1.2 MHz",MT3608,Package_TO_SOT_SMD:SOT-23-6,yes,0.10,0.10
 L4,1,6.8uH/2A,"Power inductor, 2 A saturation",,Inductor_SMD:L_Taiyo-Yuden_NR-40xx,yes,0.10,0.10
 D8,1,SS24,"Schottky 40 V 2 A, step-up diode",SS24,Diode_SMD:D_SMA,yes,0.04,0.04
-R20,1,220k,Output 5.0 V: 0.6 V x (1 + 220k / 30k),,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.01
-R21,1,30k,"Resistor, 1 %, 0603",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.01
+R21,1,220k,Output 5.0 V: 0.6 V x (1 + 220k / 30k),,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.01
+R22,1,30k,"Resistor, 1 %, 0603",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.01
 Q1,1,AO3401A,"P-MOSFET 30 V 4 A: disconnects the loads, which a step-up converter cannot do by itself",AO3401A,Package_TO_SOT_SMD:SOT-23,yes,0.05,0.05
-R23 R29 R36,3,1k,"Resistor, 1 %, 0603",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.03
+R24 R30 R37,3,1k,"Resistor, 1 %, 0603",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.03
 Q2,1,AO3400A,N-MOSFET 30 V 5 A,AO3400A,Package_TO_SOT_SMD:SOT-23,yes,0.05,0.05
 F2,1,PPTC 0.5A/16V,"Resettable fuse for the sensor cable, 0.5 A hold",,Fuse:Fuse_1812_4532Metric,yes,0.10,0.10
 U6,1,A7670E,"LTE Cat 1 module with 2G fallback, 88 pads, footprint from the hardware guide",SIMCom A7670E,,yes,11.00,11.00
@@ -55,10 +56,10 @@ D9,1,SMF05C,5-line ESD array for the SIM,SMF05C,Package_TO_SOT_SMD:SOT-363_SC-70
 J4,1,U.FL,LTE antenna connector,Hirose U.FL-R-SMT-1,Connector_Coaxial:U.FL_Hirose_U.FL-R-SMT-1_Vertical,yes,0.10,0.10
 J5,1,Header 1x5,Modem USB for firmware updates,,Connector_PinHeader_2.54mm:PinHeader_1x05_P2.54mm_Vertical,no,0.05,0.00
 Q3 Q4,2,MMBT3904,NPN transistor,MMBT3904,Package_TO_SOT_SMD:SOT-23,yes,0.02,0.04
-R25 R27 R52 R54 R55,5,4.7k,"Resistor, 1 %, 0603",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.05
+R26 R28 R53 R55 R56,5,4.7k,"Resistor, 1 %, 0603",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.05
 D10,1,blue,"Indicator LED, 0603: network",,LED_SMD:LED_0603_1608Metric,yes,0.03,0.03
-R30 R31 R32,3,22R,"Resistor, 1 %, 0603",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.03
-R33,1,0R,Series element of the antenna matching network,,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.01
+R31 R32 R33,3,22R,"Resistor, 1 %, 0603",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.03
+R34,1,0R,Series element of the antenna matching network,,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.01
 C35 C36,2,match,"Matching network, value from antenna tuning",,Capacitor_SMD:C_0603_1608Metric,no,0.02,0.00
 U8,1,ESP32-S3-WROOM-1-N8,"Wi-Fi and Bluetooth module, 8 MB flash",ESP32-S3-WROOM-1-N8,RF_Module:ESP32-S3-WROOM-1,yes,3.20,3.20
 C39 C44,2,1uF,"Ceramic capacitor, X7R",,Capacitor_SMD:C_0603_1608Metric,yes,0.02,0.04
@@ -68,14 +69,14 @@ D11,1,amber,"Indicator LED, 0603: status",,LED_SMD:LED_0603_1608Metric,yes,0.03,
 J6,1,USB-C 16P,"USB-C receptacle, USB 2.0",HRO TYPE-C-31-M-12,Connector_USB:USB_C_Receptacle_HRO_TYPE-C-31-M-12,yes,0.20,0.20
 U9,1,USBLC6-2SC6,USB ESD protection,USBLC6-2SC6,Package_TO_SOT_SMD:SOT-23-6,yes,0.15,0.15
 J7,1,Header 1x6,"Serial programming and log header, as on Rev A",,Connector_PinHeader_2.54mm:PinHeader_1x06_P2.54mm_Vertical,yes,0.05,0.05
-R37 R38,2,5.1k,"Resistor, 1 %, 0603",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.02
+R38 R39,2,5.1k,"Resistor, 1 %, 0603",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.02
 Q5 Q6,2,SS8050,"NPN transistor, automatic programming",SS8050,Package_TO_SOT_SMD:SOT-23,yes,0.02,0.04
 J8,1,Header 1x5,Socket for the GNSS module,,Connector_PinHeader_2.54mm:PinHeader_1x05_P2.54mm_Vertical,yes,0.05,0.05
-R41,1,470R,Limits the current into the module while its supply is switched off,,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.01
+R42,1,470R,Limits the current into the module while its supply is switched off,,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.01
 U10,1,SP3485EN,"RS-485 transceiver, 3.3 V",SP3485EN-L/TR,Package_SO:SOIC-8_3.9x4.9mm_P1.27mm,yes,0.30,0.30
 J9,1,RJ45,"Sensor bus socket, shielded",,Connector_RJ:RJ45_Amphenol_RJHSE5380,yes,0.35,0.35
-R45 R46,2,390R,Bus bias: about 235 mV idle with both terminators fitted,,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.02
-R47,1,120R,Bus termination,,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.01
+R46 R47,2,390R,Bus bias: about 235 mV idle with both terminators fitted,,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.02
+R48,1,120R,Bus termination,,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.01
 JP1,1,TERM,"Solder jumper, closed: termination on",,Jumper:SolderJumper-2_P1.3mm_Bridged_RoundedPad1.0x1.5mm,yes,0.00,0.00
 D12,1,SM712,RS-485 line protection,SM712,Package_TO_SOT_SMD:SOT-23,yes,0.15,0.15
 D13,1,SMAJ5.0A,TVS on the cable supply,SMAJ5.0A,Diode_SMD:D_SMA,yes,0.08,0.08
@@ -84,9 +85,9 @@ D14 D15 D16,3,BAT54S,Dual Schottky clamp,BAT54S,Package_TO_SOT_SMD:SOT-23,yes,0.
 J11,1,JST-XH 3,DS18B20 probe connector,JST B3B-XH-A,Connector_JST:JST_XH_B3B-XH-A_1x03_P2.50mm_Vertical,yes,0.08,0.08
 U11,1,LIS3DHTR,"3-axis accelerometer, I2C address 0x18",LIS3DHTR,Package_LGA:LGA-16_3x3mm_P0.5mm_LayoutBorder3x5y,yes,0.80,0.80
 U12,1,SHT40-AD1B,"Board temperature and humidity, I2C address 0x44",SHT40-AD1B,Sensor_Humidity:Sensirion_DFN-4_1.5x1.5mm_P0.8mm_SHT4x_NoCentralPad,yes,1.50,1.50
-R53,1,100R,"Resistor, 1 %, 0603",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.01
+R54,1,100R,"Resistor, 1 %, 0603",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.01
 
-"Total of fitted parts (estimate, small quantities)",,,,,,,,31.77
+"Total of fitted parts (estimate, small quantities)",,,,,,,,31.78
 
 Not on the schematic,Quantity,Item,Note,Part number,,,Unit price USD (estimate),Line total USD
 ,1,GNSS module NEO-7M with antenna connector,Plugs onto the GNSS header,u-blox NEO-7M module,,,4.00,4.00
@@ -97,4 +98,4 @@ Not on the schematic,Quantity,Item,Note,Part number,,,Unit price USD (estimate),
 ,1,Sealed enclosure with cable glands,IP65 or better,,,,5.00,5.00
 ,1,Vehicle harness with 2 A blade fuse,"Supply, ground and ignition",,,,3.00,3.00
 
-"Whole unit (estimate, small quantities)",,,,,,,,55.27
+"Whole unit (estimate, small quantities)",,,,,,,,55.28
