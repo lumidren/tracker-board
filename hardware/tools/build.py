@@ -319,9 +319,10 @@ def tracker():
     usb_esd = box('USBLC6-2SC6', 'U', [(1, 'IO1'), (3, 'IO2'), (2, 'GND')], [(6, 'IO1'), (4, 'IO2'), (5, 'VBUS')])
     b.add(usb_esd, 'USBLC6-2SC6', {1: 'USB_DM_CONN', 6: 'USB_DM', 3: 'USB_DP_CONN', 4: 'USB_DP', 2: 'GND', 5: 'USB_VBUS'},
           footprint='Package_TO_SOT_SMD:SOT-23-6', mpn='USBLC6-2SC6', desc='USB ESD protection', price=0.15)
-    header = box('Debug_1x6', 'J', [], [(1, 'GND'), (2, '3V3'), (3, 'RXD0'), (4, 'TXD0'), (5, 'DTR'), (6, 'RTS')])
-    b.add(header, 'Header 1x6', {1: 'GND', 2: '+3V3', 3: 'UART0_RX', 4: 'UART0_TX', 5: 'PROG_DTR', 6: 'PROG_RTS'},
-          footprint='Connector_PinHeader_2.54mm:PinHeader_1x06_P2.54mm_Vertical', desc='Serial programming and log header, as on Rev A', price=0.05)
+    header = box('Debug_1x6', 'J', [], [(1, '3V3'), (2, 'GND'), (3, 'ESP_TXD0'), (4, 'ESP_RXD0'), (5, 'DTR'), (6, 'RTS')])
+    b.add(header, 'Header 1x6', {1: '+3V3', 2: 'GND', 3: 'UART0_TX', 4: 'UART0_RX', 5: 'PROG_DTR', 6: 'PROG_RTS'},
+          footprint='Connector_PinHeader_2.54mm:PinHeader_1x06_P2.54mm_Vertical',
+          desc='Serial programming and log header, same pin order as Rev A J4, so Rev A programming leads fit', price=0.05)
     b.R('5.1k', 'USB_CC1', 'GND')
     b.R('5.1k', 'USB_CC2', 'GND')
     b.C('100nF', 'USB_VBUS', 'GND')

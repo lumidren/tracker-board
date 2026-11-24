@@ -79,7 +79,7 @@ SW2,1,BOOT,Push button,,Button_Switch_SMD:SW_SPST_TL3342,yes,0.05,0.05
 D14,1,amber,"Indicator LED, 0603: status",,LED_SMD:LED_0603_1608Metric,yes,0.03,0.03
 J6,1,USB-C 16P,"USB-C receptacle, USB 2.0",HRO TYPE-C-31-M-12,Connector_USB:USB_C_Receptacle_HRO_TYPE-C-31-M-12,yes,0.20,0.20
 U10,1,USBLC6-2SC6,USB ESD protection,USBLC6-2SC6,Package_TO_SOT_SMD:SOT-23-6,yes,0.15,0.15
-J7,1,Header 1x6,"Serial programming and log header, as on Rev A",,Connector_PinHeader_2.54mm:PinHeader_1x06_P2.54mm_Vertical,yes,0.05,0.05
+J7,1,Header 1x6,"Serial programming and log header, same pin order as Rev A J4, so Rev A programming leads fit",,Connector_PinHeader_2.54mm:PinHeader_1x06_P2.54mm_Vertical,yes,0.05,0.05
 R45 R46,2,5.1k,"Resistor, 1 %, 0603",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.02
 Q5 Q6,2,SS8050,"NPN transistor, automatic programming",SS8050,Package_TO_SOT_SMD:SOT-23,yes,0.02,0.04
 J8,1,Header 1x5,Socket for the GNSS module,,Connector_PinHeader_2.54mm:PinHeader_1x05_P2.54mm_Vertical,yes,0.05,0.05
