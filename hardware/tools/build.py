@@ -184,27 +184,27 @@ def tracker():
 
     # ---- 6 ------------------------------------------------------------------
     b.section('6  Switched 5 V for the GNSS module and the sensor cable',
-              'Stepped up from VSYS, so position and cargo readings carry on when the vehicle supply is cut. 5V_SW_EN low switches both off.')
+              'Stepped up from VSYS, so position and cargo readings carry on when the vehicle supply is cut. 5V_SW_EN low switches both off. A short latches the switch off until 5V_SW_EN is toggled.')
     boost = box('MT3608', 'U', [(5, 'IN'), (4, 'EN')], [(1, 'SW'), (3, 'FB'), (2, 'GND'), (6, 'NC')])
     b.add(boost, 'MT3608', {5: 'VSYS', 4: '5V_SW_EN', 1: 'SW_AUX', 3: 'FB_AUX', 2: 'GND', 6: NC},
           footprint='Package_TO_SOT_SMD:SOT-23-6', mpn='MT3608', desc='Step-up converter, 4 A switch, 1.2 MHz', price=0.10)
     b.C('22uF', 'VSYS', 'GND', footprint=C0805, price=0.06)
-    b.add('L', '6.8uH/2A', {1: 'VSYS', 2: 'SW_AUX'}, footprint='Inductor_SMD:L_Taiyo-Yuden_NR-40xx', desc='Power inductor, 2 A saturation', price=0.10)
-    b.D('DS', 'SS24', '+5V_AUX', 'SW_AUX', footprint=SMA, mpn='SS24', desc='Schottky 40 V 2 A, step-up diode', price=0.04)
+    b.add('L', '4.7uH/2A', {1: 'VSYS', 2: 'SW_AUX'}, footprint='Inductor_SMD:L_Taiyo-Yuden_NR-40xx', mpn='Taiyo Yuden NRS4018T4R7MDGJ',
+          desc='Power inductor, 4 x 4 mm, 2 A saturation', price=0.12)
+    b.D('DS', 'SS24', '+5V_AUX', 'SW_AUX', footprint=SMA, mpn='SS24 in SMA / DO-214AC (MDD SS24, onsemi SSA24; Vishay SS24 is SMB)',
+        desc='Schottky 40 V 2 A, step-up diode', price=0.04)
     b.R('220k', '+5V_AUX', 'FB_AUX', desc='Output 5.0 V: 0.6 V x (1 + 220k / 30k)')
     b.R('30k', 'FB_AUX', 'GND')
     b.C('22uF', '+5V_AUX', 'GND', footprint=C0805, price=0.06)
     b.C('100nF', '+5V_AUX', 'GND')
-    b.add('PMOS', 'AO3401A', {1: 'Q_5VSW_G', 2: '+5V_AUX', 3: '5V_SW'}, footprint=SOT23, mpn='AO3401A',
-          desc='P-MOSFET 30 V 4 A: disconnects the loads, which a step-up converter cannot do by itself', price=0.05)
-    b.R('100k', 'Q_5VSW_G', '+5V_AUX')
-    b.C('100nF', 'Q_5VSW_G', '+5V_AUX')
-    b.R('1k', 'Q_5VSW_G', 'Q_5VSW_D')
-    b.add('NMOS', 'AO3400A', {1: '5V_SW_EN', 3: 'Q_5VSW_D', 2: 'GND'}, footprint=SOT23, mpn='AO3400A', desc='N-MOSFET 30 V 5 A', price=0.05)
+    switch = box('TPS2553DBV-1', 'U', [(1, 'IN'), (3, 'EN'), (5, 'ILIM')], [(6, 'OUT'), (4, 'FAULT'), (2, 'GND')])
+    b.add(switch, 'TPS2553DBV-1', {1: '+5V_AUX', 3: '5V_SW_EN', 5: 'SW_ILIM', 6: '5V_SW', 4: 'CABLE_FAULT_N', 2: 'GND'},
+          footprint='Package_TO_SOT_SMD:SOT-23-6', mpn='TPS2553DBVR-1',
+          desc='Current-limited switch, latch-off version. Disconnects the loads, which a step-up converter cannot do, and turns off on a short', price=0.60)
+    b.R('49.9k', 'SW_ILIM', 'GND', desc='Current limit 0.48 to 0.57 A (TI table)')
+    b.R('10k', '+3V3', 'CABLE_FAULT_N', desc='Pull-up for the open-drain fault output')
     b.R('100k', '5V_SW_EN', 'GND')
     b.C('10uF', '5V_SW', 'GND', footprint=C0805, price=0.05)
-    b.add('F', 'PPTC 0.5A/16V', {1: '5V_SW', 2: '5V_BUS'}, footprint='Fuse:Fuse_1812_4532Metric',
-          desc='Resettable fuse for the sensor cable, 0.5 A hold', price=0.10)
     b.TP('5V_SW', '5V_SW')
 
     # ---- 7 ------------------------------------------------------------------
@@ -278,7 +278,7 @@ def tracker():
     b.add(esp, 'ESP32-S3-WROOM-1-N8', {
         2: '+3V3', 3: 'EN', 27: 'BOOT', 39: 'DOOR1', 38: 'DOOR2', 15: NC, 4: 'IGN_SENSE', 5: 'VIN_SENSE', 6: 'BAT_SENSE', 7: 'ACC_INT',
         12: 'I2C_SDA', 17: 'I2C_SCL', 18: 'ONEWIRE', 19: 'MODEM_DTR_3V3', 20: 'RS485_TX', 21: 'RS485_RX', 22: 'RS485_RE', 8: '5V_SW_EN',
-        9: 'GPS_PPS', 10: 'GPS_RX', 11: 'GPS_TX', 13: 'USB_DM', 14: 'USB_DP', 23: 'RS485_DE', 28: NC, 29: 'MODEM_PG', 30: 'MODEM_DISCHARGE',
+        9: 'GPS_PPS', 10: 'GPS_RX', 11: 'GPS_TX', 13: 'USB_DM', 14: 'USB_DP', 23: 'RS485_DE', 28: 'CABLE_FAULT_N', 29: 'MODEM_PG', 30: 'MODEM_DISCHARGE',
         31: 'MODEM_PWRKEY', 32: 'MODEM_STATUS_3V3', 33: 'MODEM_PWR_EN', 34: 'CHG_STAT', 35: 'STATUS_LED', 26: NC, 16: NC,
         24: 'MODEM_RX_3V3', 25: 'MODEM_TX_3V3', 36: 'UART0_RX', 37: 'UART0_TX', 1: 'GND', 40: 'GND', 41: 'GND'},
           footprint='RF_Module:ESP32-S3-WROOM-1', mpn='ESP32-S3-WROOM-1-N8', desc='Wi-Fi and Bluetooth module, 8 MB flash', price=3.20)
@@ -329,7 +329,7 @@ def tracker():
     b.section('11  RS-485 sensor bus', 'The tracker is the master at one end of the cable: bias and termination are fitted here.')
     b.add(SP3485, 'SP3485EN', {1: 'RS485_RX', 2: 'RS485_RE', 3: 'RS485_DE', 4: 'RS485_TX', 8: '+3V3', 6: 'RS485_A', 7: 'RS485_B', 5: 'GND'},
           footprint=SOIC8, mpn='SP3485EN-L/TR', desc='RS-485 transceiver, 3.3 V', price=0.30)
-    b.add(RJ45, 'RJ45', rj45_nets('5V_BUS'), footprint=RJ45_FP, desc='Sensor bus socket, shielded', price=0.35)
+    b.add(RJ45, 'RJ45', rj45_nets('5V_SW'), footprint=RJ45_FP, desc='Sensor bus socket, shielded', price=0.35)
     b.C('100nF', '+3V3', 'GND')
     b.R('10k', '+3V3', 'RS485_RX')
     b.R('10k', 'RS485_DE', 'GND')
@@ -340,8 +340,8 @@ def tracker():
     b.add('JPC', 'TERM', {1: 'RS485_TERM', 2: 'RS485_B'}, footprint='Jumper:SolderJumper-2_P1.3mm_Bridged_RoundedPad1.0x1.5mm',
           desc='Solder jumper, closed: termination on', price=0.0)
     b.add('SM712', 'SM712', {1: 'RS485_A', 2: 'RS485_B', 3: 'GND'}, footprint=SOT23, mpn='SM712', desc='RS-485 line protection', price=0.15)
-    b.D('DZ', 'SMAJ5.0A', '5V_BUS', 'GND', footprint=SMA, mpn='SMAJ5.0A', desc='TVS on the cable supply', price=0.08)
-    b.C('1uF', '5V_BUS', 'GND')
+    b.D('DZ', 'SMAJ5.0A', '5V_SW', 'GND', footprint=SMA, mpn='SMAJ5.0A', desc='TVS on the cable supply', price=0.08)
+    b.C('1uF', '5V_SW', 'GND')
 
     # ---- 12 -----------------------------------------------------------------
     b.section('12  Door inputs', 'Reed switch to ground, closed when the door is shut. Survives a wire shorted to 24 V.')
@@ -501,6 +501,7 @@ TRACKER_PINS = {
     'RS485_RE': 'Sensor bus: receiver enable, low = listening',
     'RS485_DE': 'Sensor bus: driver enable, high = transmitting',
     '5V_SW_EN': 'High starts the 5 V step-up converter and switches on 5V_SW: the GNSS module and the sensor cable',
+    'CABLE_FAULT_N': 'Low when the 5 V switch has turned off on a short or overload. Toggle 5V_SW_EN to try again',
     'GPS_PPS': 'GNSS time pulse',
     'GPS_RX': 'Serial to the GNSS module (processor transmits)',
     'GPS_TX': 'Serial from the GNSS module (processor receives)',
