@@ -67,7 +67,7 @@ Content-Type: application/json
 | --- | --- | --- | --- | --- |
 | `seq` | Reading number, rising by one each time, kept in flash | whole number | 1 and up | yes |
 | `at` | When the reading was taken | Unix seconds | not more than 5 minutes ahead, not older than 7 days | recommended |
-| `temp` | Cargo temperature | °C | -90 to 90 | |
+| `temp` | Cargo temperature. With several sensors, the warmest one (see [FIRMWARE.md](FIRMWARE.md)) | °C | -90 to 90 | |
 | `hum` | Cargo humidity | % | 0 to 100 | |
 | `doors` | Each door, `true` when open | up to four values | | |
 | `lat`, `lon` | Position | degrees | valid coordinates | |
@@ -132,4 +132,4 @@ node server/devices.js add TRK-951 "Simulator"
 node tools/device-sim.js --key DEV-XXXXXX.<secret> --scenario all
 ```
 
-Scenarios: `normal`, `door`, `warm`, `power-cut`, `offline`, `all`. Watch the unit in the control room while it runs. In `offline` the simulator holds readings and delivers them together when the signal returns.
+Scenarios: `normal`, `door`, `warm`, `power-cut`, `offline`, `detour`, `stop`, `all`. Watch the unit in the control room while it runs. In `offline` the simulator holds readings and delivers them together when the signal returns.
