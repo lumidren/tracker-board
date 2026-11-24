@@ -360,21 +360,28 @@ def tracker():
     b.C('1uF', '5V_SW', 'GND')
 
     # ---- 12 -----------------------------------------------------------------
-    b.section('12  Door inputs', 'Reed switch to ground, closed when the door is shut. Survives a wire shorted to 24 V.')
+    b.section('12  Door inputs', 'Reed switch to ground, closed when the door is shut. Both inputs survive 32 V without lifting the 3.3 V rail.')
     doors = box('Doors_1x4', 'J', [], [(1, 'DOOR1'), (2, 'GND'), (3, 'DOOR2'), (4, 'GND')])
-    b.add(doors, 'Micro-Fit 2x2', {1: 'DOOR1_IN', 2: 'GND', 3: 'DOOR2_IN', 4: 'GND'},
-          footprint='Connector_Molex:Molex_Micro-Fit_3.0_43045-0412_2x02_P3.00mm_Vertical', mpn='Molex 43045-0412', desc='Door switch connector, locking', price=0.90)
+    b.add(doors, 'Micro-Fit 1x4', {1: 'DOOR1_IN', 2: 'GND', 3: 'DOOR2_IN', 4: 'GND'},
+          footprint='Connector_Molex:Molex_Micro-Fit_3.0_43650-0400_1x04_P3.00mm_Vertical', mpn='Molex 43650-0400',
+          desc='Door switch connector, locking, single row: the 2x2 vehicle plug cannot go in it', price=0.90)
     for door in ('DOOR1', 'DOOR2'):
-        b.R('10k', '+3V3', door + '_IN')
-        b.R('10k', door + '_IN', door)
+        b.D('DS', 'BAT46W', door + '_PU', '+3V3', footprint='Diode_SMD:D_SOD-123', mpn='BAT46W',
+            desc='Schottky 100 V: stops a door wire at vehicle voltage pushing current back into +3V3', price=0.03)
+        b.R('10k', door + '_PU', door + '_IN')
+        b.R('220k', door + '_IN', door, desc='Limits the clamp current to 0.13 mA at 32 V')
         b.C('100nF', door, 'GND')
-        b.add('BAT54S', 'BAT54S', {3: door, 2: '+3V3', 1: 'GND'}, footprint=SOT23, mpn='BAT54S', desc='Dual Schottky clamp', price=0.03)
+        b.add('BAT54S', 'BAV99', {3: door, 2: '+3V3', 1: 'GND'}, footprint=SOT23, mpn='BAV99',
+              desc='Dual diode clamp, low leakage, so the 220 k does not pull an open door low', price=0.02)
 
     # ---- 13 -----------------------------------------------------------------
     b.section('13  Probe input and on-board sensors', 'One-wire probe, motion sensor (wakes the processor), board temperature and humidity.')
     probe = box('Probe_1x3', 'J', [], [(1, '3V3'), (2, 'DQ'), (3, 'GND')])
-    b.add(probe, 'JST-XH 3', {1: '+3V3', 2: 'ONEWIRE_IN', 3: 'GND'}, footprint='Connector_JST:JST_XH_B3B-XH-A_1x03_P2.50mm_Vertical',
+    b.add(probe, 'JST-XH 3', {1: 'PROBE_3V3', 2: 'ONEWIRE_IN', 3: 'GND'}, footprint='Connector_JST:JST_XH_B3B-XH-A_1x03_P2.50mm_Vertical',
           mpn='JST B3B-XH-A', desc='DS18B20 probe connector', price=0.08)
+    b.R('100R', '+3V3', 'PROBE_3V3', footprint='Resistor_SMD:R_0805_2012Metric',
+        desc='Resistor, 0805: a shorted probe lead draws 33 mA instead of stopping the board')
+    b.C('100nF', 'PROBE_3V3', 'GND')
     motion = box('LIS3DH', 'U', [(14, 'VDD'), (1, 'VDD_IO'), (4, 'SCL'), (6, 'SDA'), (7, 'SA0'), (8, 'CS'), (10, 'RES')],
                  [(11, 'INT1'), (9, 'INT2'), (13, 'ADC3'), (15, 'ADC2'), (16, 'ADC1'), (2, 'NC'), (3, 'NC'), (5, 'GND'), (12, 'GND')])
     b.add(motion, 'LIS3DHTR', {14: '+3V3', 1: '+3V3', 4: 'I2C_SCL', 6: 'I2C_SDA', 7: 'GND', 8: '+3V3', 10: 'GND',

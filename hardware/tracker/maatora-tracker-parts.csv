@@ -8,7 +8,7 @@ C2,1,100nF/100V,"Ceramic capacitor, X7R",,Capacitor_SMD:C_0805_2012Metric,yes,0.
 R1,1,499k,"Resistor, 1 %, 1206. Two in series carry the ignition line pulses (about -600 V on 24 V trucks)",,Resistor_SMD:R_1206_3216Metric,yes,0.01,0.01
 R2,1,499k,"Resistor, 1 %, 1206",,Resistor_SMD:R_1206_3216Metric,yes,0.01,0.01
 R3 R5 R31 R34 R36,5,47k,"Resistor, 1 %, 0603",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.05
-C3 C4 C6 C10 C14 C17 C28 C30 C31 C32 C40 C42 C44 C45 C47 C48 C49 C51,18,100nF,"Ceramic capacitor, X7R",,Capacitor_SMD:C_0603_1608Metric,yes,0.02,0.36
+C3 C4 C6 C10 C14 C17 C28 C30 C31 C32 C40 C42 C44 C45 C47 C48 C49 C50 C52,19,100nF,"Ceramic capacitor, X7R",,Capacitor_SMD:C_0603_1608Metric,yes,0.02,0.38
 D3,1,BAV199,Dual low-leakage diode clamp. A BAT54S leaks enough in a hot cab to fake ignition on,BAV199,Package_TO_SOT_SMD:SOT-23,yes,0.05,0.05
 R4,1,1M,"Resistor, 1 %, 0603, 75 V working voltage or more",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.01
 U1,1,LM2596HVS-5.0,"Step-down converter, 60 V in, 5 V 3 A out. The common LM2596S-5.0 is a 40 V part and is not a substitute",H&M Semi LM2596HVS-5.0 (not the 40 V LM2596S-5.0),Package_TO_SOT_SMD:TO-263-5_TabPin3,yes,1.20,1.20
@@ -18,8 +18,8 @@ C5,1,470uF/16V,"Electrolytic, low ESR, 105 C. The value in the regulator datashe
 U2,1,BQ24074RGT,Li-ion charger with power path and cell temperature input,BQ24074RGTR,Package_DFN_QFN:VQFN-16-1EP_3x3mm_P0.5mm_EP1.6x1.6mm,yes,1.60,1.60
 J2,1,JST-PH 3,Protected 1S cell with 10 k NTC,JST B3B-PH-K,Connector_JST:JST_PH_B3B-PH-K_1x03_P2.00mm_Vertical,yes,0.10,0.10
 C7 C9,2,4.7uF,"Ceramic capacitor, X7R",,Capacitor_SMD:C_0805_2012Metric,yes,0.04,0.08
-C8 C15 C16 C29 C39 C43 C50,7,10uF,"Ceramic capacitor, X7R",,Capacitor_SMD:C_0805_2012Metric,yes,0.05,0.35
-R6 R13 R32 R42 R43 R47 R48 R50 R51 R52 R56 R57 R58 R59,14,10k,"Resistor, 1 %, 0603",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.14
+C8 C15 C16 C29 C39 C43 C51,7,10uF,"Ceramic capacitor, X7R",,Capacitor_SMD:C_0805_2012Metric,yes,0.05,0.35
+R6 R13 R32 R42 R43 R47 R48 R50 R51 R52 R56 R58,12,10k,"Resistor, 1 %, 0603",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.12
 R7,1,1.5k,Input limit about 1.07 A (1610 / R),,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.01
 R8,1,1.78k,Charge current 0.5 A (890 / R),,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.01
 R9,1,68k,Charge safety timer about 9 h (6.8 h minimum). The 5 h default ends a full charge of the cell early,,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.01
@@ -63,7 +63,7 @@ J5,1,Header 1x5,Modem USB for firmware updates. Never link BOOT to VBUS: the mod
 R29,1,10k,"Forced-download pull-up, used only through the BOOT 1V8 jumper",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.01
 JP1,1,BOOT 1V8,"Solder jumper, open. Close only to force a modem firmware download, then open it again",,Jumper:SolderJumper-2_P1.3mm_Open_RoundedPad1.0x1.5mm,yes,0.00,0.00
 Q2,1,MMBT3904,"NPN transistor: modem status to the processor, defined even when the modem is off",MMBT3904,Package_TO_SOT_SMD:SOT-23,yes,0.02,0.02
-R30 R33 R35 R60 R62 R63,6,4.7k,"Resistor, 1 %, 0603",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.06
+R30 R33 R35 R61 R63 R64,6,4.7k,"Resistor, 1 %, 0603",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.06
 Q3 Q4,2,MMBT3904,NPN transistor,MMBT3904,Package_TO_SOT_SMD:SOT-23,yes,0.02,0.04
 R37 R44,2,1k,"Resistor, 1 %, 0603",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.02
 D13,1,blue,"Indicator LED, 0603: network",,LED_SMD:LED_0603_1608Metric,yes,0.03,0.03
@@ -92,14 +92,18 @@ R55,1,120R,"Bus termination, 1206, 0.25 W: survives a crossover cable that puts 
 JP2,1,TERM,"Solder jumper, closed: termination on",,Jumper:SolderJumper-2_P1.3mm_Bridged_RoundedPad1.0x1.5mm,yes,0.00,0.00
 D15,1,SM712,RS-485 line protection,SM712,Package_TO_SOT_SMD:SOT-23,yes,0.15,0.15
 D16,1,SMAJ5.0A,TVS on the cable supply,SMAJ5.0A,Diode_SMD:D_SMA,yes,0.08,0.08
-J10,1,Micro-Fit 2x2,"Door switch connector, locking",Molex 43045-0412,Connector_Molex:Molex_Micro-Fit_3.0_43045-0412_2x02_P3.00mm_Vertical,yes,0.90,0.90
-D17 D18 D19,3,BAT54S,Dual Schottky clamp,BAT54S,Package_TO_SOT_SMD:SOT-23,yes,0.03,0.09
+J10,1,Micro-Fit 1x4,"Door switch connector, locking, single row: the 2x2 vehicle plug cannot go in it",Molex 43650-0400,Connector_Molex:Molex_Micro-Fit_3.0_43650-0400_1x04_P3.00mm_Vertical,yes,0.90,0.90
+D17 D19,2,BAT46W,Schottky 100 V: stops a door wire at vehicle voltage pushing current back into +3V3,BAT46W,Diode_SMD:D_SOD-123,yes,0.03,0.06
+R57 R59,2,220k,Limits the clamp current to 0.13 mA at 32 V,,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.02
+D18 D20,2,BAV99,"Dual diode clamp, low leakage, so the 220 k does not pull an open door low",BAV99,Package_TO_SOT_SMD:SOT-23,yes,0.02,0.04
 J11,1,JST-XH 3,DS18B20 probe connector,JST B3B-XH-A,Connector_JST:JST_XH_B3B-XH-A_1x03_P2.50mm_Vertical,yes,0.08,0.08
+R60,1,100R,"Resistor, 0805: a shorted probe lead draws 33 mA instead of stopping the board",,Resistor_SMD:R_0805_2012Metric,yes,0.01,0.01
 U12,1,LIS3DHTR,"3-axis accelerometer, I2C address 0x18",LIS3DHTR,Package_LGA:LGA-16_3x3mm_P0.5mm_LayoutBorder3x5y,yes,0.80,0.80
 U13,1,SHT40-AD1B,"Board temperature and humidity, I2C address 0x44",SHT40-AD1B,Sensor_Humidity:Sensirion_DFN-4_1.5x1.5mm_P0.8mm_SHT4x_NoCentralPad,yes,1.50,1.50
-R61,1,100R,"Resistor, 1 %, 0603",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.01
+R62,1,100R,"Resistor, 1 %, 0603",,Resistor_SMD:R_0603_1608Metric,yes,0.01,0.01
+D21,1,BAT54S,Dual Schottky clamp,BAT54S,Package_TO_SOT_SMD:SOT-23,yes,0.03,0.03
 
-"Total of fitted parts (estimate, small quantities)",,,,,,,,32.40
+"Total of fitted parts (estimate, small quantities)",,,,,,,,32.47
 
 Not on the schematic,Quantity,Item,Note,Part number,,,Unit price USD (estimate),Line total USD
 ,1,GNSS module NEO-7M with antenna connector,Plugs onto the GNSS header,u-blox NEO-7M module,,,4.00,4.00
@@ -110,4 +114,4 @@ Not on the schematic,Quantity,Item,Note,Part number,,,Unit price USD (estimate),
 ,1,Sealed enclosure with cable glands,IP65 or better,,,,5.00,5.00
 ,1,Vehicle harness with 2 A blade fuse,"Supply, ground and ignition",,,,3.00,3.00
 
-"Whole unit (estimate, small quantities)",,,,,,,,55.90
+"Whole unit (estimate, small quantities)",,,,,,,,55.97
