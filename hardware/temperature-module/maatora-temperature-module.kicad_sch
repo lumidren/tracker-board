@@ -1,4 +1,4 @@
-(kicad_sch (version 20230121) (generator eeschema)
+(kicad_sch (version 20230121) (generator maatora_kit)
 
   (uuid 878796af-4cee-5a99-8df6-5d9951676b20)
 
@@ -116,7 +116,7 @@
         (pin passive line (at 0 -3.81 90) (length 1.27) (name "~" (effects (font (size 1.27 1.27)))) (number "2" (effects (font (size 1.27 1.27)))))
       )
     )
-    (symbol "maatora:TestPoint" (pin_numbers hide) (pin_names (offset 0) hide) (in_bom yes) (on_board yes)
+    (symbol "maatora:TestPoint" (pin_numbers hide) (pin_names (offset 0) hide) (in_bom no) (on_board yes)
       (property "Reference" "TP" (at 0 0 0) (effects (font (size 1.27 1.27))))
       (property "Value" "TestPoint" (at 0 -5.08 0) (effects (font (size 1.27 1.27))))
       (property "Footprint" "" (at 0 0 0) (effects (font (size 1.27 1.27)) hide))
@@ -801,7 +801,7 @@
     (pin "2" (uuid b18e6fdd-4914-587d-86c2-086474ae815c))
     (instances (project "maatora-temperature-module" (path "/878796af-4cee-5a99-8df6-5d9951676b20" (reference "C5") (unit 1))))
   )
-  (symbol (lib_id "maatora:TestPoint") (at 127 104.14 0) (unit 1) (in_bom yes) (on_board yes) (dnp no)
+  (symbol (lib_id "maatora:TestPoint") (at 127 104.14 0) (unit 1) (in_bom no) (on_board yes) (dnp no)
     (uuid 9d6d2862-969b-59f8-a484-792ecef1c97f)
     (property "Reference" "TP1" (at 129.54 102.87 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property "Value" "+3V3" (at 129.54 105.41 0) (effects (font (size 1.27 1.27)) (justify left)))
@@ -811,7 +811,7 @@
     (pin "1" (uuid dc6e425c-0f1c-52d5-8a86-f68fb863ad41))
     (instances (project "maatora-temperature-module" (path "/878796af-4cee-5a99-8df6-5d9951676b20" (reference "TP1") (unit 1))))
   )
-  (symbol (lib_id "maatora:TestPoint") (at 144.78 104.14 0) (unit 1) (in_bom yes) (on_board yes) (dnp no)
+  (symbol (lib_id "maatora:TestPoint") (at 144.78 104.14 0) (unit 1) (in_bom no) (on_board yes) (dnp no)
     (uuid ad0339c2-fd2d-5dc5-a2b6-38259babc30d)
     (property "Reference" "TP2" (at 147.32 102.87 0) (effects (font (size 1.27 1.27)) (justify left)))
     (property "Value" "GND" (at 147.32 105.41 0) (effects (font (size 1.27 1.27)) (justify left)))

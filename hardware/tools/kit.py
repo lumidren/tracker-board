@@ -87,7 +87,7 @@ class Symbol(object):
         if not self.show_numbers:
             flags += ' (pin_numbers hide)'
         flags += ' (pin_names (offset %s)%s)' % ('1.016' if self.show_names else '0', '' if self.show_names else ' hide')
-        lines.append('%s(symbol %s%s (in_bom yes) (on_board yes)' % (pad, quote(top), flags))
+        lines.append('%s(symbol %s%s (in_bom %s) (on_board yes)' % (pad, quote(top), flags, in_bom(self)))
         lines.append('%s  (property "Reference" %s (at 0 %s 0) %s)' % (pad, quote(self.prefix), num(self.ymax + G), font))
         lines.append('%s  (property "Value" %s (at 0 %s 0) %s)' % (pad, quote(self.name), num(self.ymin - G), font))
         lines.append('%s  (property "Footprint" "" (at 0 0 0) %s)' % (pad, hidden))
@@ -464,7 +464,7 @@ def kicad_schematic(board, library='maatora'):
     root = uid(board.key, 'root')
     font = '(effects (font (size 1.27 1.27)) (justify left))'
     hidden = '(effects (font (size 1.27 1.27)) hide)'
-    out = ['(kicad_sch (version 20230121) (generator eeschema)', '', '  (uuid %s)' % root, '',
+    out = ['(kicad_sch (version 20230121) (generator maatora_kit)', '', '  (uuid %s)' % root, '',
            '  (paper "User" %s %s)' % (num(board.page[0]), num(board.page[1])), '',
            '  (title_block', '    (title %s)' % quote(board.title), '    (date %s)' % quote(board.date),
            '    (rev %s)' % quote(board.revision), '    (company %s)' % quote(board.company),
@@ -493,8 +493,8 @@ def kicad_schematic(board, library='maatora'):
             quote(net), num(x), num(y), angle, 'right' if angle == 180 else 'left', uid(board.key, 'label', ref, pin)))
     for part in board.parts:
         ref_at, value_at = property_positions(part)
-        out.append('  (symbol (lib_id %s) (at %s %s 0) (unit 1) (in_bom yes) (on_board yes) (dnp %s)' % (
-            quote('%s:%s' % (library, part.symbol.name)), num(part.x), num(part.y), 'yes' if part.dnp else 'no'))
+        out.append('  (symbol (lib_id %s) (at %s %s 0) (unit 1) (in_bom %s) (on_board yes) (dnp %s)' % (
+            quote('%s:%s' % (library, part.symbol.name)), num(part.x), num(part.y), in_bom(part.symbol), 'yes' if part.dnp else 'no'))
         out.append('    (uuid %s)' % uid(board.key, 'symbol', part.ref))
         out.append('    (property "Reference" %s (at %s %s 0) %s)' % (quote(part.ref), num(ref_at[0]), num(ref_at[1]), font))
         out.append('    (property "Value" %s (at %s %s 0) %s)' % (quote(part.value), num(value_at[0]), num(value_at[1]), font))
@@ -513,8 +513,13 @@ def kicad_schematic(board, library='maatora'):
     return '\n'.join(out)
 
 
+def in_bom(symbol):
+    """Test pads are bare copper: nothing to buy, so they stay out of KiCad's parts list, as they do in the CSV."""
+    return 'no' if symbol.kind == 'one' else 'yes'
+
+
 def kicad_library(board):
-    out = ['(kicad_symbol_lib (version 20220914) (generator kicad_symbol_editor)']
+    out = ['(kicad_symbol_lib (version 20220914) (generator maatora_kit)']
     for symbol in used_symbols(board):
         out.append(symbol.kicad('', 2))
     out.append(')')
