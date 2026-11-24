@@ -426,12 +426,13 @@ def module():
     regulator = box('MCP1702-3302E', 'U', [(3, 'VIN')], [(2, 'VOUT'), (1, 'GND')])
     b.add(regulator, 'MCP1702-3302E/CB', {3: 'VIN_P', 2: '+3V3', 1: 'GND'}, footprint=SOT23, mpn='MCP1702T-3302E/CB',
           desc='3.3 V regulator, 250 mA, 13.2 V maximum input', price=0.45)
-    b.add('F', 'PPTC 0.2A', {1: 'BUS_5V', 2: 'VIN_F'}, footprint='Fuse:Fuse_1206_3216Metric', desc='Resettable fuse, 0.2 A hold', price=0.08)
+    b.add('F', 'PPTC 0.2A/30V', {1: 'BUS_5V', 2: 'VIN_F'}, footprint='Fuse:Fuse_1206_3216Metric', mpn='Bourns MF-NSMF020X or equivalent, 30 V',
+          desc='Resettable fuse, 0.2 A hold, 30 V', price=0.10)
     b.D('DS', 'SS14', 'VIN_P', 'VIN_F', footprint=SMA, mpn='SS14', desc='Schottky 40 V 1 A, reverse-polarity protection', price=0.03)
     b.D('DZ', 'SMAJ5.0A', 'VIN_P', 'GND', footprint=SMA, mpn='SMAJ5.0A', desc='TVS on the cable supply', price=0.08)
-    b.C('10uF', 'VIN_P', 'GND', footprint=C0805, price=0.05)
-    b.C('100nF', 'VIN_P', 'GND')
-    b.C('1uF', '+3V3', 'GND')
+    b.C('10uF', 'VIN_P', 'GND', footprint=C0805, desc='Ceramic capacitor, X7R, 16 V or more', price=0.05)
+    b.C('100nF', 'VIN_P', 'GND', desc='Ceramic capacitor, X7R, 16 V or more')
+    b.C('10uF', '+3V3', 'GND', footprint=C0805, desc='Ceramic capacitor, X7R, 10 V or more: steadies the rail when the module answers', price=0.05)
     b.C('100nF', '+3V3', 'GND')
     b.R('100k', 'VIN_P', 'VBUS_SENSE')
     b.R('33k', 'VBUS_SENSE', 'GND')
@@ -569,7 +570,7 @@ MODULE_PINS = {
     'ISP_SCK': 'Programming header',
     'I2C_SDA': 'I2C data to the SHT4x at 0x44',
     'I2C_SCL': 'I2C clock',
-    'VBUS_SENSE': 'Cable supply through 100 k / 33 k. Cable voltage = pin voltage x 4.03',
+    'VBUS_SENSE': 'Supply after the fuse and the diode, through 100 k / 33 k: that voltage = pin voltage x 4.03. The cable is about 0.3 V higher (0.4 V in a freezer)',
 }
 
 
