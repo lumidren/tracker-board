@@ -1,168 +1,175 @@
-# Maatora tracker board: Rev B design
+# Maatora hardware
 
-A proposed second revision of the vehicle unit, based on a review of the Rev A schematic (`Schematic.pdf`, one page: ESP32-S3, NEO-7M GPS, RS-485, 12 V input).
+Two boards make up the hardware side of Maatora.
 
-**Status: a design proposal, not a finished schematic.** It was written from a drawing and from datasheets, without a board to measure. An electronics engineer must review it, and every part value marked *verify* must be checked against the manufacturer's datasheet, before anything is ordered. Figures quoted from datasheets list their source at the end.
+- **The tracker** sits in the cab. It takes power from the truck, keeps a backup cell charged, knows where it is, reads the door switches, powers and reads the temperature modules, and reports to the Maatora server over the mobile network.
+- **The temperature module** sits in the cargo space. It measures air temperature and humidity and answers the tracker over one cable, which also brings its power. Several modules chain along the same cable.
 
-![Rev B block diagram](rev-b-blocks.svg)
+![The tracker, its modules and the path to the app](system.svg)
 
-The same design as printable sheets, one section per page: [Maatora-Tracker-Rev-B-Schematics.pdf](Maatora-Tracker-Rev-B-Schematics.pdf). They are rebuilt with `build-schematics.py`.
+## Status
 
-## What Rev B changes, and why
+This is a schematic-level design for review. Read this list before relying on anything in the folder.
 
-| Rev A | Problem | Rev B |
+- **Done.** Every part, pin and connection of both boards, with values. Drawings, parts lists, netlists and pin maps, all produced from one description. Automatic wiring checks. Pin numbers and limits of the main parts compared with their datasheets (listed below).
+- **Not done.** No printed-circuit layout. No board has been built or measured. No firmware has been written.
+- **Never opened in KiCad.** The `.kicad_sch` files are written by a script, and KiCad is not installed on the PC they were made on. They pass the script's own checks, but the first real test is opening them. If KiCad refuses one, the PDFs and the CSV files carry the same design.
+- **Values come from datasheet formulas**, not from simulation or measurement. Prices and battery runtimes are estimates.
+- An electronics engineer should review it before boards are ordered. [BUILD-GUIDE.md](BUILD-GUIDE.md) says what to check, in what order.
+
+## Files
+
+| File | What it is |
+| --- | --- |
+| `tracker/maatora-tracker-schematic.pdf` | The whole tracker on one large sheet |
+| `tracker/maatora-tracker-sections.pdf` | The same drawing, one section per A3 page: the one to print |
+| `tracker/maatora-tracker.kicad_pro`, `.kicad_sch` | KiCad project and schematic |
+| `tracker/maatora.kicad_sym` | The symbols the schematic uses |
+| `tracker/maatora-tracker-parts.csv` | Parts list with part numbers, footprints and estimated prices |
+| `tracker/maatora-tracker-netlist.csv` | Every net and the pins on it |
+| `tracker/pin-map.md` | What each processor pin does |
+| `temperature-module/` | The same set of files for the module |
+| `tools/build.py` | The description of both boards. Edit this, then rebuild |
+| `tools/kit.py` | Turns the description into the files above and checks it |
+| [USER-GUIDE.md](USER-GUIDE.md) | Fitting it in a truck and using it |
+| [BUILD-GUIDE.md](BUILD-GUIDE.md) | From these files to working boards: KiCad, layout rules, first power-up |
+| [SENSOR-BUS.md](SENSOR-BUS.md) | The cable between the tracker and the modules, and the messages on it |
+| [FIRMWARE.md](FIRMWARE.md) | What the software on each board has to do |
+| [PROTOCOL.md](PROTOCOL.md) | How the tracker talks to the server |
+
+## The tracker, section by section
+
+The numbers match the sections of the drawing.
+
+**1. Vehicle input and protection.** A locking four-pin connector brings supply, ground and the ignition line. In order: a resettable fuse, a surge diode that stays off up to 33 V and clamps spikes above that, a diode that blocks a reversed supply, and a 100 µF capacitor. Every part here is rated for 60 V or more, so the same board fits 12 V and 24 V trucks. Two dividers let the processor measure the supply and the ignition line (pin voltage × 22.28).
+
+**2. Vehicle supply down to 5 V.** An LM2596HV, chosen for its 60 V input rating. Its output feeds the charger and nothing else, which is what lets the rest of the board ignore a power cut.
+
+**3. Charger and backup battery.** A BQ24074 charges one lithium cell at 0.5 A and produces the system rail, `VSYS`. With vehicle power present `VSYS` is 4.4 V. Without it the charger passes the cell through, with no gap. It refuses to charge when the cell is below about 0 °C or above about 50 °C, which it reads from the temperature sensor inside the battery pack. A green light shows vehicle power. The processor measures the cell (pin voltage × 2) and sees whether it is charging.
+
+**4. Logic supply, 3.3 V.** A small step-down converter from `VSYS` feeds the processor, the on-board sensors and the cable driver. They keep running on the battery.
+
+**5. Modem supply, 3.8 V.** The modem accepts 3.4 to 4.2 V. `VSYS` is 4.4 V on vehicle power, which is too high, and falls towards 3.3 V on a tired cell, which is too low. A TPS63020 converter holds 3.8 V across that whole range. A 1000 µF capacitor beside the modem covers its transmit bursts. One processor pin removes the supply completely, which is the dependable way to restart a modem that has stopped answering.
+
+**6. Switched 5 V for the GNSS module and the sensor cable.** An MT3608 steps `VSYS` up to 5 V, followed by a switch. Because this rail starts from `VSYS` and not from the truck, position and cargo readings carry on when the truck supply is cut. One processor pin turns the rail off to save the battery or to restart a stuck sensor. The cable has its own 0.5 A resettable fuse.
+
+**7. LTE modem and SIM.** A SIMCom A7670E: LTE Cat 1 with 2G as a fallback. Its logic runs at 1.8 V, so a translator sits between it and the 3.3 V processor. The translator is powered from the modem's own 1.8 V output, so it lets go of the lines when the modem is off. There is a nano SIM holder with protection, an antenna connector with space for a matching network, and a blue light driven by the modem. One line lets the processor put the modem to sleep and wake it, which is what makes days on the battery possible.
+
+**8. Processor.** An ESP32-S3-WROOM-1 module. [tracker/pin-map.md](tracker/pin-map.md) lists every pin. The doors and the motion sensor are on pins that can wake the processor from sleep. Reset and boot buttons, and an amber status light.
+
+**9. USB-C and programming header.** USB-C goes to the processor's own USB for programming and logs. It carries data only and does not power the board. The six-pin serial header from Rev A is kept, with its automatic programming circuit.
+
+**10. GNSS module.** The NEO-7M module from Rev A on a five-pin header, on the switched 5 V rail. It needs an external active antenna with a view of the sky.
+
+**11. RS-485 sensor bus.** The cable driver, with surge protection on the data lines and on the cable's 5 V. The tracker is one end of the cable, so it carries the 120 Ω terminator and the two resistors that hold the line in a defined state while nobody talks.
+
+**12. Door inputs.** Two inputs for magnetic switches that close to ground when a door is shut. A wire shorted to 24 V does no damage.
+
+**13. Probe input and on-board sensors.** A header for one sealed DS18B20 probe, for a truck that needs a single reading and no modules. A motion sensor that notices the unit being moved or struck while parked. A temperature and humidity sensor for the air inside the enclosure: it warns of condensation or an overheating cab, and is not a cargo reading.
+
+## The temperature module, section by section
+
+**1. Bus connectors and supply.** Two sockets wired straight through: cable in, cable out. The 5 V from the cable passes a resettable fuse and a diode against a reversed supply, then a regulator makes 3.3 V. The regulator tolerates 13.2 V, so a wrong supply on the cable trips the fuse instead of killing the board. The module measures the cable voltage (pin voltage × 4.03), so a weak supply at the far end of a long cable shows up in the readings.
+
+**2. RS-485 transceiver.** One processor pin switches between listening and answering. It listens by default. The END TERM jumper is fitted on the last module of the cable only.
+
+**3. Microcontroller.** An ATmega328P running at 3.3 V from an 8 MHz crystal. The chip's internal oscillator would save two parts, but it drifts too far between a freezer and a hot loading dock for reliable serial timing. A four-way switch sets the module's address, 1 to 15. A green light blinks each time the module answers.
+
+**4. Sensors.** A Sensirion SHT45 at the edge of the board, behind a slot cut in the board so the chips' warmth does not reach it. A header takes an optional DS18B20 probe on a lead, for the middle of the load.
+
+## Power: what runs from what
+
+```
+Truck, 9 to 36 V
+  fuse, surge diode, reverse diode            VIN_PROT
+    LM2596HV step-down                        +5V       feeds the charger only
+      BQ24074 charger and power path          VSYS      4.4 V on truck power, cell voltage without it
+        backup cell, one lithium cell         VBAT
+        TLV62569 step-down                    +3V3      processor, sensors, cable driver
+        TPS63020 buck-boost, switchable       V_MODEM   3.8 V for the modem
+        MT3608 step-up and switch, switchable 5V_SW     GNSS module and the sensor cable
+```
+
+When the truck supply is cut, `+5V` disappears and the charger passes the cell to `VSYS`. Everything below `VSYS` keeps running: processor, modem, GNSS and the temperature modules. The processor sees the supply reading fall and reports it. The server raises a power alert when the reported supply is below 6 V.
+
+**How long the battery lasts has not been measured.** A 2600 mAh cell holds about 9 Wh. With everything left running (processor awake, modem attached, GNSS on, two modules) expect a draw of roughly 0.5 to 0.8 W, so about half a day. If the firmware switches the GNSS module and the sensor cable on only for each reading and lets the modem sleep between uploads, several days is realistic. The modem guide used for this design leaves the modem's standby current blank, so measure the real figure on the first board before promising one to a customer.
+
+## What it costs
+
+Estimates for small quantities, in US dollars. The parts lists carry the price of every line.
+
+| | Parts on the board | Whole unit |
 | --- | --- | --- |
-| 18 V spike suppressor, 16 V converter, 30 V transistor | Works on 12 V only. A 24 V truck would trip the fuse or destroy the converter | Input stage rated for 9 to 36 V, parts rated 60 V |
-| MT2492 5 V converter (16 V operating, 17 V absolute maximum) behind a suppressor that clamps near 25 V | The converter is the first thing to fail on a voltage spike, even on 12 V | A 5 V converter rated for 60 V input |
-| No mobile modem on the board | The board cannot report by itself | LTE module with SIM holder and antenna connector |
-| No backup battery | Cutting the supply silences the unit, which is exactly what a dishonest driver would do | One lithium cell with a temperature-supervised charger; the unit keeps reporting and says when main power was cut |
-| No door input | Door openings are the main driver-accountability signal | Two protected door inputs that can wake the processor |
-| RS-485 lines leave the board bare | Static and surges from a long cable into the cargo area | Surge protection, a fused sensor supply, proper idle bias |
-| Processor cannot tell main supply from battery | Firmware cannot report "main power cut" or battery level | Voltage sensing for main supply and battery |
-| Serial header only | Needs an adapter to program or read logs | USB-C on the processor's native USB, header kept |
-| Nothing shows the unit's state | Installers cannot tell whether it works | Power, network and status lights |
+| Tracker | about 32 | about 55, with GNSS module, antennas, cell, board, enclosure and harness |
+| Temperature module | about 10 | about 13, with board, enclosure and one cable |
 
-Everything else in Rev A is kept: the processor, the GPS module, the RS-485 transceiver and RJ45 pinout, ignition sensing, the switched 5 V rail and the automatic programming circuit.
+The modem (about 11) and the SHT45 sensor (about 4.50) are the largest single lines.
 
-## Power input: 9 to 36 V
+## What was compared with datasheets
 
-Order of parts from the vehicle connector:
+Pin numbers and the limits that matter were read from the manufacturer's document for these parts.
 
-1. **Fuse.** A 2 A blade fuse in the harness, close to where it taps the vehicle supply, plus a resettable fuse on the board rated for 60 V and about 1.1 A hold.
-2. **Spike suppressor.** Standoff voltage of 33 V so that it stays off on a 24 V system while charging (about 28.8 V). Minimum: a 1500 W part such as SMCJ33CA. Preferred: a load-dump rated part such as SM8S33A or SM8S36A. *Verify the clamp voltage is below the rating of every part after it.*
-3. **Reverse-polarity protection.** Either keep the Rev A P-MOSFET circuit with a 60 V transistor, a 12 V gate clamp and the 100 kΩ gate resistor, or replace it with a 60 V, 5 A Schottky diode (for example SS56). The diode is simpler and costs about 0.4 V.
-4. **Bulk capacitor.** 100 µF or more, rated 63 V.
-
-Everything connected to this node must be rated for at least 60 V. Vehicle transients are governed by ISO 7637-2 and ISO 16750-2; whether the suppressor survives an unsuppressed load dump on a 24 V system is a question for the reviewing engineer.
-
-## 5 V rail
-
-A step-down converter rated for 60 V input and at least 3 A output:
-
-- **LM2596HVS-5.0**: rated to 60 V input (63 V absolute maximum), 3 A, needs at least 8 V in. Large but simple and widely stocked.
-- Smaller alternatives: LMR16030 or TPS54360B. *Verify.*
-
-Its catch diode and input capacitor must also be rated above the input maximum (the LM2596HV datasheet asks for a capacitor rating 1.25 times the maximum input).
-
-The switched rail from Rev A (`5V_Controlled`, P-MOSFET driven from GPIO15) is kept. Add 100 nF from the P-MOSFET gate to its source so the rail rises gently instead of dipping the 5 V supply.
-
-## Backup battery and system rail
-
-**Requirement:** when vehicle power disappears, the processor and the modem keep running long enough to report it, and keep reporting position and door events for hours.
-
-**Recommended arrangement:** one lithium-ion cell forms the system rail (3.4 to 4.2 V). A charger fed from the 5 V rail keeps it full. The modem and the 3.3 V regulator both draw from that rail, so the cell also supplies the modem's short current bursts.
-
-- **Cell:** one 18650 (about 2600 mAh) with a protection circuit and a 10 kΩ temperature sensor against the cell.
-- **Charger:** must stop charging when the cell is too cold or too hot. A lithium cell must not be charged below 0 °C or above about 45 °C, and a parked truck cab reaches both. The BQ24074 does this through its TS pin and its datasheet thresholds correspond to roughly 0 °C and 50 °C with a 10 kΩ sensor; it accepts 4.35 to 10.2 V in and charges at up to 1.5 A. Set the charge current to about 0.5 A.
-- **Caution with the BQ24074:** its system output regulates at 4.4 V, which is above the modem's 4.2 V maximum. The modem must therefore be connected to the battery pin, not to the system output. *The reviewing engineer should confirm the charge-termination behaviour with a load on the battery pin.*
-- **Battery placement:** in the cab with the unit, never in the refrigerated space.
-
-**Strong suggestion:** do not design this section from scratch. Published boards that combine an ESP32, an A7670 modem and an 18650 cell already solve the modem supply and charging together. Start from one of those schematics, or from the reference circuits in the modem's hardware design guide.
-
-## 3.3 V rail
-
-Keep the SY8089 circuit but feed it from the system rail instead of the 5 V rail, so the processor runs on battery. Change the inductor to 2.2 µH. *Verify how the converter behaves when the cell is nearly empty and its input approaches 3.3 V; if it does not pass the input through cleanly, use a 1 A low-dropout regulator instead.* Add 10 µF and 100 nF directly at the module's 3V3 pin.
-
-## Mobile modem
-
-An LTE Cat 1 module with 2G fallback. Example: SIMCom A7670E, whose commonly listed bands are LTE 1, 3, 5, 7, 8 and 20. *Check the exact variant against the bands your SIM provider uses before choosing.*
-
-From the A7670 hardware design guide:
-
-- **Supply:** 3.4 to 4.2 V, 3.8 V recommended. Peaks reach 2.8 A when transmitting on 2G. Place at least 300 µF close to the module if the supply can deliver that peak, 1000 µF if it cannot, plus 100 nF and small high-frequency capacitors at the pins.
-- **Logic level is 1.8 V.** The processor is 3.3 V, so the serial lines need level conversion: a dual-supply translator powered from the module's 1.8 V output, or the transistor circuit shown in the guide.
-- **Power key:** pulled up inside the module to its supply. Drive it through a transistor, never directly from a GPIO.
-- **SIM holder** with protection diodes on its lines, close to the module.
-- **Antenna:** 50 Ω trace to a U.FL or SMA connector, with a matching network footprint. This trace is the part most likely to be wrong on a first board; follow the guide's layout rules exactly.
-
-Add a P-MOSFET switch on the modem supply so firmware can cut power completely if the modem stops responding.
-
-If the team prefers to keep an external 4G stick on the USB socket instead: add 1000 µF next to the socket and expect the stick, not the board, to be the least reliable part.
-
-## GPS
-
-Keep the NEO-7M module and its pins. Fit an external active antenna; a GPS antenna inside a metal cab sees very little sky.
-
-## Door and tamper inputs
-
-Two inputs for door switches (a magnetic reed switch that closes to ground when the door is shut):
-
-- 10 kΩ pull-up to 3.3 V, 10 kΩ in series to the processor pin, 100 nF to ground at the pin.
-- A dual diode clamp (BAT54S) to 3.3 V and ground at the pin, and a small protection diode at the connector. With the series resistor this survives a wire being shorted to 24 V.
-- Both on pins that can wake the processor from sleep.
-
-Add a motion sensor (LIS3DH or similar, I2C) with its interrupt on a wake-capable pin. It detects the unit being moved or struck while the vehicle is parked, and lets the processor sleep until something happens.
-
-## Sensor connections
-
-- **RS-485 (kept).** Add an SM712 protection diode across A and B. Replace the 4.7 kΩ bias resistors with 680 Ω so the idle state is defined with the 120 Ω terminator fitted, and make the terminator a solder jumper. Put a 500 mA resettable fuse in the 5 V line that leaves on the RJ45.
-- **One-wire probe input (new).** 4.7 kΩ pull-up, 100 Ω in series, a protection diode. Takes inexpensive sealed temperature probes.
-- **I2C (new).** The motion sensor, plus a footprint for a board temperature and humidity sensor.
-
-For pharmaceutical customers the cargo temperature sensor needs a calibration record against a reference thermometer. That is a procedure and a document, not a component.
-
-## Processor and pin map
-
-ESP32-S3-WROOM-1 as in Rev A. If the unit goes in a metal enclosure, use the -1U variant with an external antenna.
-
-| GPIO | Use | New |
+| Part | What was compared | Document |
 | --- | --- | --- |
-| 0, EN | Boot and reset: buttons plus the existing automatic programming circuit | buttons |
-| 1, 2 | Door 1, door 2 (wake-capable) | yes |
-| 4 | Ignition sense (analog) | |
-| 5 | Main supply voltage (analog) | yes |
-| 6 | Battery voltage (analog) | yes |
-| 7 | Motion sensor interrupt (wake-capable) | yes |
-| 8, 9 | I2C data, clock | yes |
-| 10 | One-wire probe | yes |
-| 11 | Modem ring indicator (wake-capable) | yes |
-| 12, 13, 14, 21 | RS-485 transmit, receive, receiver enable, driver enable | |
-| 15 | Switched 5 V rail | |
-| 16, 17, 18 | GPS pulse, to GPS receive, from GPS transmit | |
-| 19, 20 | USB data | yes |
-| 38, 39, 40 | Modem power key, modem status, modem supply switch | yes |
-| 41 | Charger status | yes |
-| 42 | Status light | yes |
-| 43, 44 | Debug serial header | |
-| 47, 48 | To modem receive, from modem transmit | yes |
+| A7670E modem | All 88 pads, supply range and peak current, power-key and reset timing, 1.8 V logic, light patterns | SIMCom A7670 Series Hardware Design V1.00 |
+| BQ24074 charger | Pins, input range, 4.4 V output, current-setting formulas, temperature input | [TI datasheet](https://www.ti.com/lit/gpn/bq24074) |
+| TPS63020 | Pins, 0.5 V feedback and divider, inductor, capacitors, the `VINA` pin | [TI datasheet](https://www.ti.com/lit/gpn/tps63020) |
+| TLV62569 | Pins, 0.6 V feedback, 2.5 to 5.5 V input, 2 A | [TI datasheet](https://www.ti.com/lit/ds/symlink/tlv62569.pdf) |
+| LM2596HV | Pins, 60 V input rating | Datasheet |
+| MT3608 | Pins, 0.6 V feedback, input range, inductor range, enable level | Datasheet |
+| TXS0104E translator | Pins, supply rule, enable pin | TI datasheet |
+| LIS3DH motion sensor | All 16 pins, address select, unused pins | ST datasheet |
+| SHT4x sensors | Pins, supply range, address, measurement command | Sensirion datasheet |
+| MCP1702 regulator | Pins, 13.2 V input, dropout | [Microchip DS22008E](https://ww1.microchip.com/downloads/en/DeviceDoc/22008E.pdf) |
+| ATmega328P | All 32 pins, 8 MHz allowed from 2.7 V, fuse tables | [Atmel 7810 datasheet](https://ww1.microchip.com/downloads/en/DeviceDoc/Atmel-7810-Automotive-Microcontrollers-ATmega328P_Datasheet.pdf) |
+| SMF05C | Pin assignment | [onsemi datasheet](https://www.onsemi.com/pdf/datasheet/smf05c-d.pdf) |
 
-GPIO 3, 45 and 46 set the processor's start-up mode and are left unconnected. GPIO 35 to 37 are left free so that a module with extra memory can be fitted. Analog inputs use GPIO 1 to 10 only, because the others stop working as analog inputs when Wi-Fi is on. *Verify the whole table against the module datasheet.*
+**Not compared.** These use the pin numbers such parts normally have, written from memory. Check each against the datasheet of the exact part you buy, before layout:
 
-Voltage sensing: 1 MΩ over 47 kΩ for the main supply and for ignition (36 V reads as about 1.6 V), 220 kΩ over 220 kΩ for the battery, each with 100 nF at the pin.
+- **ESP32-S3-WROOM-1.** Its datasheet could not be downloaded when the design was made. It has the most connections of any part here, so check it first, against [tracker/pin-map.md](tracker/pin-map.md).
+- USBLC6-2SC6, SM712, SP3485, BAT54S, MMBT3904, SS8050, AO3401A, AO3400A, and the direction of every diode.
+- The connectors: USB-C, nano SIM holder, RJ45, Micro-Fit, JST. A holder or socket from another maker can number its pins differently.
+- The voltage rating of both resettable fuses. The input fuse must be a 60 V or 72 V type. The common MF-R160 is a 30 V part and is not suitable.
+- The SY8089, listed as a cheaper stand-in for the TLV62569.
 
-## Programming, lights, enclosure
+## What changed since Rev A
 
-- **USB-C** on GPIO 19 and 20 with a protection diode array and 5.1 kΩ on each CC line. Keep the serial header.
-- **Lights:** power (hardwired), modem network (from the modem), status (GPIO 42).
-- **Enclosure:** sealed, with the board conformally coated. A unit that moves between a cold cargo area and warm air collects condensation.
-- **Connectors:** locking automotive types for power, doors and sensors. Screw terminals work loose under vibration.
+| Rev A | Problem | Now |
+| --- | --- | --- |
+| 18 V surge diode, 16 V converter, 30 V transistor | Works on 12 V only. A 24 V truck would trip the fuse or destroy the converter | Input rated for 9 to 36 V, parts rated 60 V |
+| No mobile modem on the board | The board cannot report by itself | LTE modem with SIM holder and antenna connector |
+| No backup battery | Cutting the supply silences the unit, which is what a dishonest driver would do | A lithium cell with a temperature-supervised charger. Processor, modem, GNSS and cargo sensors all keep running |
+| No door input | Door openings are the main accountability signal | Two protected door inputs that can wake the processor |
+| RS-485 lines leave the board bare | Static and surges from a long cable into the cargo area | Surge protection, a fused cable supply, a defined idle state |
+| Processor cannot tell truck supply from battery | Firmware cannot report a power cut or the battery level | Voltage measurement for the supply, the ignition line and the cell |
+| Serial header only | Needs an adapter to program or read logs | USB-C on the processor's own USB, header kept |
+| Nothing shows the unit's state | An installer cannot tell whether it works | Power, vehicle supply, network and status lights |
+| No motion sensing | The unit cannot sleep and still notice being moved | Motion sensor on a wake pin |
 
-## What firmware can then report
+Kept from Rev A: the processor, the GNSS module and its pins, the RS-485 transceiver, the sensor cable pinout, ignition sensing, the switchable 5 V rail and the automatic programming circuit.
 
-Temperature and humidity from the sensor bus, position and speed, ignition on or off, each door opening and closing with its time, main power cut and restored, battery level, the unit being moved while parked, and modem signal strength. Readings are kept in flash while there is no signal and sent when it returns.
+The module here is a proposed next revision of the COLDCHAIN RS-485 board. It was drawn from a photo of that board's layout, not from its schematic, so its pin choices are new. It keeps the two sockets, the END TERM jumper, the 32-pin microcontroller, the crystal and the programming header. It adds an address switch, a low surface-mount crystal, protection on the cable, and a sensor placed on the board edge.
 
-## Bring-up test order
+## Decisions that are yours
 
-1. Power section alone, no processor fitted: 9, 12, 24 and 36 V in; check 5 V, system rail and 3.3 V; reverse the input and confirm nothing gets hot.
-2. Pull the input while loaded and confirm the system rail holds on the battery.
-3. Fit the processor; program over USB-C; read all three voltage inputs against a multimeter.
-4. Modem: power-key sequence, SIM detected, network registration, then a data connection. Watch the supply on an oscilloscope during transmission; it must not dip more than 300 mV.
-5. GPS fix outdoors with the real antenna and enclosure.
-6. RS-485 sensor on five metres of cable; door inputs with the real switches.
-7. A day in a real vehicle, including engine cranking, before showing a customer.
+1. **The sensor cable pinout.** This design keeps the Rev A pinout so new boards plug into the ones you already have. That pinout puts 5 V and ground on the same pair of the cable. If someone plugs the sensor cable into a computer or a network switch, 5 V lands across that socket's transformer. The 0.5 A fuse on the tracker limits it, but it can still damage the other device. A second pinout that avoids this is built in: set `CABLE = 'network-safe'` at the top of `tools/build.py` and rebuild. It does not match boards built with the Rev A pinout, so choose before more modules are made. [SENSOR-BUS.md](SENSOR-BUS.md) shows both.
+2. **12 V trucks only, or 24 V too?** The board covers both. On a 24 V truck without central surge suppression, a load dump can exceed what the 1500 W surge diode survives. Fitting a load-dump rated diode (SM8S33A class, a larger package) settles it. This needs an engineer's judgement and a test, not an opinion.
+3. **A lithium cell in a hot cab.** The charger stops charging above about 50 °C, which is right. A cab parked in the sun goes well past that, and heat shortens the life of any lithium cell. Mount the unit low and out of the sun, and plan to replace cells.
+4. **Which cargo sensor.** The SHT45 is typically accurate to ±0.1 °C. For pharmaceutical customers, the SHT43 from the same family is delivered with an individual ISO 17025 calibration certificate. Your own board has a plug-in sensor on A1 that this design does not know.
+5. **SIM provider and bands.** Check the exact A7670 variant against the bands your provider uses in Egypt before ordering modems.
+6. **Connectors in the cargo space.** RJ45 and network cable are cheap and sold everywhere, which suits a pilot. They are not sealed. For series production in freezers, a sealed industrial connector (M12, five pins) carries the same signals.
 
-## Decisions for the hardware team
+## Rebuilding the files
 
-1. Do the first customers run 12 V or 24 V vehicles? Rev B covers both, at some cost.
-2. On-board modem, or an external 4G stick for the first prototype?
-3. Which SIM provider, and which bands?
-4. Battery runtime target after main power is cut.
-5. Which cargo sensors, and how they are calibrated.
+```
+python hardware/tools/build.py --pdf
+```
 
-## Sources
+It needs Python 3, and Chrome for the PDFs. It rewrites everything in `tracker/` and `temperature-module/` and ends with the result of its checks:
 
-- MT2492 ratings: [LCSC listing](https://lcsc.com/product-detail/DC-DC-Converters_MT2492_C89358.html), [datasheet copy](https://hestore.hu/prod_getfile.php?id=15270)
-- LM2596HV ratings: [datasheet copy](https://www.framboise314.fr/wp-content/uploads/2018/07/LM2596HV.pdf)
-- A7670 supply, peak current, capacitance, 1.8 V logic and power key: [A7670 Series Hardware Design V1.00](https://www.elecrow.com/download/product/CRT01260S/A7670_Series_Hardware_Design_V1.00.pdf)
-- A7670E bands (third-party listing, verify): [everythingRF](https://everythingrf.com/products/cellular-modules/simcom/811-765-a7670e)
-- BQ24074 input range, output regulation, temperature pin and power path: [TI datasheet](https://www.ti.com/lit/gpn/bq24074)
+- every pin of every part is either on a net or marked as unconnected on purpose;
+- no pin number is used that the part does not have, and no reference is used twice;
+- every net reaches at least two pins;
+- the finished drawing is read back from its coordinates alone, and the nets found that way must equal the description.
+
+To change the design, edit `tools/build.py`. Each part is one line: its value, then the net on each pin. Do not edit the generated files by hand, because the next build overwrites them.
