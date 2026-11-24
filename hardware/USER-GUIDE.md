@@ -54,7 +54,7 @@ On the tracker:
 | --- | --- |
 | PWR, green | The board has power, from the truck or from its cell |
 | EXT, green | The truck supply is present. Dark with the engine running means a blown fuse or a loose wire |
-| NET, blue | Steady: looking for a network. Quick blinking: connected on LTE. Slow blinking: connected on 2G. Dark: the modem is off or asleep, which is normal on the battery |
+| NET, blue | Steady: looking for a network. Slow blinking: connected on 2G. Quick blinking: connected on LTE, or sending data on either network. Dark: the modem is off or asleep, which is normal on the battery |
 | STATUS, amber | Set by the firmware. The pattern proposed in [FIRMWARE.md](FIRMWARE.md): one short flash every 5 s means working and connected |
 
 On each module: one green light that blinks briefly every time the tracker questions it. Fast, constant blinking means its address switches are all off.
@@ -63,7 +63,7 @@ On each module: one green light that blinks briefly every time the tracker quest
 
 **Where.** In the cab, behind the dashboard or under a seat. Never in the cargo space: the cell must not be charged in the cold, and the mobile signal is poor inside an insulated box. Keep it out of direct sun and away from heater outlets. Fix it firmly, because it senses movement.
 
-**Power.** Three wires, the same for 12 V and 24 V trucks.
+**Power.** Three wires into the square four-pin plug. The board is designed for 12 V trucks; do not fit it to a 24 V truck until the 24 V question in the [README](README.md) has been settled and tested.
 
 | Wire | Tracker pin | Connect to |
 | --- | --- | --- |
@@ -75,9 +75,9 @@ Do not take the supply from the refrigeration unit or from anything the driver c
 
 **Antennas.** The GNSS antenna lies flat facing the sky, on top of the dashboard or on the roof, never under metal. The LTE antenna goes on glass or plastic, at least a hand's width from the GNSS antenna, never inside a metal box.
 
-**Doors.** Fit the switch on the door frame and its magnet on the door, so the switch is closed when the door is shut. Two wires per switch.
+**Doors.** Fit the switch on the door frame and its magnet on the door, so the switch is closed when the door is shut. Two wires per switch, into the long single-row four-pin plug (it cannot go into the square power socket by mistake).
 
-| Door | Tracker pins |
+| Door | Door plug pins |
 | --- | --- |
 | Door 1 | 1 and 2 |
 | Door 2 | 3 and 4 |
@@ -99,6 +99,8 @@ If only one door is watched, join pins 3 and 4 with a short wire link. An unconn
 
 **The last module** gets the END TERM jumper. No other module has one.
 
+**Use straight-through network cables only.** A crossover cable ties the data lines to the supply: nothing answers and the terminators run hot.
+
 **Never plug the sensor cable into a computer, a router or a network switch.** It looks like a network cable. It carries 5 V and can damage them.
 
 ## The first test in the truck
@@ -107,7 +109,7 @@ If only one door is watched, join pins 3 and 4 with a short wire link. An unconn
 2. In the control room, the unit shows a temperature, a position and closed doors.
 3. Open a cargo door. The door shows as open within seconds.
 4. Pull the blade fuse. EXT goes dark, PWR stays lit, and a power alert appears within a minute. Put the fuse back and the alert clears.
-5. Unplug the sensor cable at the tracker. The temperature disappears from the next reading. Plug it back.
+5. Unplug the sensor cable at the tracker. Within a minute the modules' lights stop blinking and the tracker's STATUS light blinks fast. Plug it back and both return to normal. (The control room does not show a lost sensor yet: it keeps showing the last temperature. That is a gap in the server, listed in [PROTOCOL.md](PROTOCOL.md).)
 
 A unit that passes all five is fitted correctly.
 
@@ -126,9 +128,9 @@ Tell the driver three things: it reports door openings, it reports being unplugg
 | NET steady for many minutes | No coverage, SIM not active, antenna unplugged | Check the antenna, try the SIM in a phone |
 | Unit shown as not reporting | No signal, or the key was not loaded or was revoked | Check NET first, then the key |
 | A power alert while the truck is running | Supply taken from a switched point, or a loose ground | Move the supply wire, tighten the ground |
-| No temperature at all | No module answers: cable unplugged, or END TERM missing or fitted twice | Watch the module lights. With everything unplugged from power, measure between the two data wires: 55 to 60 Ω is right |
+| STATUS blinks fast, module lights dark | No module answers: cable unplugged, a crossover cable, or END TERM missing or fitted twice. The control room keeps showing the last temperature | Watch the module lights. With everything unplugged from power, measure between the two data wires: 55 to 60 Ω is right |
 | One module missing | Two modules share an address, or the cable after the previous module is bad | Give every module its own address, swap the cable |
-| All modules vanish at once | The cable's fuse has tripped, usually water in a socket | Unplug the cable at the tracker for a minute, dry the socket, plug in again. The fuse resets itself |
+| All modules vanish at once, position lost too | The cable supply has switched itself off on a short, usually water in a socket or a crushed cable. The tracker tries once more and then keeps it off | Dry the socket or replace the cable, then press the tracker's RESET button so it tries again. (Unplugging the vehicle connector does not help: the tracker keeps running on its cell) |
 | A module restarts again and again | The 5 V arriving is too low: very long cable, or a damaged one | Shorten or replace the cable |
 | A door shows open all the time | Switch and magnet too far apart, a cut wire, or an unused input left open | Align the switch, check the wire, link the unused input |
 | Position missing or jumping | GNSS antenna under metal | Move the antenna |
@@ -140,7 +142,7 @@ Do this before first use and once a year, and keep the record. Customers with re
 
 - **A probe on a lead:** fill an insulated cup with crushed ice and a little water, stir, wait ten minutes, and hold the probe in the middle. It should read 0.0 °C, give or take 0.5.
 - **A module:** put it in a closed box in a refrigerator or freezer next to a calibrated reference thermometer. Wait at least half an hour and compare.
-- If the difference is steady, store it in the module as a correction ([SENSOR-BUS.md](SENSOR-BUS.md), settings register 0).
+- If the difference is steady, store it in the module as a correction ([SENSOR-BUS.md](SENSOR-BUS.md)): settings register 0 for the module's own sensor, register 2 for a probe plugged into it.
 - Write down the date, the module's serial number, the reference thermometer used, both readings and the correction.
 
 ## Care and safety
