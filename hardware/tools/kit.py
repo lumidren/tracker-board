@@ -690,8 +690,7 @@ def write_bom(board, path):
         groups.setdefault(key, []).append(part)
     total = 0.0
     with io.open(path, 'w', encoding='utf-8', newline='') as handle:
-        writer = csv.writer(handle, lineterminator='
-')
+        writer = csv.writer(handle, lineterminator=chr(10))
         writer.writerow(['References', 'Quantity', 'Value', 'Description', 'Part number', 'Footprint', 'Fitted', 'Unit price USD (estimate)', 'Line total USD'])
         for (value, footprint, mpn, desc, dnp), parts in groups.items():
             price = parts[0].price
@@ -705,8 +704,7 @@ def write_bom(board, path):
 
 def write_netlist(board, path):
     with io.open(path, 'w', encoding='utf-8', newline='') as handle:
-        writer = csv.writer(handle, lineterminator='
-')
+        writer = csv.writer(handle, lineterminator=chr(10))
         writer.writerow(['Net', 'Pins', 'Connections (reference.pin name)'])
         for net, pins in sorted(board.nets().items()):
             writer.writerow([net, len(pins), '  '.join('%s.%s%s' % (ref, number, (' ' + name) if name else '') for ref, number, name in pins)])

@@ -603,8 +603,7 @@ def build(board, folder, name, work, want_pdf):
     extras = sum(price * quantity for _name, quantity, _desc, _mpn, price in board.extras)
     with io.open(os.path.join(folder, name + '-parts.csv'), 'a', encoding='utf-8', newline='') as handle:
         import csv
-        writer = csv.writer(handle, lineterminator='
-')
+        writer = csv.writer(handle, lineterminator=chr(10))
         writer.writerow([])
         writer.writerow(['Not on the schematic', 'Quantity', 'Item', 'Note', 'Part number', '', '', 'Unit price USD (estimate)', 'Line total USD'])
         for item, quantity, desc, mpn, price in board.extras:
